@@ -68,12 +68,17 @@ export interface DungeonTexturesProperties {
     variants: {
         walls: Record<number, number>;
         floor: Record<number, number>;
+    },
+    water: {
+        frames: [number, number, number][][],
+        speed: number,        
     };
 };
 
 export interface DungeonTextures {
-    textures: HTMLImageElement,
-    heightmaps: HTMLImageElement,
+    textures: CanvasImageSource,
+    heightmaps: CanvasImageSource,
+    waterTextures: CanvasImageSource[],
     properties: DungeonTexturesProperties;
 };
 

@@ -1,3 +1,5 @@
+import { Tiles } from "../data/tiles";
+
 type CropParams = [number, number, number, number];
 
 /** Value to index each type of tiling encounterable */
@@ -169,6 +171,7 @@ const NeighborsLookupTable: Record<string, Tilings> = {
     "01101011": Tilings.WEST_FULL,
     "01101111": Tilings.WEST_FULL,
     "11101011": Tilings.WEST_FULL,
+    "11101111": Tilings.WEST_FULL,
 
     "11111111": Tilings.CENTER_FULL,
 
@@ -382,30 +385,41 @@ const NeighborsLookupTable: Record<string, Tilings> = {
     "01011010": Tilings.FOUR_WAY_JUNCTION_THIN,
 };
 
+
+export enum TilingTextureMode {
+    TEXTURE,
+    HEIGHTMAP,
+};
+
+export const DungeonTilingStarts: Record<TilingTextureMode, Partial<Record<Tiles, number>>> = {
+    [TilingTextureMode.HEIGHTMAP]: {
+        [Tiles.WALL]: 0,
+        [Tiles.WATER]: 3,
+    },
+    [TilingTextureMode.TEXTURE]: {
+        [Tiles.WALL]: 0,
+        [Tiles.FLOOR]: 9,
+        [Tiles.WATER]: 0,
+    }
+};
+
+
 /** Helper class */
 export class DungeonTiling {
     static getTiling(neighbors: boolean[]): number {
         return NeighborsLookupTable[neighbors.map(n => n ? "1" : "0").join("")] ?? Tilings.UNDEFINED;
     }
 
-    static getWallsHeightmapCrop(tiling: Tilings): CropParams {
-        // Each tile is a 24x24
-        // The board is virtually 3 wide and infinitely tall
-        const x = (tiling % 3) * 24;
-        const y = Math.floor(tiling / 3) * 24;
-        return [x, y, 24, 24];
-    }
-
-    static getWallsTexturesCrop(tiling: Tilings, variant: number): CropParams {
-        const x = ((tiling % 3) + 3 * variant) * 24;
-        const y = Math.floor(tiling / 3) * 24;
-        return [x, y, 24, 24];
-    }
-
-    static getFloorCrop(tiling: Tilings, variant: number): CropParams {
-        // Each tile is a 24x24
-        // The board is virtually 3 wide and infinitely tall
-        const x = ((tiling % 3) + 9 + 3 * variant) * 24;
+    /** Generic function for getting texture crops from different parameters */
+    static getCrop(
+        tiling: Tilings,
+        tile: Tiles = Tiles.WALL,
+        variant: number = 0,
+        textureMode: TilingTextureMode = TilingTextureMode.HEIGHTMAP
+    ): CropParams {
+        const start = DungeonTilingStarts[textureMode][tile];
+        if (start === undefined) throw Error(`No valid texture for this kind of tile ${tile}`);
+        const x = ((tiling % 3) + start + 3 * variant) * 24;
         const y = Math.floor(tiling / 3) * 24;
         return [x, y, 24, 24];
     }

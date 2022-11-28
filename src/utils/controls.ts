@@ -32,7 +32,7 @@ export class Controls {
         document.addEventListener("keyup", (e) => this.mouseUp(e));
     }
 
-    private updateSticks(e: KeyboardEvent) {
+    private updateSticks() {
         // Update the left stick
         this.LS.x = 0, this.LS.y = 0;
         if (this.isPressed(Keys.L_UP)) this.LS.y += 1;
@@ -54,7 +54,7 @@ export class Controls {
         // Add the current keyCode to the keys array
         this.keys.add(e.key as Keys);
         // Update the sticks
-        this.updateSticks(e);
+        this.updateSticks();
     }
 
     private mouseUp(e: KeyboardEvent) {
@@ -63,7 +63,7 @@ export class Controls {
         // Remove the current keyCode from the keys set
         this.keys.delete(e.key as Keys);
         // Update the sticks
-        this.updateSticks(e);
+        this.updateSticks();
     }
 
     public isPressed(key: string): boolean {

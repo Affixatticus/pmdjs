@@ -97,7 +97,7 @@ export class DungeonState {
         // camera.attachControl(this.engine.getRenderingCanvas(), true);
         return camera;
     }
-    
+
     private moveCamera(newPos: Vec3) {
         this.camera.position = newPos.add(CAMERA_OFFSET).gameFormat;
     }
@@ -181,11 +181,14 @@ export class DungeonState {
         this.camera.cameraRotation = rot.add(V2(rotation.x, 0));
     }
 
+    private tick = 0;
     /** Renders the scene if the scene is done loading */
     public render() {
         if (this.isLoaded) {
             this.scene.render();
+            this.floor.update(this.tick / 5);
             this.controlCamera();
         }
+        this.tick++;
     }
 }

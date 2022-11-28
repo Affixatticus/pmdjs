@@ -28,7 +28,7 @@ export class Vec2 extends Vector2 {
         return V2(Math.floor(this.x), Math.floor(this.y));
     }
 
-    public translate(amount: number) {
+    public move(amount: number) {
         return V2(this.x, this.y).add(V2(amount, amount));
     }
 
@@ -37,6 +37,10 @@ export class Vec2 extends Vector2 {
             return V3(this.x, fill, this.y);
         else
             return V3(this.x, this.y, fill);
+    }
+
+    public dist(other: Vec2) {
+        return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
     }
 
 }
@@ -70,7 +74,7 @@ export class Vec3 extends Vector3 {
         return V3(Math.floor(this.x), Math.floor(this.y), Math.floor(this.z));
     }
 
-    public translate(amount: number) {
+    public move(amount: number) {
         return V3(this.x, this.y, this.z).add(V3(amount, amount, amount));
     }
 

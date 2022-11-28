@@ -127,7 +127,7 @@ export class DungeonGrid extends ByteGrid {
     }
 
     /** Returns a new grid with each cell changed to the correct tiling based on the given tile */
-    public mapTilingsFor(tile: Tiles, update?: boolean): ByteGrid {
+    public mapTilingsFor(tile: Tiles, ignoreTiles: Tiles[] = [], update?: boolean): ByteGrid {
         if (this._mapsTilingsCache.has(tile) && !update)
             return this._mapsTilingsCache.get(tile)!;
 
@@ -143,7 +143,7 @@ export class DungeonGrid extends ByteGrid {
                 // Get the adjacent tiles
                 const neighbors = this.getNeighbors(x, y);
                 // Convert the adjacent tiles to a boolean if they are the same as the tile
-                const neighborsEqualToTile = neighbors.map(t => t === tile);
+                const neighborsEqualToTile = neighbors.map(t => t === tile || ignoreTiles.includes(t));
                 // Get the tiling for the neighbors
                 const tiling = DungeonTiling.getTiling(neighborsEqualToTile);
                 tilingGrid.set(x, y, tiling);

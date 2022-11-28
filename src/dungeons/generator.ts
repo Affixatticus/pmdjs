@@ -35,8 +35,15 @@ export class DungeonGenerator {
         let str = '';
 
         for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++)
-                str += this.grid.get(x, y) === Tiles.FLOOR ? ' ' : '█';
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.grid.get(x, y);
+                if (tile === Tiles.WALL)
+                    str += '█';
+                else if (tile === Tiles.FLOOR)
+                    str += ' ';
+                else if (tile === Tiles.WATER)
+                    str += '░';
+            }
             str += '\n';
         }
 
@@ -62,6 +69,9 @@ export class DungeonGenerator {
 
         // Draw the corridors
         this.drawCorridors(corridors);
+
+        // Generate some pools of water
+        this.generatePools();
 
         return this.grid;
     }
@@ -162,6 +172,31 @@ export class DungeonGenerator {
                 const y = pos.y + DungeonGenerator.ROOM_BORDERS.y;
 
                 this.grid.set(x, y, Tiles.FLOOR);
+            }
+        }
+    }
+
+    private generatePools() {
+        // Generates some circular pools of water of 3 to 4 tiles in diameter
+        const poolsAmount = Random.randint(3, 5);
+        for (let i = 0; i < poolsAmount; i++) {
+            const x = Random.randint(0, this.width - 1);
+            const y = Random.randint(0, this.height - 1);
+
+            const radius = Random.randint(1, 2);
+
+            for (let j = -radius; j <= radius; j++) {
+                for (let k = -radius; k <= radius; k++) {
+                    const tileX = x + k;
+                    const tileY = y + j;
+
+                    if (tileX < 0 || tileX >= this.width || tileY < 0 || tileY >= this.height)
+                        continue;
+
+                    const dist = V2(x, y).dist(V2(tileX, tileY));
+                    if (dist <= radius)
+                        this.grid.set(tileX, tileY, Tiles.WATER);
+                }
             }
         }
     }

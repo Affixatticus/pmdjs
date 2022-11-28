@@ -1,6 +1,5 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
-import { AssetsLoader } from "../utils/assets_loader";
 import { Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./generator";
 import { DungeonGrid } from "./grid";
@@ -50,6 +49,10 @@ export class DungeonFloor {
     /** Renders the first view of the map */
     public renderToScreen(position: Vec2) {
         this.map.buildAt(position);
+    }
+    
+    public update(tick: number) {
+        this.map.animateTiles(tick);
     }
 
     // Utility

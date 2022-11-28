@@ -10,7 +10,7 @@ function createCanvas(width: number, height?: number): CanvasRenderingContext2D 
     return canvas.getContext("2d") as CanvasRenderingContext2D;
 }
 
-function putImage(ctx: CanvasRenderingContext2D, image: HTMLImageElement, ...params: [number, number, number, number]) {
+function putImage(ctx: CanvasRenderingContext2D, image: CanvasImageSource, ...params: [number, number, number, number]) {
     ctx.drawImage(image, ...params, 0, 0, params[2], params[3]);
 }
 
@@ -19,7 +19,7 @@ function toDataURL(ctx: CanvasRenderingContext2D) {
     return ctx.canvas.toDataURL();
 }
 
-function createURL(image: HTMLImageElement, ...params: [number, number, number, number]) {
+function createURL(image: CanvasImageSource, ...params: [number, number, number, number]) {
     const ctx = createCanvas(params[2], params[3]);
     putImage(ctx, image, ...params);
     return ctx.canvas.toDataURL();
