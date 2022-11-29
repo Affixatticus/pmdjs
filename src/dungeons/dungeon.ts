@@ -1,4 +1,4 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, PointLight, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
+import { AxesViewer, Color3, Color4, DirectionalLight, Engine, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Controls } from "../utils/controls";

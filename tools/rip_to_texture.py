@@ -9,7 +9,7 @@ im = Image.open(sys.argv[1])
 pix = im.load()
 
 # create an output image
-out = Image.new("RGB", (504, 576))
+out = Image.new("RGB", (576, 576))
 
 START_POINT = (84, 163)
 

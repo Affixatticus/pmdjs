@@ -2,9 +2,14 @@ export enum Tiles {
     FLOOR,
     WALL,
     WATER,
-    LAVA,
-    THORNS,
-    CHASM,
+
+    FLOOR_WITH_ITEMS,
+    FLOOR_WITH_ENEMIES,
+    FLOOR_WITH_TRAPS,
+
+    WATER_WITH_ENEMIES,
+    WATER_WITH_TRAPS,
+    
     UNKNOWN,
     OUT_OF_BOUNDS
 };

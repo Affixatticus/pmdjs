@@ -36,19 +36,19 @@ export class DungeonFloor {
     /** Loads the tiles */
     public async preloadAssets() {
         // Load the assets
-        this.map = new DungeonScene(this.scene, this.info, this.grid);
+        this.map = new DungeonScene(this.scene, this.info.path, this.grid);
         await this.map.preload();
     }
 
     // Rendering
 
     public render(position: Vec2) {
-        this.map.firstBuild(position);
+        this.map.build(position);
     }
 
     /** Renders the first view of the map */
     public renderToScreen(position: Vec2) {
-        this.map.buildAt(position);
+        this.map.buildView(position);
     }
     
     public update(tick: number) {

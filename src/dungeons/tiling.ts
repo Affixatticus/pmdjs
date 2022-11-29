@@ -90,8 +90,8 @@ export enum Tilings {
 }
 
 const NeighborsLookupTable: Record<string, Tilings> = {
-    "01111110": Tilings.FULL_TO_SOUTH_WEST_AND_OPPOSITE,
-    "11011011": Tilings.FULL_TO_SOUTH_EAST_AND_OPPOSITE,
+    "11011011": Tilings.FULL_TO_SOUTH_WEST_AND_OPPOSITE,
+    "01111110": Tilings.FULL_TO_SOUTH_EAST_AND_OPPOSITE,
 
     "01011011": Tilings.ALL_JUNCTION_TO_SOUTH_EAST_FULL,
     "01011110": Tilings.ALL_JUNCTION_TO_SOUTH_WEST_FULL,

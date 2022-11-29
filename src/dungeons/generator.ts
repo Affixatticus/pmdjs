@@ -1,29 +1,33 @@
 import Random from '../utils/random';
-import { DungeonFloorInfo } from "../data/dungeons";
+import { DungeonFloorInfo, GeneratorFlags } from "../data/dungeons";
 import { V2, Vec2 } from "../utils/vectors"
 import { Tiles } from '../data/tiles';
 import { DungeonGrid } from './grid';
 
 type Room = Vec2;
 type Corridor = Vec2[];
+type Pool = Vec2[];
 
 export class DungeonGenerator {
     private maxRoomSize: Vec2;
     private paddingSize: Vec2;
     private roomsLayout: Vec2;
     private roomsAmount: number;
+    private flags: GeneratorFlags;
 
     private width!: number;
     private height!: number;
     private grid!: DungeonGrid;
 
-    static ROOM_BORDERS = V2(10, 6);
+    static ROOM_BORDERS = V2(12, 8);
 
     constructor(info: DungeonFloorInfo) {
         this.maxRoomSize = info.size.maxRoomSize;
         this.paddingSize = info.size.paddingSize;
         this.roomsLayout = info.size.roomsLayout;
         this.roomsAmount = info.size.roomsAmount;
+
+        this.flags = info.flags;
 
         this.width = this.maxRoomSize.x * this.roomsLayout.x +
             this.paddingSize.x * (this.roomsLayout.x - 1) + DungeonGenerator.ROOM_BORDERS.x * 2;
@@ -71,7 +75,10 @@ export class DungeonGenerator {
         this.drawCorridors(corridors);
 
         // Generate some pools of water
-        this.generatePools();
+        if (this.flags.water) {
+            const pools = this.generatePools();
+            this.drawPools(pools);
+        }
 
         return this.grid;
     }
@@ -93,7 +100,7 @@ export class DungeonGenerator {
         const roomsToKeep: Room[] = [];
 
         for (let i = 0; i < this.roomsAmount; i++) {
-            const index = Random.randint(0, rooms.length - 1);
+            const index = Random.int(0, rooms.length - 1);
             const room = rooms[index];
             roomsToKeep.push(room);
             rooms.splice(index, 1);
@@ -176,27 +183,51 @@ export class DungeonGenerator {
         }
     }
 
-    private generatePools() {
-        // Generates some circular pools of water of 3 to 4 tiles in diameter
-        const poolsAmount = Random.randint(3, 5);
-        for (let i = 0; i < poolsAmount; i++) {
-            const x = Random.randint(0, this.width - 1);
-            const y = Random.randint(0, this.height - 1);
+    private randomPoint(): Vec2 {
+        // Within the borders
+        const x = Random.int(DungeonGenerator.ROOM_BORDERS.x, this.width - DungeonGenerator.ROOM_BORDERS.x - 1);
+        const y = Random.int(DungeonGenerator.ROOM_BORDERS.y, this.height - DungeonGenerator.ROOM_BORDERS.y - 1);
+        return V2(x, y);
+    }
 
-            const radius = Random.randint(1, 2);
+    private generatePool(): Pool {
+        const pool: Pool = [];
 
-            for (let j = -radius; j <= radius; j++) {
-                for (let k = -radius; k <= radius; k++) {
-                    const tileX = x + k;
-                    const tileY = y + j;
+        const center = this.randomPoint();
+        pool.push(center);
 
-                    if (tileX < 0 || tileX >= this.width || tileY < 0 || tileY >= this.height)
-                        continue;
+        const rad = Random.int(4, 8); 
 
-                    const dist = V2(x, y).dist(V2(tileX, tileY));
-                    if (dist <= radius)
-                        this.grid.set(tileX, tileY, Tiles.WATER);
-                }
+        // Create a circle of tiles
+        for (let y = center.y - rad + 1; y < rad + center.y; y++) {
+            for (let x = center.x - rad + 1; x < rad + center.x; x++) {
+                if (Math.abs(V2(x, y).dist(center)) < rad)
+                    pool.push(V2(x, y));
+            }
+        }
+
+        return pool;
+    }
+
+    private generatePools(): Pool[] {
+        const pools: Pool[] = [];
+
+        const poolAmount = Random.int(4, 8);
+        for (let i = 0; i < poolAmount; i++) {
+            const pool = this.generatePool();
+            pools.push(pool);
+        }
+
+        return pools;
+    }
+
+    private drawPools(pools: Pool[]) {
+        for (const pool of pools) {
+            for (const pos of pool) {
+                const x = pos.x + DungeonGenerator.ROOM_BORDERS.x;
+                const y = pos.y + DungeonGenerator.ROOM_BORDERS.y;
+
+                this.grid.set(x, y, Tiles.WATER);
             }
         }
     }

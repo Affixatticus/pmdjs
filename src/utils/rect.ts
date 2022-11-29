@@ -1,4 +1,4 @@
-import { randint } from "./Random";
+import { int } from "./Random";
 import { V2, Vec2 } from "./vectors";
 
 export class Rect {
@@ -66,10 +66,10 @@ export class Rect {
      * @returns An rect contained in this one
      */
     public subrect(delta: number): Rect {
-        const left = randint(this.left, this.left + (this.width * delta | 0));
-        const top = randint(this.top, this.top + (this.height * delta | 0));
-        const right = randint(this.right - (this.width * delta | 0), this.right);
-        const bottom = randint(this.bottom - (this.height * delta | 0), this.bottom);
+        const left = int(this.left, this.left + (this.width * delta | 0));
+        const top = int(this.top, this.top + (this.height * delta | 0));
+        const right = int(this.right - (this.width * delta | 0), this.right);
+        const bottom = int(this.bottom - (this.height * delta | 0), this.bottom);
 
         return Rect.fromLTRB(left, top, right, bottom);
     }
@@ -77,8 +77,8 @@ export class Rect {
     /** Returns a random point withing the rect's bounds */
     get randomPoint(): Vec2 {
         return V2(
-            this.left + 1 + randint(0, this.width - 2),
-            this.top + 1 + randint(0, this.height - 2),
+            this.left + 1 + int(0, this.width - 2),
+            this.top + 1 + int(0, this.height - 2),
         );
     }
 

@@ -1,4 +1,4 @@
-import { Color3 } from "@babylonjs/core";
+import { Color3, Constants, DynamicTexture, Scene } from "@babylonjs/core";
 
 function createCanvas(width: number, height?: number): CanvasRenderingContext2D {
     if (height === undefined) {
@@ -22,7 +22,16 @@ function toDataURL(ctx: CanvasRenderingContext2D) {
 function createURL(image: CanvasImageSource, ...params: [number, number, number, number]) {
     const ctx = createCanvas(params[2], params[3]);
     putImage(ctx, image, ...params);
-    return ctx.canvas.toDataURL();
+    const url = ctx.canvas.toDataURL();
+    return url;
+}
+
+function toDynamicTexture(image: CanvasImageSource, scene: Scene, startX: number, startY: number, width: number, height: number) {
+    const texture = new DynamicTexture("texture", { width, height }, scene,
+        true, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+    putImage(texture.getContext() as CanvasRenderingContext2D, image, startX, startY, width, height);
+    texture.update();
+    return texture;
 }
 
 function getPixelColor(ctx: CanvasRenderingContext2D, x: number, y: number) {
@@ -36,6 +45,7 @@ export {
     toDataURL,
     createURL,
     getPixelColor,
+    toDynamicTexture
 }
 
 export default {
@@ -44,5 +54,6 @@ export default {
     toDataURL,
     createURL,
     getPixelColor,
+    toDynamicTexture
 }
 
