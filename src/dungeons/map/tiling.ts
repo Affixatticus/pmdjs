@@ -1,6 +1,5 @@
-import { Tiles } from "../data/tiles";
-
-type CropParams = [number, number, number, number];
+import { Tiles } from "../../data/tiles";
+import { CropParams } from "../../utils/canvas";
 
 /** Value to index each type of tiling encounterable */
 export enum Tilings {

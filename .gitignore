@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 
+public/assets/textures/pokemon
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

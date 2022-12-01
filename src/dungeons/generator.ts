@@ -1,8 +1,12 @@
 import Random from '../utils/random';
 import { DungeonFloorInfo, GeneratorFlags } from "../data/dungeons";
 import { V2, Vec2 } from "../utils/vectors"
-import { Tiles } from '../data/tiles';
-import { DungeonGrid } from './grid';
+import { TileObjects, Tiles, TrapChance } from '../data/tiles';
+import { DungeonGrid } from './map/grid';
+import { DungeonObject } from './objects/object';
+import { DungeonItem } from './objects/item';
+import { ItemChance } from '../data/items';
+import { DungeonTile } from './objects/tile';
 
 type Room = Vec2;
 type Corridor = Vec2[];
@@ -14,6 +18,11 @@ export class DungeonGenerator {
     private roomsLayout: Vec2;
     private roomsAmount: number;
     private flags: GeneratorFlags;
+    private itemRarity: number;
+    private itemChances: [number, number][];
+    private trapRarity: number;
+    private trapChances: [number, number][];
+
 
     private width!: number;
     private height!: number;
@@ -21,11 +30,51 @@ export class DungeonGenerator {
 
     static ROOM_BORDERS = V2(12, 8);
 
+    private generateItemChances(items: ItemChance[]): [number, number][] {
+        const chances: [number, number][] = [];
+
+        let chance = 0;
+        for (const item of items) {
+            chance += item.chance;
+            chances.push([item.id, chance]);
+        }
+
+        // Update the chances so that the maximum chance is 1
+        for (let i = 0; i < chances.length; i++) {
+            const [id, chance] = chances[i];
+            chances[i] = [id, chance / chances[chances.length - 1][1]];
+        }
+
+        return chances;
+    }
+
+    private generateTrapChances(traps: TrapChance[]): [number, number][] {
+        const chances: [number, number][] = [];
+
+        let chance = 0;
+        for (const trap of traps) {
+            chance += trap.chance;
+            chances.push([trap.id, chance]);
+        }
+
+        // Update the chances so that the maximum chance is 1
+        for (let i = 0; i < chances.length; i++) {
+            const [id, chance] = chances[i];
+            chances[i] = [id, chance / chances[chances.length - 1][1]];
+        }
+
+        return chances;
+    }
+
     constructor(info: DungeonFloorInfo) {
         this.maxRoomSize = info.size.maxRoomSize;
         this.paddingSize = info.size.paddingSize;
         this.roomsLayout = info.size.roomsLayout;
         this.roomsAmount = info.size.roomsAmount;
+        this.itemRarity = info.items?.rarity ?? 0;
+        this.itemChances = this.generateItemChances(info.items?.items ?? []);
+        this.trapRarity = info.traps?.rarity ?? 0;
+        this.trapChances = this.generateTrapChances(info.traps?.traps ?? []);
 
         this.flags = info.flags;
 
@@ -47,12 +96,74 @@ export class DungeonGenerator {
                     str += ' ';
                 else if (tile === Tiles.WATER)
                     str += '░';
+                else if (tile === Tiles.MARKER_ITEM)
+                    str += '▒';
             }
             str += '\n';
         }
 
         return str;
     }
+
+    // Object Generation
+    private getRandomItem(): number {
+        const rand = Random.float(1);
+
+        for (const [id, chance] of this.itemChances) {
+            if (rand < chance)
+                return id;
+        }
+        throw new Error('No item was chosen');
+    }
+
+    private getRandomTrap(): number {
+        const rand = Random.float(1);
+
+        for (const [id, chance] of this.trapChances) {
+            if (rand < chance)
+                return id;
+        }
+        throw new Error('No trap was chosen');
+    }
+
+    /** Replaces grid object placeholders with new objects */
+    public generateObjects(grid: DungeonGrid): DungeonObject[] {
+        const objects: DungeonObject[] = [];
+
+        // Iter through the grid
+        for (const [pos, tile] of grid) {
+            // If the tile is a placeholder
+            if (tile === Tiles.MARKER_ITEM) {
+                // Replace it with a random item
+                grid.set(...pos.spread(), Tiles.FLOOR);
+
+                if (this.itemRarity) {
+                    // Create a new object
+                    const object = new DungeonItem(pos, this.getRandomItem());
+                    objects.push(object);
+                }
+            } if (tile === Tiles.MARKER_STAIRS) {
+                // Replace it with a random item
+                grid.set(...pos.spread(), Tiles.STAIRS);
+
+                // Create a new object
+                const object = new DungeonTile(pos, TileObjects.STAIRS_DOWN, false, true);
+                objects.push(object);
+            } if (tile === Tiles.MARKER_TRAP) {
+                // Replace it with a random item
+                grid.set(...pos.spread(), Tiles.TRAP);
+
+                // Create a new object
+                const object = new DungeonTile(pos, this.getRandomTrap(), false);
+                objects.push(object);
+            }
+        }
+
+        return objects;
+    }
+
+
+    // Tile generation
 
     /** Fills up the map with tiles to form a dungeon */
     public generate(): DungeonGrid {
@@ -68,8 +179,12 @@ export class DungeonGenerator {
         // Place the tiles for the rooms
         this.placeRooms(roomsToKeep);
 
+        // Place the markers for the objects
+        this.placeMarkers();
+
         // Connect the rooms with corridors
         const corridors = this.generateCorridors(roomsToKeep);
+
 
         // Draw the corridors
         this.drawCorridors(corridors);
@@ -122,6 +237,44 @@ export class DungeonGenerator {
                     this.grid.set(tileX, tileY, Tiles.FLOOR);
                 }
             }
+        }
+    }
+
+    /** Places special tiles that determine the position of game objects */
+    private placeMarkers() {
+        // Generate a list of random positions where the tile is a floor
+        const floorPositions: Vec2[] = [];
+        for (const [pos, tile] of this.grid) {
+            if (tile === Tiles.FLOOR)
+                floorPositions.push(pos);
+        }
+
+        // Choose a random amount of positions to place the markers
+        let amount = Random.int(this.roomsAmount * this.itemRarity, this.roomsAmount * this.itemRarity * 2) * 4;
+
+        while (floorPositions.length && amount--) {
+            const index = Random.int(0, floorPositions.length - 1);
+            const pos = floorPositions[index];
+            floorPositions.splice(index, 1);
+
+            this.grid.set(...pos.spread(), Tiles.MARKER_ITEM);
+        }
+
+        // Place a stair down
+        const stairDownPos = Random.choose(floorPositions);
+        this.grid.set(...stairDownPos.spread(), Tiles.MARKER_STAIRS);
+        // Remove the used position
+        floorPositions.splice(floorPositions.indexOf(stairDownPos), 1);
+
+        // Choose a random amount of positions to place the markers
+        amount = Random.int(this.roomsAmount * this.trapRarity, this.roomsAmount * this.trapRarity * 2) * 4;
+
+        while (floorPositions.length && amount--) {
+            const index = Random.int(0, floorPositions.length - 1);
+            const pos = floorPositions[index];
+            floorPositions.splice(index, 1);
+
+            this.grid.set(...pos.spread(), Tiles.MARKER_TRAP);
         }
     }
 
@@ -196,7 +349,7 @@ export class DungeonGenerator {
         const center = this.randomPoint();
         pool.push(center);
 
-        const rad = Random.int(4, 8); 
+        const rad = Random.int(4, 8);
 
         // Create a circle of tiles
         for (let y = center.y - rad + 1; y < rad + center.y; y++) {

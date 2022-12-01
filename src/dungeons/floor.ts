@@ -1,17 +1,31 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
-import { Vec2 } from "../utils/vectors";
+import { PokemonData } from "../data/pokemon";
+import { AssetsLoader } from "../utils/assets_loader";
+import { V2, Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./generator";
-import { DungeonGrid } from "./grid";
-import { DungeonScene } from "./scene";
+import { DungeonGrid } from "./map/grid";
+import { DungeonScene } from "./map/scene";
+import { DungeonObjectContainer } from "./objects/object";
+import { DungeonPokemon, DungeonPokemonContainer, PokemonTypes } from "./objects/pokemon";
+
+export enum TileRenderingGroupIds {
+    WATER,
+    FLOOR,
+    WALL,
+};
+
 
 /** Class that builds the structure of the dungeon */
 export class DungeonFloor {
     private scene: Scene;
     private info: DungeonFloorInfo;
+    private party: string[] = [];
 
     public grid!: DungeonGrid;
     public map!: DungeonScene;
+    public objects!: DungeonObjectContainer;
+    public pokemon!: DungeonPokemonContainer;
 
 
     constructor(scene: Scene, info: DungeonFloorInfo) {
@@ -19,18 +33,37 @@ export class DungeonFloor {
         this.info = info;
     }
 
+    // Generating and loading
+
     public generate() {
         // Generate the dungeon
         const generator = new DungeonGenerator(this.info);
 
         // Generate the map and time it
-        const start = Date.now();
         this.grid = generator.generate();
-        const end = Date.now();
-        console.log(`Generated the map in ${end - start}ms`);
+
+        // Generate the objects
+        this.objects = new DungeonObjectContainer(generator.generateObjects(this.grid));
 
         // Log the map
         console.log(generator.toString());
+    }
+
+    public generatePokemon(party: PokemonData[]) {
+        this.party = party.map(p => p.id[0]);
+
+        // Generate the pokemon
+        this.pokemon = new DungeonPokemonContainer();
+
+        // Add the party to the scene
+        for (const pokemon of party) {
+            this.pokemon.add(
+                new DungeonPokemon(
+                    this.getSpawnPosition() ?? V2(0, 0),
+                    PokemonTypes.PARTNER,
+                    pokemon.id,
+                ));
+        };
     }
 
     /** Loads the tiles */
@@ -38,21 +71,42 @@ export class DungeonFloor {
         // Load the assets
         this.map = new DungeonScene(this.scene, this.info.path, this.grid);
         await this.map.preload();
+
+
+        // Load the pokemon
+        const start = performance.now();
+        // Preload the pokemon
+        await Promise.all(
+            [
+                ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0))] : []),
+                ...this.party.map(e => AssetsLoader.loadPokemon(e, 0)),
+            ]
+        );
+        console.log(`-> Loaded ${this.info?.enemies?.length ?? 0 + this.party.length} pokemon in ${performance.now() - start}ms`);
     }
 
     // Rendering
 
-    public render(position: Vec2) {
+    public build(position: Vec2) {
+        // Build the first screen of the map
         this.map.build(position);
+        // Build all the objects
+        this.objects.render(this.scene);
+
+        this.pokemon.render(this.scene);
+
+        // Build the pokemon
+        // this.pokemon.render(this.scene);
     }
 
     /** Renders the first view of the map */
     public renderToScreen(position: Vec2) {
         this.map.buildView(position);
     }
-    
+
     public update(tick: number) {
         this.map.animateTiles(tick);
+        this.pokemon.animate(tick);
     }
 
     // Utility

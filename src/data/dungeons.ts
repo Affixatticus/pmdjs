@@ -1,6 +1,7 @@
 import { V2, Vec2 } from "../utils/vectors";
 import { ItemChance, Items } from "./items";
 import { PokemonChance } from "./pokemon";
+import { TileObjects, TrapChance } from "./tiles";
 import { WeatherChance, Weathers } from "./weather";
 
 export enum Dungeons {
@@ -53,19 +54,27 @@ export interface DungeonFloorInfo {
     size: DungeonSize;
     /** List of possible enemies to spawn */
     enemies: PokemonChance[] | null;
-    /** Chance of spawning in items and items */
+    /** Chance of spawning in items */
     items: ItemRarity | null;
+    /** Chance of spawning in traps */
+    traps: TrapRarity | null;
     /** List of possible weathers to spawn */
     weathers: WeatherChance[] | null;
     /** Flags */
     flags: GeneratorFlags;
 };
 
-interface ItemRarity {
+export interface ItemRarity {
     rarity: number;
     /** List of possible items to spawn */
     items: ItemChance[];
 };
+
+export interface TrapRarity {
+    rarity: number;
+    /** List of possible traps to spawn */
+    traps: TrapChance[];
+}
 
 
 export interface DungeonTexturesProperties {
@@ -101,24 +110,37 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
     [Dungeons.GRASSY_COVE]: {
         [4]: {
             name: "Grass Cove",
-            path: "grass_cove_01",
+            path: "deep_boulder_quarry_01",
             size: {
                 paddingSize: V2(5, 5),
                 maxRoomSize: V2(8, 8),
-                roomsLayout: V2(3, 3),
-                roomsAmount: 8
+                roomsLayout: V2(1, 1),
+                roomsAmount: 1
             },
             enemies: null,
             items: {
                 rarity: 0.5,
-                items: [{ id: Items.ORAN_BERRY, chance: 20 }]
+                items: [
+                    { id: Items.ORAN_BERRY, chance: 20 },
+                    { id: Items.COIN, chance: 30 },
+                    { id: Items.APPLE, chance: 10 },
+                    { id: Items.BIG_APPLE, chance: 1 },
+                ]
+            },
+            traps: {
+                rarity: 0.5,
+                traps: [
+                    { id: TileObjects.TRAP_01, chance: 100 },
+                    { id: TileObjects.FAN_TRAP, chance: 50 },
+                    { id: TileObjects.VOLTORB_TRAP, chance: 25 },
+                ]
             },
             weathers: [{
                 id: Weathers.CLEAR,
                 chance: 100
             }],
             flags: {
-                water: true
+                water: false
             }
         },
         [6]: {
@@ -130,11 +152,17 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 roomsLayout: V2(6, 3),
                 roomsAmount: 9
             },
-            enemies: null,
+            enemies: [
+                { species: "eevee", chance: 100, levelRange: [5, 5] },
+            ],
             items: {
                 rarity: 0.5,
-                items: [{ id: Items.ORAN_BERRY, chance: 20 }]
+                items: [
+                    { id: Items.ORAN_BERRY, chance: 20 },
+                    { id: Items.COIN, chance: 50 },
+                ]
             },
+            traps: null,
             weathers: [{
                 id: Weathers.CLEAR,
                 chance: 100

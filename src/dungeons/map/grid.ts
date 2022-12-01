@@ -1,5 +1,5 @@
-import { Tiles } from "../data/tiles";
-import { V2, Vec2 } from "../utils/vectors";
+import { Tiles } from "../../data/tiles";
+import { V2, Vec2 } from "../../utils/vectors";
 import { DungeonTiling, Tilings } from "./tiling";
 
 export class ByteGrid {

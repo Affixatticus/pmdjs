@@ -1,10 +1,11 @@
 import { Color3, Color4, Constants, Matrix, Mesh, MeshBuilder, Scene, StandardMaterial, Texture } from "@babylonjs/core";
-import { DungeonTextures } from "../data/dungeons";
-import { Tiles } from "../data/tiles";
-import { AssetsLoader } from "../utils/assets_loader";
-import Canvas from "../utils/canvas";
-import Random from "../utils/random";
-import { V2, V3, Vec2 } from "../utils/vectors";
+import { DungeonTextures } from "../../data/dungeons";
+import { Tiles } from "../../data/tiles";
+import { AssetsLoader } from "../../utils/assets_loader";
+import Canvas, { CropParams } from "../../utils/canvas";
+import Random from "../../utils/random";
+import { V2, V3, Vec2 } from "../../utils/vectors";
+import { TileRenderingGroupIds } from "../floor";
 import { ByteGrid, DungeonGrid } from "./grid";
 import { DungeonTiling, Tilings, TilingTextureMode } from "./tiling";
 
@@ -12,19 +13,13 @@ const TILE_VIEWPORT = V2(24, 24);
 
 type MeshGroup = Mesh | Map<number, Mesh> | null;
 
-enum TileRenderingGroupIds {
-    WATER,
-    FLOOR,
-    WALL,
-};
-
 class WaterTileMaterial extends StandardMaterial {
     private textures: Texture[] = [];
     private texturesCount: number;
     private animationTime: number;
 
 
-    constructor(name: string, sources: CanvasImageSource[], animationTime: number, params: [number, number, number, number], scene: Scene) {
+    constructor(name: string, sources: CanvasImageSource[], animationTime: number, params: CropParams, scene: Scene) {
         super(name, scene);
         this.texturesCount = sources.length;
         this.animationTime = animationTime;
@@ -47,7 +42,7 @@ class WaterTileMaterial extends StandardMaterial {
         }
     }
 
-    private generateTextures(scene: Scene, sources: CanvasImageSource[], params: [number, number, number, number]) {
+    private generateTextures(scene: Scene, sources: CanvasImageSource[], params: CropParams) {
         for (let i = 0; i < this.texturesCount; i++) {
             const texture = Canvas.toDynamicTexture(sources[i], scene, ...params);
 
@@ -200,7 +195,7 @@ export class DungeonScene {
     }
 
     /** Used to create the material for a wall mesh */
-    private createMaterial(params: [number, number, number, number], textures: CanvasImageSource) {
+    private createMaterial(params: CropParams, textures: CanvasImageSource) {
         const material = new StandardMaterial("material", this.scene);
         // const url = Canvas.createURL(textures, ...params);
 
@@ -355,16 +350,18 @@ export class DungeonScene {
         const ctx = Canvas.create(this.grid.width * 24, this.grid.height * 24);
 
         // Draw the textures on the ctx
-        const gridTilings = this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER]);
+        const gridTilings = this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TRAP, Tiles.STAIRS]);
         for (const [pos, tiling] of gridTilings) {
             // Determine if this tile has a variant
             const variant = this.chooseVariant(variants[tiling]);
 
             let myTiling = tiling;
-            if (tiling === Tilings.UNDEFINED)
+            if (tiling === Tilings.UNDEFINED) {
+                const tile = this.grid.get(...pos.spread());
                 // If the tile doesn't have a water tile, use the CENTER_FULL
-                if (this.grid.get(...pos.spread()) !== Tiles.WATER)
+                if (tile !== Tiles.WATER && tile !== Tiles.STAIRS)
                     myTiling = Tilings.CENTER_FULL;
+            }
 
             const params = DungeonTiling.getCrop(
                 myTiling,

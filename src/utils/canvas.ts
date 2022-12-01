@@ -1,5 +1,7 @@
 import { Color3, Constants, DynamicTexture, Scene } from "@babylonjs/core";
 
+export type CropParams = [x: number, y: number, w: number, h: number];
+
 function createCanvas(width: number, height?: number): CanvasRenderingContext2D {
     if (height === undefined) {
         height = width;
@@ -10,7 +12,7 @@ function createCanvas(width: number, height?: number): CanvasRenderingContext2D 
     return canvas.getContext("2d") as CanvasRenderingContext2D;
 }
 
-function putImage(ctx: CanvasRenderingContext2D, image: CanvasImageSource, ...params: [number, number, number, number]) {
+function putImage(ctx: CanvasRenderingContext2D, image: CanvasImageSource, ...params: CropParams) {
     ctx.drawImage(image, ...params, 0, 0, params[2], params[3]);
 }
 
@@ -19,7 +21,7 @@ function toDataURL(ctx: CanvasRenderingContext2D) {
     return ctx.canvas.toDataURL();
 }
 
-function createURL(image: CanvasImageSource, ...params: [number, number, number, number]) {
+function createURL(image: CanvasImageSource, ...params: CropParams) {
     const ctx = createCanvas(params[2], params[3]);
     putImage(ctx, image, ...params);
     const url = ctx.canvas.toDataURL();

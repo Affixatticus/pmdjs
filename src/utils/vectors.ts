@@ -39,6 +39,10 @@ export class Vec2 extends Vector2 {
             return V3(this.x, this.y, fill);
     }
 
+    public get gameFormat(): Vec3 {
+        return this.toVec3().gameFormat;
+    }
+
     public dist(other: Vec2) {
         return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
     }

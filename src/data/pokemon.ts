@@ -1,15 +1,5 @@
 import { PokemonTypes } from "./pokemon_types";
 
-export enum PokemonSpecies {
-    BULBASAUR,
-    IVYSAUR,
-    VENUSAUR,
-    CHARMANDER,
-    CHARMELEON,
-    CHARIZARD,
-    //...
-};
-
 export enum PokemonForms {
     MALE,
     FEMALE,
@@ -17,7 +7,7 @@ export enum PokemonForms {
     SHINY_FEMALE
 };
 
-export type PokemonId = [species: string, form: number];
+export type PokemonId = [species: string, form: PokemonForms];
 
 export interface PokemonStats {
     hp: number;
@@ -51,7 +41,7 @@ export interface PokemonInfo {
 
 export interface PokemonChance {
     /** Pokemon species */
-    id: PokemonId;
+    species: string;
     /** Number from 0 to 100 */
     chance: number;
     /** Range between 0 and 100 */

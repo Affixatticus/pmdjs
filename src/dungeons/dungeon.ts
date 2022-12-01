@@ -115,24 +115,18 @@ export class DungeonState {
 
         // Generate the dungeon
         this.floor.generate();
+
+        // Generate the pokemon
+        this.floor.generatePokemon(this.data.party);
     }
 
-    private async renderFloor(spawn: Vec2) {
+    private async buildFloor(spawn: Vec2) {
         this.createGlobalLighting();
         // Load the assets for the map
         await this.floor.preloadAssets();
 
         // Render the visible area
-        this.floor.render(spawn);
-    }
-
-    private loadPokemon() {
-        // // Load the party pokemon
-        // this.data.party.forEach(member => {
-        //     // Load the pokemon sprites and animations
-
-        //     // Create the pokemon sprite
-        // });
+        this.floor.build(spawn);
     }
 
     /**
@@ -151,12 +145,10 @@ export class DungeonState {
         // Get the spawn position
         const spawn = this.chooseSpawnPosition();
         // Draw the floor
-        await this.renderFloor(spawn);
+        await this.buildFloor(spawn);
         // Move the camera to the spawn position
         this.moveCamera(spawn.toVec3());
 
-
-        this.loadPokemon();
 
         await this.scene.whenReadyAsync();
 
