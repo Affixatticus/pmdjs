@@ -1,6 +1,6 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
-import { PokemonData } from "../data/pokemon";
+import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
 import { AssetsLoader } from "../utils/assets_loader";
 import { V2, Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./generator";
@@ -20,7 +20,7 @@ export enum TileRenderingGroupIds {
 export class DungeonFloor {
     private scene: Scene;
     private info: DungeonFloorInfo;
-    private party: string[] = [];
+    private party: PokemonFormIdentifier[] = [];
 
     public grid!: DungeonGrid;
     public map!: DungeonScene;
@@ -50,7 +50,7 @@ export class DungeonFloor {
     }
 
     public generatePokemon(party: PokemonData[]) {
-        this.party = party.map(p => p.id[0]);
+        this.party = party.map(p => p.id);
 
         // Generate the pokemon
         this.pokemon = new DungeonPokemonContainer();
@@ -78,10 +78,11 @@ export class DungeonFloor {
         // Preload the pokemon
         await Promise.all(
             [
-                ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0))] : []),
-                ...this.party.map(e => AssetsLoader.loadPokemon(e, 0)),
+                ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0, false, 0))] : []),
+                ...this.party.map(e => AssetsLoader.loadPokemon(...e)),
             ]
         );
+        console.log(AssetsLoader.pokemon);
         console.log(`-> Loaded ${this.info?.enemies?.length ?? 0 + this.party.length} pokemon in ${performance.now() - start}ms`);
     }
 
@@ -105,8 +106,8 @@ export class DungeonFloor {
     }
 
     public update(tick: number) {
-        this.map.animateTiles(tick);
-        this.pokemon.animate(tick);
+        this.map.animateTiles(tick / 5 | 0);
+        this.pokemon.animate(tick / 3 | 0);
     }
 
     // Utility

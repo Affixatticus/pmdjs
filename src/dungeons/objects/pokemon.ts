@@ -1,5 +1,5 @@
 import { MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
-import { PokemonId } from "../../data/pokemon";
+import { PokemonFormIdentifier } from "../../data/pokemon";
 import { AssetsLoader } from "../../utils/assets_loader";
 import Random from "../../utils/random";
 import { V3, Vec2 } from "../../utils/vectors";
@@ -27,12 +27,12 @@ export enum Directions {
 export class DungeonPokemon {
     public pos: Vec2;
     public type: PokemonTypes;
-    public id: PokemonId;
+    public id: PokemonFormIdentifier;
     public direction: Directions;
 
     private material!: DungeonPokemonMaterial;
 
-    constructor(pos: Vec2, type: PokemonTypes, id: PokemonId) {
+    constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
         this.pos = pos;
         this.type = type;
         this.id = id;
@@ -42,6 +42,7 @@ export class DungeonPokemon {
     public async render(scene: Scene) {
         // Create the material
         const data = await AssetsLoader.loadPokemon(...this.id);
+        
         if (data === undefined) {
             throw new Error(`Pokemon ${this.id} not found`);
         }
@@ -58,7 +59,7 @@ export class DungeonPokemon {
         mesh.rotate(Vector3.Right(), Math.PI / 4);
 
         const material = new DungeonPokemonMaterial(data, scene);
-        material.init("Idle", Random.int(8));
+        material.init("Idle", Random.int(7));
 
         this.material = material;
         mesh.material = this.material;

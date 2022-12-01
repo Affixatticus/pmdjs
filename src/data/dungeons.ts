@@ -1,6 +1,6 @@
 import { V2, Vec2 } from "../utils/vectors";
 import { ItemChance, Items } from "./items";
-import { PokemonChance } from "./pokemon";
+import { Pokedex, PokemonChance } from "./pokemon";
 import { TileObjects, TrapChance } from "./tiles";
 import { WeatherChance, Weathers } from "./weather";
 
@@ -153,7 +153,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 roomsAmount: 9
             },
             enemies: [
-                { species: "eevee", chance: 100, levelRange: [5, 5] },
+                { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
             items: {
                 rarity: 0.5,

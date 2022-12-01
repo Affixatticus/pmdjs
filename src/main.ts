@@ -1,4 +1,5 @@
 import { Engine } from '@babylonjs/core';
+import { Pokedex } from './data/pokemon';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
 
@@ -18,7 +19,7 @@ const INITIAL_GAME_DATA: Data = {
         floor: 3,
         party: [
             {
-                id: ["eevee", 0],
+                id: [Pokedex.EEVEE, 0, true, 2],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -35,7 +36,7 @@ const INITIAL_GAME_DATA: Data = {
                 ]
             },
             {
-                id: ["pikachu", 0],
+                id: [Pokedex.EEVEE, 0, false, 2],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -52,7 +53,7 @@ const INITIAL_GAME_DATA: Data = {
                 ]
             },
             {
-                id: ["pikachu", 1],
+                id: [Pokedex.EEVEE, 0, true, 0],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -67,7 +68,24 @@ const INITIAL_GAME_DATA: Data = {
                         ppLost: 0
                     }
                 ]
-            }
+            },
+            {
+                id: [Pokedex.EEVEE, 0, false, 0],
+                stats: {
+                    hp: 0,
+                    attack: 0,
+                    defense: 0,
+                    spatk: 0,
+                    spdef: 0,
+                    speed: 0,
+                },
+                moves: [
+                    {
+                        id: 0,
+                        ppLost: 0
+                    }
+                ]
+            },
         ]
     }
 };

@@ -42,6 +42,7 @@ export interface PokemonSpriteData {
 };
 
 const SHEET_SIZE = 24 * 8;
+const T = 120;
 export class DungeonPokemonMaterial extends StandardMaterial {
     private data: PokemonSpriteData;
     public texture: DynamicTexture;
@@ -49,8 +50,12 @@ export class DungeonPokemonMaterial extends StandardMaterial {
     private animation: string;
     private direction: Directions;
 
-    private currentFrame: number = 0;
-    private currentTick: number = 0;
+    /** The current frame */
+    private currentFrame!: number;
+    /** Check again time */
+    private caTime: number = 0;
+
+    private firstAnimation: boolean = true;
 
     constructor(data: PokemonSpriteData, scene: Scene) {
         super("dungeon_pokemon_sprite", scene);
@@ -94,19 +99,28 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.texture.update();
     }
 
-    public animate(_tick: number) {
+    private setFrame(tick: number, frame: number) {
+        const durations = this.data.animations[this.animation].durations;
+        this.currentFrame = frame >= durations.length ? 0 : frame;
+        this.caTime = tick + durations[this.currentFrame];
+        this.draw();
+    }
+
+    // Determines the state of the animation at every given time
+    public animate(tick: number) {
         const anim = this.data.animations[this.animation];
-        const frame = anim.durations[this.currentFrame];
-        this.currentTick += 1 / 4;
-        if (this.currentTick >= frame) {
-            this.currentFrame += 1;
-            this.currentTick = 0;
-            this.draw();
+
+        if (this.firstAnimation) {
+            this.firstAnimation = false;
+            this.setFrame(tick % T | 0, this.currentFrame);
         }
-        if (this.currentFrame >= anim.durations.length) {
-            this.currentFrame = 0;
-            this.draw();
+
+        if ((tick % T | 0) === (this.caTime % T | 0)) {
+            this.setFrame(tick % T | 0, this.currentFrame + 1);
         }
+
+        this.currentFrame = this.currentFrame % anim.durations.length;
+        this.draw();
     }
 
     public init(animation: string, direction: Directions) {
@@ -130,9 +144,11 @@ export class DungeonPokemonMaterial extends StandardMaterial {
 
 
     public setAnimation(name: string, draw: boolean = true) {
-        this.animation = name;
+        this.animation = "Walk";
         this.currentFrame = 0;
-        this.currentTick = 0;
+        this.caTime = 0;
+        this.firstAnimation = true;
+
         if (draw)
             this.draw();
     }

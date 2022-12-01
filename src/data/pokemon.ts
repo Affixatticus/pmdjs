@@ -1,13 +1,30 @@
 import { PokemonTypes } from "./pokemon_types";
 
-export enum PokemonForms {
-    MALE,
-    FEMALE,
-    SHINY_MALE,
-    SHINY_FEMALE
+export enum PokemonGenders {
+    MALE = 0,
+    FEMALE = 2,
 };
 
-export type PokemonId = [species: string, form: PokemonForms];
+export enum PokemonForms {
+    BASE_FORM = 0
+};
+
+export enum Pokedex {
+    BULBASAUR = 1,
+    IVYSAUR = 2,
+    EEVEE = 133,
+};
+
+
+
+export type PokemonFormIdentifier = [
+    dexNumber: Pokedex,
+    form: PokemonForms,
+    isShiny: boolean,
+    gender: PokemonGenders,
+];
+
+export type PokemonId = Pokedex;
 
 export interface PokemonStats {
     hp: number;
@@ -27,7 +44,7 @@ export interface PokemonMove {
 /** Generic info for an instanced pokemon */
 export interface PokemonData {
     // Pokemon Species
-    id: PokemonId;
+    id: PokemonFormIdentifier;
     // Stat changes
     stats: PokemonStats;
     // Moves
@@ -41,7 +58,7 @@ export interface PokemonInfo {
 
 export interface PokemonChance {
     /** Pokemon species */
-    species: string;
+    species: PokemonId;
     /** Number from 0 to 100 */
     chance: number;
     /** Range between 0 and 100 */

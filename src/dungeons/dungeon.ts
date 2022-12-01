@@ -178,7 +178,7 @@ export class DungeonState {
     public render() {
         if (this.isLoaded) {
             this.scene.render();
-            this.floor.update(this.tick / 5);
+            this.floor.update(this.tick);
             this.controlCamera();
         }
         this.tick++;
