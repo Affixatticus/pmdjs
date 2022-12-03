@@ -145,7 +145,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
         },
         [6]: {
             name: "Grass Cave",
-            path: "deep_boulder_quarry_01",
+            path: "grass_cove_01",
             size: {
                 paddingSize: V2(5, 5),
                 maxRoomSize: V2(8, 8),

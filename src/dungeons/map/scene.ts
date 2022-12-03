@@ -1,16 +1,118 @@
-import { Color3, Color4, Constants, Mesh, MeshBuilder, Scene, StandardMaterial, Texture } from "@babylonjs/core";
+import { Color3, Color4, Constants, DynamicTexture, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { DungeonTextures } from "../../data/dungeons";
 import { Tiles } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
-import Canvas from "../../utils/canvas";
-import Random from "../../utils/random";
 import { V2, V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
-import { ByteGrid, DungeonGrid } from "./grid";
+import { ByteGrid, DungeonGrid, TilingGrid } from "./grid";
 import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { DungeonTiling, Tilings, TilingTextureMode } from "./tiling";
 
 const TILE_VIEWPORT = V2(24, 24);
+
+class FloorTile {
+    private mesh!: Mesh;
+    private ctx!: CanvasRenderingContext2D;
+    private material!: StandardMaterial;
+    private textures!: CanvasImageSource;
+    private variants!: Record<number, number[]>;
+    public width: number;
+    public height: number;
+
+    constructor(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+    }
+
+    // Preloading
+    public async preloadTexture(dungeonId: string) {
+        const { textures, properties } = await AssetsLoader.loadDungeonTextures(dungeonId);
+        this.textures = textures;
+        this.variants = properties.variants.floor;
+    }
+
+    // Building
+    public async build(scene: Scene) {
+        // Create the mesh
+        const mesh = MeshBuilder.CreateGround("ground", {
+            width: this.width,
+            height: this.height,
+            subdivisionsX: this.width,
+            subdivisionsY: this.height,
+        }, scene);
+
+        // Adjust the position
+        mesh.position.set(...V2(this.width / 2, this.height / 2).toVec3().gameFormat.spread());
+
+        // Resolve z-fighting
+        mesh.renderingGroupId = TileRenderingGroupIds.FLOOR;
+
+        // Loads the material
+        this.material = this.createMaterial(scene);
+        mesh.material = this.material;
+        this.mesh = mesh;
+    }
+
+    public createMaterial(scene: Scene): StandardMaterial {
+        const material = new StandardMaterial("material", scene);
+        const texture = new DynamicTexture("dynamic texture", {
+            width: this.width * 24,
+            height: this.height * 24,
+        }, scene, false, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+        texture.hasAlpha = true;
+        texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
+        texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
+        texture.update();
+
+        material.diffuseTexture = texture;
+        material.specularPower = 10000000;
+
+        this.ctx = texture.getContext() as CanvasRenderingContext2D;
+
+        return material;
+    }
+
+    // Updating
+    private chooseVariant(tilings: Tilings, pos: Vec2): number {
+        const variants = this.variants[tilings];
+        // return 0;
+        if (!variants) return 0;
+        const rand = pos.getHashCode() % 7;
+        if (rand == 1 && variants.includes(2))
+            return 2;
+        if (rand <= 2 && variants.includes(1))
+            return 1;
+        return 0;
+    }
+
+    public updateTexture(toUpdate: TilingGrid, grid: DungeonGrid) {
+        this.ctx.clearRect(toUpdate.start.x * 24, toUpdate.start.y * 24, toUpdate.width * 24, toUpdate.height * 24);
+
+        for (const [pos, tiling] of toUpdate) {
+            let variant = 0;
+
+            if (tiling === Tilings.UNDEFINED) {
+                const tile = grid.get(...pos.spread());
+                // If the tile doesn't have a water tile, use the CENTER_FULL
+                if (tile !== Tiles.WATER && tile !== Tiles.STAIRS)
+                    variant = Tilings.CENTER_FULL;
+            } else
+                variant = this.chooseVariant(tiling, pos);
+
+            const tilingCrop = DungeonTiling.getCrop(tiling, Tiles.FLOOR, variant, TilingTextureMode.TEXTURE);
+
+            this.ctx.drawImage(this.textures, ...tilingCrop, pos.x * 24, pos.y * 24, 24, 24);
+        }
+
+        (<DynamicTexture>this.material.diffuseTexture).update();
+    }
+
+    // Disposing
+    public dispose() {
+        this.mesh.dispose();
+        this.material.dispose();
+    }
+}
 
 
 export class DungeonMap {
@@ -26,7 +128,7 @@ export class DungeonMap {
     // Output
     private wallMeshes: TileMeshContainer;
     private waterMeshes: TileMeshContainer;
-    private floorMesh!: Mesh;
+    private floor: FloorTile;
 
     // Consts
     private static DEFAULT_BACKGROUND: [number, number, number] = [0, 0, 0];
@@ -37,9 +139,26 @@ export class DungeonMap {
         this.grid = map;
         this.wallMeshes = new TileMeshContainer();
         this.waterMeshes = new TileMeshContainer();
+        this.floor = new FloorTile(this.grid.width, this.grid.height);
 
         // Create a matrix to keep track of the loaded tiles
         this.loaded = new ByteGrid(map.width, map.height);
+
+        // Mouse down listener
+        this.scene.onPointerObservable.add((event) => {
+            if (event.type !== 1) return;
+            if (!event.pickInfo) return;
+            const point = V3(event.pickInfo.pickedPoint as Vector3).toVec2().roundDown().subtract(V2(0, -1)).multiply(V2(1, -1));
+            const area = new ByteGrid(1, 1);
+            if (event.event.button == 0) {
+                area.fill(Tiles.FLOOR);
+            } else if (event.event.button == 1) {
+                area.fill(Tiles.WATER);
+            } else if (event.event.button == 2) {
+                area.fill(Tiles.WALL);
+            }
+            this.changeGridSection(point, area);
+        });
     }
 
     // Loading
@@ -47,28 +166,18 @@ export class DungeonMap {
     /* Creates all the used tiles combinations */
     private async createWallMeshes(tilings: Iterable<Tilings>) {
         // Load the image and time it
-        const start = performance.now();
         const { textures, heightmaps, properties } = this.props;
         const variants = properties.variants.walls;
 
-        let avg = 0;
-        let avgCnt = 0;
-
         for (const tiling of tilings) {
-            const astart = performance.now();
+            // Skip it if it is already loaded
+            if (this.wallMeshes.has(tiling)) continue;
+
             // If this tiling has a variant
             for (const variant of variants[tiling] ? variants[tiling] : [0]) {
                 this.wallMeshes.createWallTileMesh(tiling, textures, heightmaps, this.scene, { variant });
             }
-
-            const aend = performance.now();
-            avg += aend - astart;
-            avgCnt++;
         }
-
-        const end = performance.now();
-        console.log(`Loaded dungeon wall meshes in ${(end - start).toFixed(2)}ms`);
-        console.log(`-> Average time per mesh: ${(avg / avgCnt).toFixed(2)}ms`);
     }
 
     /** Creates all the tiles used for water */
@@ -86,6 +195,9 @@ export class DungeonMap {
 
         // Water meshs have no variants
         for (const tiling of tilings) {
+            // Skip it if it is already loaded
+            if (this.waterMeshes.has(tiling)) continue;
+
             this.waterMeshes.createWaterTileMesh(tiling, waterTextures as CanvasImageSource[], heightmaps, this.scene, options);
         }
 
@@ -111,20 +223,12 @@ export class DungeonMap {
 
         // Get the water tilings
         await this.createWaterMeshes(this.grid.mapTilingsFor(Tiles.WATER).getUniqueValues());
+
+        // Create the floor
+        await this.floor.preloadTexture(this.path);
     }
 
     // Building
-    private chooseVariant(variants: number[] | undefined): number {
-        // return 0;
-        if (!variants) return 0;
-        const rand = Random.int(7);
-        if (rand == 1 && variants.includes(2))
-            return 2;
-        if (rand <= 2 && variants.includes(1))
-            return 1;
-        return 0;
-    }
-
     private placeWallTiles(start?: Vec2, size?: Vec2) {
         // Determine the area
         start = start ?? V2(0, 0);
@@ -155,87 +259,19 @@ export class DungeonMap {
         }
     }
 
-    /** Creates the floor's material, does not need updating */
-    private createFloorMaterial(texture: CanvasImageSource, variants: Record<number, number[]>): StandardMaterial {
-        const material = new StandardMaterial("material", this.scene);
-
-        const ctx = Canvas.create(this.grid.width * 24, this.grid.height * 24);
-
-        // Draw the textures on the ctx
-        const gridTilings = this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TRAP, Tiles.STAIRS]);
-        for (const [pos, tiling] of gridTilings) {
-            // Determine if this tile has a variant
-            const variant = this.chooseVariant(variants[tiling]);
-
-            let myTiling = tiling;
-            if (tiling === Tilings.UNDEFINED) {
-                const tile = this.grid.get(...pos.spread());
-                // If the tile doesn't have a water tile, use the CENTER_FULL
-                if (tile !== Tiles.WATER && tile !== Tiles.STAIRS)
-                    myTiling = Tilings.CENTER_FULL;
-            }
-
-            const params = DungeonTiling.getCrop(
-                myTiling,
-                Tiles.FLOOR, variant, TilingTextureMode.TEXTURE);
-            ctx.drawImage(texture, ...params, pos.x * 24, pos.y * 24, 24, 24);
-        }
-
-        const url = Canvas.toDataURL(ctx);
-
-        material.diffuseTexture = new Texture(url, this.scene,
-            true, true, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
-        material.diffuseTexture.hasAlpha = true;
-        material.diffuseTexture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-        material.diffuseTexture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-
-        material.specularPower = 10000000;
-
-        return material;
-    }
-
-    /** Creates the floor GroundMesh */
-    private createFloorMesh(): Mesh {
-        const mesh = MeshBuilder.CreateGround("ground", {
-            width: this.grid.width,
-            height: this.grid.height,
-            subdivisionsX: this.grid.width,
-            subdivisionsY: this.grid.height,
-        }, this.scene);
-
-        // Adjust the position
-        mesh.position.set(...V2(this.grid.width / 2, this.grid.height / 2).toVec3().gameFormat.spread());
-
-        // Resolve z-fighting
-        mesh.renderingGroupId = TileRenderingGroupIds.FLOOR;
-
-        return mesh;
-    }
-
-    /** Builds the floor GroundMesh from the group up */
-    private async buildFloor() {
-        const { textures, properties } = this.props;
-
-        const material = this.createFloorMaterial(textures, properties.variants.floor);
-        const mesh = this.createFloorMesh();
-        mesh.material = material;
-
-        return mesh;
-    }
-
     /** Renders to screen the first tiles and builds the ground */
     public async build(pos: Vec2) {
+        // Place the floor ground and time it
+        const fstart = performance.now();
+        this.floor.build(this.scene);
+        const fend = performance.now();
+        console.log(`Placed dungeon floor in ${(fend - fstart).toFixed(2)}ms`);
+
         // Place the tiles and time it
         const tstart = performance.now();
         const tend = performance.now();
         this.buildView(pos);
         console.log(`Placed dungeon tiles in ${tend - tstart}ms`);
-
-        // Place the floor ground and time it
-        const fstart = performance.now();
-        this.floorMesh = await this.buildFloor();
-        const fend = performance.now();
-        console.log(`Placed dungeon floor in ${(fend - fstart).toFixed(2)}ms`);
     }
 
     /** Builds the map to fill the view with the position at the center */
@@ -245,6 +281,7 @@ export class DungeonMap {
         const size = TILE_VIEWPORT;
         this.placeWallTiles(start, size);
         this.placeWaterTiles(start, size);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TRAP, Tiles.STAIRS], start, size), this.grid);
     }
 
 
@@ -264,6 +301,46 @@ export class DungeonMap {
         this.animateWater(tick);
     }
 
+    public async changeGridSection(start: Vec2, values: ByteGrid) {
+        // Update the grid
+        for (let x = start.x; x < start.x + values.width; x++)
+            for (let y = start.y; y < start.y + values.height; y++)
+                this.grid.set(x, y, values.get(x - start.x, y - start.y));
+
+        // Calculate the new tilings for the portion of the grid
+        const redoStart = start.subtract(V2(1, 1));
+        const redoSize = V2(values.width + 2, values.height + 2);
+
+        // const floorGridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.FLOOR, Tiles.WATER, Tiles.TRAP, Tiles.STAIRS]);
+        const wallGridTilings = this.grid.mapTilingsFor(Tiles.WALL, [], redoStart, redoSize);
+        const waterGridTilings = this.grid.mapTilingsFor(Tiles.WATER, [], redoStart, redoSize);
+
+        // Load the meshes necessary
+        await this.createWallMeshes(wallGridTilings.getUniqueValues());
+        await this.createWaterMeshes(waterGridTilings.getUniqueValues());
+
+        // Delete the old instances
+        for (let x = redoStart.x; x < redoStart.x + redoSize.x; x++)
+            for (let y = redoStart.y; y < redoStart.y + redoSize.y; y++) {
+                this.wallMeshes.removeInstanceAt(V2(x, y));
+                this.waterMeshes.removeInstanceAt(V2(x, y));
+                this.loaded.set(x, y, 0);
+            }
+
+        // Create the new instances
+        for (let x = redoStart.x; x < redoStart.x + redoSize.x; x++)
+            for (let y = redoStart.y; y < redoStart.y + redoSize.y; y++) {
+                const tile = this.grid.get(x, y);
+                if (tile === Tiles.WALL)
+                    this.wallMeshes.instance(V2(x, y), wallGridTilings.get(x, y), this.loaded);
+                else if (tile === Tiles.WATER)
+                    this.waterMeshes.instance(V2(x, y), waterGridTilings.get(x, y), this.loaded);
+            }
+
+        // Update the floor
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TRAP, Tiles.STAIRS], redoStart, redoSize), this.grid);
+    }
+
     // Disposing
 
     /** Disposed of the tiles and their instances */
@@ -276,7 +353,7 @@ export class DungeonMap {
             if (mesh) mesh.dispose();
         }
         // Dispose of the floor mesh
-        if (this.floorMesh) this.floorMesh.dispose();
+        this.floor.dispose();
         // Set the clearColor to black
         this.scene.clearColor = Color4.FromColor3(Color3.Black());
     }

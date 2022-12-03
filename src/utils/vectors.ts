@@ -20,6 +20,10 @@ export class Vec2 extends Vector2 {
         return [this.x, this.y];
     }
 
+    public round() {
+        return V2(Math.round(this.x), Math.round(this.y));
+    }
+
     public roundUp() {
         return V2(Math.ceil(this.x), Math.ceil(this.y));
     }
@@ -70,6 +74,10 @@ export class Vec3 extends Vector3 {
         return [this.x, this.y, this.z];
     }
 
+    public round() {
+        return V3(Math.round(this.x), Math.round(this.y), Math.round(this.z));
+    }
+
     public roundUp() {
         return V3(Math.ceil(this.x), Math.ceil(this.y), Math.ceil(this.z));
     }
@@ -85,6 +93,13 @@ export class Vec3 extends Vector3 {
     public get gameFormat() {
         return V3(this.x, this.y, -this.z);
     };
+
+    public toVec2(xz: boolean = true) {
+        if (xz)
+            return V2(this.x, this.z);
+        else
+            return V2(this.x, this.y);
+    }
 
 }
 

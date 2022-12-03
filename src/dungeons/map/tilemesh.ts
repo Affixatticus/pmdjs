@@ -1,7 +1,6 @@
 import { StandardMaterial, Texture, Scene, Constants, Mesh, GroundMesh, MeshBuilder, Matrix } from "@babylonjs/core";
 import { Tiles } from "../../data/tiles";
 import Canvas, { CropParams } from "../../utils/canvas";
-import Random from "../../utils/random";
 import { Vec2, V3 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
 import { ByteGrid } from "./grid";
@@ -70,7 +69,7 @@ export class TileMaterial extends StandardMaterial {
 export class TileMeshContainer {
     public list: Partial<Record<Tilings, MeshGroup>>;
     /** List of the positioned instances indexed by position */
-    private instances!: Record<string, MeshInstance>;
+    public instances!: Record<string, MeshInstance>;
 
     constructor() {
         this.list = { [Tilings.UNDEFINED]: null };
@@ -106,14 +105,20 @@ export class TileMeshContainer {
         } else return null;
     }
 
+    public has(tiling: Tilings) {
+        return this.list[tiling] !== undefined;
+    }
+
     /** Gets a tiling variant for placing */
-    public getVariantForPlacing(tiling: Tilings): TileMesh | null {
+    public getVariantForPlacing(tiling: Tilings, pos: Vec2): TileMesh | null {
         const meshGroup = this.list[tiling] as MeshGroup;
         if (meshGroup === null) return null;
         if (meshGroup instanceof TileMesh) return meshGroup;
 
         // Get all the keys for the meshgroup
-        const rand = Random.int(7);
+        // const rand = Random.int(7);
+        const rand = pos.getHashCode() % 7;
+
         if (rand == 1 && meshGroup.has(2))
             return meshGroup.get(2) ?? null;
         if (rand <= 2 && meshGroup.has(1))
@@ -170,7 +175,7 @@ export class TileMeshContainer {
         if (tiling === Tilings.UNDEFINED) return;
 
         if (loaded.get(...pos.spread()) === 0) {
-            const tileMesh = this.getVariantForPlacing(tiling);
+            const tileMesh = this.getVariantForPlacing(tiling, pos);
             if (tileMesh === null) return;
             // Create the instance
             const instanceId = tileMesh.instance(pos);

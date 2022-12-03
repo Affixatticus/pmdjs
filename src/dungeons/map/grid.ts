@@ -37,6 +37,10 @@ export class ByteGrid {
         return this._height;
     }
 
+    public get size(): Vec2 {
+        return V2(this.width, this.height);
+    }
+
     public get data() {
         return this._data;
     }
@@ -119,22 +123,45 @@ export class ByteGrid {
     }
 }
 
-export class DungeonGrid extends ByteGrid {
-    private _mapsTilingsCache: Map<Tiles, ByteGrid> = new Map();
+/** A reduced size grid that has an iterator with the correct x and y */
+export class TilingGrid extends ByteGrid {
+    private _start: Vec2;
 
+    constructor(width: number, height: number, start: Vec2) {
+        super(width, height);
+        this._start = start;
+    }
+
+    public get start() {
+        return this._start;
+    }
+
+    public set(x: number, y: number, value: Tilings) {
+        super.set(x - this.start.x, y - this.start.y, value);
+    }
+
+    public get(x: number, y: number) {
+        return super.get(x - this.start.x, y - this.start.y);
+    }
+
+    public *[Symbol.iterator](): IterableIterator<[Vec2, Tilings]> {
+        for (let y = 0; y < this.height; y++)
+            for (let x = 0; x < this.width; x++)
+                yield [V2(x + this.start.x, y + this.start.y), this.get(x + this.start.x, y + this.start.y)];
+    }
+}
+
+export class DungeonGrid extends ByteGrid {
     constructor(width: number, height: number) {
         super(width, height);
     }
 
     /** Returns a new grid with each cell changed to the correct tiling based on the given tile */
-    public mapTilingsFor(tile: Tiles, ignoreTiles: Tiles[] = [], update?: boolean): ByteGrid {
-        if (this._mapsTilingsCache.has(tile) && !update)
-            return this._mapsTilingsCache.get(tile)!;
+    public mapTilingsFor(tile: Tiles, ignoreTiles: Tiles[] = [], start: Vec2 = V2(0, 0), size: Vec2 = this.size): TilingGrid {
+        const tilingGrid = new TilingGrid(...size.spread(), start);
 
-        const tilingGrid = new ByteGrid(this.width, this.height);
-
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        for (let y = start.y; y < start.y + size.y; y++) {
+            for (let x = start.x; x < start.x + size.x; x++) {
                 if (this.get(x, y) !== tile) {
                     tilingGrid.set(x, y, Tilings.UNDEFINED);
                     continue;
@@ -150,7 +177,6 @@ export class DungeonGrid extends ByteGrid {
             }
         }
 
-        this._mapsTilingsCache.set(tile, tilingGrid);
         return tilingGrid;
     }
 
