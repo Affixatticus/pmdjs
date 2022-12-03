@@ -1,61 +1,19 @@
-import { Color3, Color4, Constants, Matrix, Mesh, MeshBuilder, Scene, StandardMaterial, Texture } from "@babylonjs/core";
+import { Color3, Color4, Constants, Mesh, MeshBuilder, Scene, StandardMaterial, Texture } from "@babylonjs/core";
 import { DungeonTextures } from "../../data/dungeons";
 import { Tiles } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
-import Canvas, { CropParams } from "../../utils/canvas";
+import Canvas from "../../utils/canvas";
 import Random from "../../utils/random";
 import { V2, V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
 import { ByteGrid, DungeonGrid } from "./grid";
+import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { DungeonTiling, Tilings, TilingTextureMode } from "./tiling";
 
 const TILE_VIEWPORT = V2(24, 24);
 
-type MeshGroup = Mesh | Map<number, Mesh> | null;
 
-class WaterTileMaterial extends StandardMaterial {
-    private textures: Texture[] = [];
-    private texturesCount: number;
-    private animationTime: number;
-
-
-    constructor(name: string, sources: CanvasImageSource[], animationTime: number, params: CropParams, scene: Scene) {
-        super(name, scene);
-        this.texturesCount = sources.length;
-        this.animationTime = animationTime;
-
-        this.generateTextures(scene, sources, params);
-        this.setTexture(0);
-    }
-
-
-    public setTexture(index: number) {
-        if (index > this.texturesCount || index < 0) return;
-
-        this.diffuseTexture = this.textures[index];
-    }
-
-    public updateAnimation(tick: number) {
-        if (tick % this.animationTime === 0) {
-            const index = (tick / this.animationTime) % this.texturesCount;
-            this.setTexture(index);
-        }
-    }
-
-    private generateTextures(scene: Scene, sources: CanvasImageSource[], params: CropParams) {
-        for (let i = 0; i < this.texturesCount; i++) {
-            const texture = Canvas.toDynamicTexture(sources[i], scene, ...params);
-
-            texture.hasAlpha = true;
-            texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-            texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-
-            this.textures.push(texture);
-        }
-    }
-}
-
-export class DungeonScene {
+export class DungeonMap {
     // Input
     private scene: Scene;
     private path: string;
@@ -66,19 +24,20 @@ export class DungeonScene {
     private props!: DungeonTextures;
 
     // Output
-    private wallMeshes: Partial<Record<Tilings, MeshGroup>>;
-    private waterMeshes: Partial<Record<Tilings, Mesh | null>>;
+    private wallMeshes: TileMeshContainer;
+    private waterMeshes: TileMeshContainer;
     private floorMesh!: Mesh;
 
-
+    // Consts
     private static DEFAULT_BACKGROUND: [number, number, number] = [0, 0, 0];
 
     constructor(scene: Scene, path: string, map: DungeonGrid) {
         this.scene = scene;
         this.path = path;
         this.grid = map;
-        this.wallMeshes = {};
-        this.waterMeshes = {};
+        this.wallMeshes = new TileMeshContainer();
+        this.waterMeshes = new TileMeshContainer();
+
         // Create a matrix to keep track of the loaded tiles
         this.loaded = new ByteGrid(map.width, map.height);
     }
@@ -98,12 +57,10 @@ export class DungeonScene {
         for (const tiling of tilings) {
             const astart = performance.now();
             // If this tiling has a variant
-            if (variants[tiling])
-                // Create all the variants
-                for (const variant of variants[tiling])
-                    this.createMesh(tiling, textures, heightmaps, Tiles.WALL, variant);
-            else
-                this.createMesh(tiling, textures, heightmaps, Tiles.WALL, 0);
+            for (const variant of variants[tiling] ? variants[tiling] : [0]) {
+                this.wallMeshes.createWallTileMesh(tiling, textures, heightmaps, this.scene, { variant });
+            }
+
             const aend = performance.now();
             avg += aend - astart;
             avgCnt++;
@@ -121,114 +78,21 @@ export class DungeonScene {
 
         if (!properties.water) return;
 
-        const animationTime = properties.water.speed;
+        const waterSpeed = properties.water.speed ?? 10;
+        const waterHeight = properties.water.height ?? 0.5;
+        const waterLevel = properties.water.level ?? 0;
+
+        const options = { waterSpeed, waterHeight, waterLevel };
 
         // Water meshs have no variants
         for (const tiling of tilings) {
-            this.createWaterMesh(tiling, waterTextures as CanvasImageSource[], heightmaps, animationTime ?? 0);
+            this.waterMeshes.createWaterTileMesh(tiling, waterTextures as CanvasImageSource[], heightmaps, this.scene, options);
         }
 
         const end = performance.now();
         console.log(`Loaded dungeon water textures in ${(end - start).toFixed(2)}ms`);
     }
 
-    /** Used in creating a wall mesh from a heightmap and a texture */
-    private createMesh(
-        tiling: Tilings,
-        textures: CanvasImageSource,
-        heightmaps: CanvasImageSource,
-        tile: Tiles,
-        variant: number = 0,
-        container: Partial<Record<Tilings, MeshGroup>> = this.wallMeshes,
-        createMaterial: boolean = true,
-        heightmapMaxHeight: number = 1
-    ): null | void | Mesh {
-        // Skip undefined tilings
-        if (tiling === Tilings.UNDEFINED) return this.wallMeshes[tiling] = null;
-
-        const heightmapURL = Canvas.createURL(heightmaps, ...DungeonTiling.getCrop(tiling, tile));
-
-        // Create the mesh
-        // Time
-        const mesh = MeshBuilder.CreateGroundFromHeightMap(
-            "ground_" + Tilings,
-            heightmapURL, {
-            width: 1,
-            height: 1,
-            subdivisions: 24,
-            minHeight: 0,
-            maxHeight: heightmapMaxHeight,
-        }, this.scene);
-
-
-        // Time it
-        if (createMaterial) {
-            // Create the material
-            const material = this.createMaterial(DungeonTiling.getCrop(tiling, tile, variant, TilingTextureMode.TEXTURE), textures);
-            mesh.material = material;
-        }
-
-        // Hide the mesh
-        mesh.isVisible = true;
-        mesh.renderingGroupId = TileRenderingGroupIds.WALL;
-        mesh.alwaysSelectAsActiveMesh = true;
-        mesh.name = "wall_" + tiling + "_" + variant;
-
-        // Check if there is a mesh already
-        if (container[tiling] instanceof Mesh) {
-            // If there already is a reference, add the new mesh to a new array
-            const oldMesh = container[tiling] as Mesh;
-            const map = new Map<number, Mesh>();
-            map.set(0, oldMesh);
-            map.set(variant, mesh);
-            container[tiling] = map;
-        } else if (container[tiling] instanceof Map) {
-            // If there already is a map, add the new mesh to it
-            (container[tiling] as Map<number, Mesh>)?.set(variant, mesh);
-        }
-        // If there is no mesh, just add it
-        else {
-            container[tiling] = mesh;
-        }
-
-        return mesh;
-    }
-
-    /** Used to create the material for a wall mesh */
-    private createMaterial(params: CropParams, textures: CanvasImageSource) {
-        const material = new StandardMaterial("material", this.scene);
-        // const url = Canvas.createURL(textures, ...params);
-
-        const texture = Canvas.toDynamicTexture(textures, this.scene, ...params);
-
-        material.diffuseTexture = texture;
-        material.diffuseTexture.hasAlpha = true;
-        material.diffuseTexture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-        material.diffuseTexture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-
-        material.specularPower = 10000000;
-
-        return material;
-    }
-
-    /** Creates a generic mesh, then updates its material to be animatable */
-    private createWaterMesh(tiling: Tilings, textures: CanvasImageSource[], heightmap: CanvasImageSource, animationTime: number) {
-        if (!this.props.properties.water) return;
-
-        // Skip undefined tilings
-        if (tiling === Tilings.UNDEFINED) return this.waterMeshes[tiling] = null;
-        // textures[0] is unused
-        const mesh = this.createMesh(tiling, textures[0], heightmap, Tiles.WATER, 0, this.waterMeshes, false, this.props.properties.water.height);
-        if (!mesh) return;
-
-        mesh.renderingGroupId = TileRenderingGroupIds.WATER;
-
-        const material = new WaterTileMaterial("water_material", textures, animationTime,
-            DungeonTiling.getCrop(tiling, Tiles.WATER, 0, TilingTextureMode.TEXTURE), this.scene);
-        mesh.material = material;
-
-        return mesh;
-    }
 
     /** Creates the tiles from the assets */
     public async preload() {
@@ -236,7 +100,7 @@ export class DungeonScene {
         this.props = await AssetsLoader.loadDungeonTextures(this.path);
 
         // Change the clear color to the one in the info
-        const background = this.props.properties.background ?? DungeonScene.DEFAULT_BACKGROUND;
+        const background = this.props.properties.background ?? DungeonMap.DEFAULT_BACKGROUND;
         this.scene.clearColor = Color4.FromColor3(new Color3(
             // TODO Scale to 255, right now it darkens the color to account for weak lighting
             ...V3(...background).scale(1 / 359).spread()
@@ -250,22 +114,6 @@ export class DungeonScene {
     }
 
     // Building
-
-    private chooseVariantMesh(meshGroup: MeshGroup) {
-        if (meshGroup instanceof Mesh) return meshGroup;
-
-        const map = <Map<number, Mesh>>meshGroup;
-
-        // Get all the keys for the meshgroup
-        const rand = Random.int(7);
-        if (rand == 1 && map.has(2))
-            return map.get(2);
-        if (rand <= 2 && map.has(1))
-            return map.get(1);
-
-        return map.get(0);
-    }
-
     private chooseVariant(variants: number[] | undefined): number {
         // return 0;
         if (!variants) return 0;
@@ -275,42 +123,6 @@ export class DungeonScene {
         if (rand <= 2 && variants.includes(1))
             return 1;
         return 0;
-    }
-
-    /** Places a random WallMesh corresponding to a tiling in the given position */
-    private instanceMesh(tiling: Tilings, pos: Vec2, meshes: Partial<Record<Tilings, MeshGroup>>, yOffset: number) {
-        // Get the mesh
-        const meshGroup = meshes[tiling];
-
-        // If there is no mesh, skip
-        if (!meshGroup) return;
-
-        // If there is an array, pick a random mesh
-        const mesh = this.chooseVariantMesh(meshGroup);
-
-        // Create the instance's matrix
-        const matrix = Matrix.Translation(
-            ...pos.move(0.5).toVec3().gameFormat.add(V3(0, yOffset, 0)).spread()
-        );
-        // Create a new thin instance
-        mesh?.thinInstanceAdd(matrix);
-
-        // Update the loaded matrix at the pos
-        this.loaded.set(pos.x, pos.y, 1);
-    }
-
-    /** Places a tiling */
-    private placeTile(
-        pos: Vec2,
-        tiling: Tilings,
-        forceUpdate: boolean = false,
-        meshes: Partial<Record<Tilings, MeshGroup>> = this.wallMeshes,
-        yOffset: number = 0) {
-        // If the tile is already loaded, skip it
-        if (!forceUpdate && this.loaded.get(pos.x, pos.y) === 1) return;
-
-        // Create the mesh
-        this.instanceMesh(tiling, pos, meshes, yOffset);
     }
 
     private placeWallTiles(start?: Vec2, size?: Vec2) {
@@ -323,7 +135,7 @@ export class DungeonScene {
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings.iterGrid(start, size)) {
-            this.placeTile(pos, tiling);
+            this.wallMeshes.instance(pos, tiling, this.loaded);
         }
     }
 
@@ -339,7 +151,7 @@ export class DungeonScene {
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings.iterGrid(start, size)) {
-            this.placeTile(pos, tiling, false, this.waterMeshes, this.props.properties.water.level);
+            this.waterMeshes.instance(pos, tiling, this.loaded);
         }
     }
 
@@ -437,13 +249,9 @@ export class DungeonScene {
 
 
     // Updating
-
     private animateWater(tick: number) {
         // Loop through all the water meshes
-        for (const mesh of Object.values(this.waterMeshes)) {
-            // If there is no mesh, skip it
-            if (!mesh) continue;
-
+        for (const mesh of this.waterMeshes.getMeshes()) {
             const material = mesh.material as WaterTileMaterial;
 
             // Update the material
@@ -461,11 +269,8 @@ export class DungeonScene {
     /** Disposed of the tiles and their instances */
     public dispose() {
         // Dispose of the meshes
-        for (const mesh of Object.values(this.wallMeshes)) {
-            if (!mesh) continue;
-            if (mesh instanceof Mesh) mesh.dispose();
-            else if (mesh instanceof Map) for (const m of mesh.values()) m.dispose();
-        }
+        this.wallMeshes.dispose();
+
         // Dispose of the water meshes
         for (const mesh of Object.values(this.waterMeshes)) {
             if (mesh) mesh.dispose();

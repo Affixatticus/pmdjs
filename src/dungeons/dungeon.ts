@@ -5,8 +5,8 @@ import { Controls } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor } from "./floor";
 
-const CAMERA_ROTATION = V2(0.11, 0);
-const CAMERA_OFFSET = V3(0, 11, 8);
+const CAMERA_ROTATION = V2(Math.PI / 24, 0);
+const CAMERA_OFFSET = V3(0, 11, 4);
 
 
 export interface DungeonStateData {

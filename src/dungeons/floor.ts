@@ -5,16 +5,15 @@ import { AssetsLoader } from "../utils/assets_loader";
 import { V2, Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./generator";
 import { DungeonGrid } from "./map/grid";
-import { DungeonScene } from "./map/scene";
+import { DungeonMap } from "./map/scene";
 import { DungeonObjectContainer } from "./objects/object";
-import { DungeonPokemon, DungeonPokemonContainer, PokemonTypes } from "./objects/pokemon";
+import { DungeonPokemon, DungeonPokemonList, PokemonTypes } from "./objects/pokemon";
 
 export enum TileRenderingGroupIds {
     WATER,
     FLOOR,
     WALL,
 };
-
 
 /** Class that builds the structure of the dungeon */
 export class DungeonFloor {
@@ -23,9 +22,9 @@ export class DungeonFloor {
     private party: PokemonFormIdentifier[] = [];
 
     public grid!: DungeonGrid;
-    public map!: DungeonScene;
+    public map!: DungeonMap;
     public objects!: DungeonObjectContainer;
-    public pokemon!: DungeonPokemonContainer;
+    public pokemon!: DungeonPokemonList;
 
 
     constructor(scene: Scene, info: DungeonFloorInfo) {
@@ -53,7 +52,7 @@ export class DungeonFloor {
         this.party = party.map(p => p.id);
 
         // Generate the pokemon
-        this.pokemon = new DungeonPokemonContainer();
+        this.pokemon = new DungeonPokemonList();
 
         // Add the party to the scene
         for (const pokemon of party) {
@@ -69,7 +68,7 @@ export class DungeonFloor {
     /** Loads the tiles */
     public async preloadAssets() {
         // Load the assets
-        this.map = new DungeonScene(this.scene, this.info.path, this.grid);
+        this.map = new DungeonMap(this.scene, this.info.path, this.grid);
         await this.map.preload();
 
 
@@ -107,7 +106,7 @@ export class DungeonFloor {
 
     public update(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate(tick / 3 | 0);
+        this.pokemon.animate(tick / 4 | 0);
     }
 
     // Utility

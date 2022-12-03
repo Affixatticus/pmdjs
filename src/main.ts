@@ -16,7 +16,7 @@ interface Data {
 const INITIAL_GAME_DATA: Data = {
     dungeon: {
         id: 0,
-        floor: 3,
+        floor: 6,
         party: [
             {
                 id: [Pokedex.EEVEE, 0, true, 2],

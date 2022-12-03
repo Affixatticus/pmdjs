@@ -1,4 +1,5 @@
 import { Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
+import Random from "../../utils/random";
 import { Directions } from "./pokemon";
 
 export interface PokemonSpriteAnimationData {
@@ -144,7 +145,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
 
 
     public setAnimation(name: string, draw: boolean = true) {
-        this.animation = "Walk";
+        this.animation = Random.choose(Object.keys(this.data.animations));
         this.currentFrame = 0;
         this.caTime = 0;
         this.firstAnimation = true;

@@ -59,11 +59,11 @@ export class DungeonTile extends DungeonObject {
                 height: 1,
                 subdivisions: 48,
                 minHeight: 0,
-                maxHeight: 1
+                maxHeight: 0.25
             }, scene
         );
 
-        mesh.position = V3(this.pos.x + .5, -1, this.pos.y + .5).gameFormat;
+        mesh.position = V3(this.pos.x + .5, -0.25, this.pos.y + .5).gameFormat;
         mesh.renderingGroupId = TileRenderingGroupIds.FLOOR;
 
         const source = await AssetsLoader.loadTileSheet();

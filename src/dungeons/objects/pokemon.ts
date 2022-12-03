@@ -1,4 +1,4 @@
-import { MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
+import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
 import { PokemonFormIdentifier } from "../../data/pokemon";
 import { AssetsLoader } from "../../utils/assets_loader";
 import Random from "../../utils/random";
@@ -30,6 +30,7 @@ export class DungeonPokemon {
     public id: PokemonFormIdentifier;
     public direction: Directions;
 
+    private mesh!: Mesh;
     private material!: DungeonPokemonMaterial;
 
     constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
@@ -39,10 +40,10 @@ export class DungeonPokemon {
         this.direction = Directions.SOUTH;
     }
 
-    public async render(scene: Scene) {
+    public async addToScene(scene: Scene) {
         // Create the material
         const data = await AssetsLoader.loadPokemon(...this.id);
-        
+
         if (data === undefined) {
             throw new Error(`Pokemon ${this.id} not found`);
         }
@@ -62,6 +63,7 @@ export class DungeonPokemon {
         material.init("Idle", Random.int(7));
 
         this.material = material;
+        this.mesh = mesh;
         mesh.material = this.material;
     }
 
@@ -70,10 +72,13 @@ export class DungeonPokemon {
         this.material?.animate(tick);
     }
 
-    public dispose = () => true;
+    public dispose = () => {
+        this.mesh.dispose();
+        this.material.dispose();
+    };
 }
 
-export class DungeonPokemonContainer {
+export class DungeonPokemonList {
     public objects: DungeonPokemon[];
 
     public constructor() {
@@ -90,7 +95,7 @@ export class DungeonPokemonContainer {
 
     public render(scene: Scene) {
         for (const obj of this.objects) {
-            obj.render(scene);
+            obj.addToScene(scene);
         }
     }
 
