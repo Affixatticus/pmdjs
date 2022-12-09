@@ -160,10 +160,10 @@ export class DungeonGenerator {
         this.placeUnobstructableTiles(rooms);
         // Generate water features
         this.drawWaterFeatures();
-        // Place items and traps
-        this.placeItemsAndTraps(rooms);
         // Place keckleon shop
         this.placeKecleonShopRoom(rooms);
+        // Place items and traps
+        this.placeItemsAndTraps(rooms);
 
         // Log the generation time
         const end = performance.now();
@@ -195,6 +195,10 @@ export class DungeonGenerator {
     }
 
     private getRoomFreePositions(room: Rect, freeTile: Tiles = Tiles.FLOOR) {
+        if (!room) {
+            console.log("Room is undefined")
+            return [];
+        };
         const positions = [];
         for (let y = room.top; y < room.bottom; y++)
             for (let x = room.left; x < room.right; x++) {
@@ -879,8 +883,8 @@ export class DungeonGenerator {
     private placeMarkersInRooms(spaces: Room[][], amount: number, tile: Tiles) {
         const rooms = Random.shuffle(this.getRooms(spaces));
 
-        for (let i = 0; i <= amount; i++) {
-            const roomIndex = amount % rooms.length;
+        for (let i = 0; i < amount; i++) {
+            const roomIndex = i % rooms.length;
             this.placeMarkerInRoom(rooms[roomIndex], tile);
         }
     }
@@ -901,13 +905,13 @@ export class DungeonGenerator {
         this.placeMarkersInRooms(rooms, 1, Tiles.MARKER_STAIRS);
     }
 
-    private placeBuriedItems(rooms: Room[][]) {
-        const amount = (this.getItemDensity()) + Random.int(-2, 2);
-    }
+    // private placeBuriedItems(rooms: Room[][]) {
+    //     const amount = (this.getItemDensity()) + Random.int(-2, 2);
+    // }
 
     private placeItemsAndTraps(rooms: Room[][]) {
         this.placeStairs(rooms);
-        this.placeBuriedItems(rooms);
+        // this.placeBuriedItems(rooms);
         this.placeItems(rooms);
         this.placeTraps(rooms);
     }
@@ -917,14 +921,17 @@ export class DungeonGenerator {
         const room = Random.choose(this.getRooms(rooms));
         if (!room || !Random.chance(1)) return;
         const carpetArea = room;
-        const itemArea = carpetArea.inflate(-2);
+        let itemArea = carpetArea.centralRect(V2(2, 2));
+        if (itemArea.height <= 1 || itemArea.width <= 1)
+            itemArea = itemArea.inflate(1);
+
         for (const pos of carpetArea.iter()) {
-            this.grid.set(pos.x, pos.y, Tiles.KECKLEON_CARPET);
+            this.grid.set(pos.x, pos.y, Tiles.KECLEON_CARPET);
         }
         for (const pos of itemArea.iter()) {
-            this.grid.set(pos.x, pos.y, Tiles.KECKLEON_ITEM);
+            this.grid.set(pos.x, pos.y, Tiles.KECLEON_ITEM);
         }
-        this.grid.set(...carpetArea.getRandomPoint().spread(), Tiles.KECKLEON_MARKER);
+        this.grid.set(...carpetArea.getRandomPoint().spread(), Tiles.KECLEON_MARKER);
     }
 }
 

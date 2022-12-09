@@ -4,17 +4,17 @@ export enum Tiles {
     FLOOR,
     WALL,
     WATER,
-    TRAP,
-    STAIRS,
+    TILE,
+    CLEAR_TILE,
     UNBREAKABLE_WALL,
 
     MARKER_ITEM,
     MARKER_TRAP,
     MARKER_STAIRS,
 
-    KECKLEON_CARPET,
-    KECKLEON_ITEM,
-    KECKLEON_MARKER,
+    KECLEON_CARPET,
+    KECLEON_ITEM,
+    KECLEON_MARKER,
 
     UNOBSTRUCTABLE,
     UNKNOWN,
@@ -49,7 +49,7 @@ export enum TileObjects {
     MYSTERY_TRAP,
     TOXIC_SPIKES_TRAP,
     SPIKES_TRAP,
-    KEKLEON_CARPET,
+    KECLEON_CARPET,
 };
 
 export interface TrapChance {
@@ -83,7 +83,7 @@ export const TileSheet: Record<TileObjects, CropParams> = {
     [TileObjects.MYSTERY_TRAP]: [6, 2, 1, 1],
     [TileObjects.TOXIC_SPIKES_TRAP]: [7, 2, 1, 1],
     [TileObjects.SPIKES_TRAP]: [0, 3, 1, 1],
-    [TileObjects.KEKLEON_CARPET]: [1, 3, 1, 1],
+    [TileObjects.KECLEON_CARPET]: [0, 3, 1, 1],
 };
 
 export function getTileCrop(tile: TileObjects): CropParams {

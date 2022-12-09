@@ -3,7 +3,8 @@ import { DungeonFloorInfo } from "../data/dungeons";
 import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
 import { AssetsLoader } from "../utils/assets_loader";
 import { V2, Vec2 } from "../utils/vectors";
-import { DungeonGenerator } from "./map/dungeon_generator";
+import { DungeonGenerator } from "./map/map_generator";
+import { DungeonObjectGenerator } from "./objects/object_generator";
 import { DungeonGrid } from "./map/grid";
 import { DungeonMap } from "./map/scene";
 import { DungeonObjectContainer } from "./objects/object";
@@ -36,14 +37,15 @@ export class DungeonFloor {
 
     public generate() {
         // Generate the dungeon
-        const generator = new DungeonGenerator(this.info);
+        const mapGenerator = new DungeonGenerator(this.info);
 
         // Generate the map
-        this.grid = generator.generate();
+        this.grid = mapGenerator.generate();
 
         // Generate the objects
-        // generator.generateObjects(this.grid)
-        this.objects = new DungeonObjectContainer([]);
+        const objectGenerator = new DungeonObjectGenerator(this.grid, this.info);
+
+        this.objects = new DungeonObjectContainer(objectGenerator.generate());
     }
 
     public generatePokemon(party: PokemonData[]) {
@@ -92,9 +94,6 @@ export class DungeonFloor {
         this.objects.render(this.scene);
 
         this.pokemon.render(this.scene);
-
-        // Build the pokemon
-        // this.pokemon.render(this.scene);
     }
 
     /** Renders the first view of the map */

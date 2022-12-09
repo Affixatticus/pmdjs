@@ -94,7 +94,7 @@ class FloorTile {
             if (tiling === Tilings.UNDEFINED) {
                 const tile = grid.get(...pos.spread());
                 // If the tile doesn't have a water tile, use the CENTER_FULL
-                if (tile !== Tiles.WATER && tile !== Tiles.STAIRS)
+                if (tile !== Tiles.WATER && tile !== Tiles.CLEAR_TILE)
                     variant = Tilings.CENTER_FULL;
             } else
                 variant = this.chooseVariant(tiling, pos);
@@ -286,7 +286,7 @@ export class DungeonMap {
         const size = TILE_VIEWPORT;
         this.placeWallTiles(start, size);
         this.placeWaterTiles(start, size);
-        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TRAP, Tiles.STAIRS, Tiles.UNOBSTRUCTABLE], [], start, size), this.grid);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE], [], start, size), this.grid);
 
     }
 
@@ -343,7 +343,7 @@ export class DungeonMap {
             }
 
         // Update the floor
-        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TRAP, Tiles.STAIRS, Tiles.UNOBSTRUCTABLE], [Tiles.UNOBSTRUCTABLE], redoStart, redoSize), this.grid);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE], [Tiles.UNOBSTRUCTABLE], redoStart, redoSize), this.grid);
     }
 
     // Disposing

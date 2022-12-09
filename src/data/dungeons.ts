@@ -1,4 +1,4 @@
-import { GenerationRules as GeneratorLayouts } from "../dungeons/map/dungeon_generator";
+import { GenerationRules as GeneratorLayouts } from "../dungeons/map/map_generator";
 import { V2, Vec2 } from "../utils/vectors";
 import { ItemChance, Items } from "./items";
 import { Pokedex, PokemonChance } from "./pokemon";
@@ -46,27 +46,14 @@ export interface DungeonFloorInfo {
     /** List of possible enemies to spawn */
     enemies: PokemonChance[] | null;
     /** Chance of spawning in items */
-    items: ItemRarity | null;
+    items: ItemChance[] | null;
     /** Chance of spawning in traps */
-    traps: TrapRarity | null;
+    traps: TrapChance[] | null;
     /** List of possible weathers to spawn */
     weathers: WeatherChance[] | null;
     /** Flags */
     generation: GeneratorParams;
 };
-
-export interface ItemRarity {
-    rarity: number;
-    /** List of possible items to spawn */
-    items: ItemChance[];
-};
-
-export interface TrapRarity {
-    rarity: number;
-    /** List of possible traps to spawn */
-    traps: TrapChance[];
-}
-
 
 export interface DungeonTexturesProperties {
     /** Clear color for the scene */
@@ -103,23 +90,17 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
             name: "Grass Cove",
             path: "grass_cove_01",
             enemies: null,
-            items: {
-                rarity: 0.5,
-                items: [
-                    { id: Items.ORAN_BERRY, chance: 20 },
-                    { id: Items.COIN, chance: 30 },
-                    { id: Items.APPLE, chance: 10 },
-                    { id: Items.BIG_APPLE, chance: 1 },
-                ]
-            },
-            traps: {
-                rarity: 0.5,
-                traps: [
-                    { id: TileObjects.TRAP_01, chance: 100 },
-                    { id: TileObjects.FAN_TRAP, chance: 50 },
-                    { id: TileObjects.VOLTORB_TRAP, chance: 25 },
-                ]
-            },
+            items: [
+                { id: Items.ORAN_BERRY, chance: 20 },
+                { id: Items.COIN, chance: 30 },
+                { id: Items.APPLE, chance: 10 },
+                { id: Items.BIG_APPLE, chance: 1 },
+            ],
+            traps: [
+                { id: TileObjects.TRAP_01, chance: 100 },
+                { id: TileObjects.FAN_TRAP, chance: 50 },
+                { id: TileObjects.VOLTORB_TRAP, chance: 25 },
+            ],
             weathers: [{
                 id: Weathers.CLEAR,
                 chance: 100
@@ -133,6 +114,8 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .75,
                 terrainDensity: 10,
+                groundItemDensity: 4,
+                tileDensity: 4,
             }
         },
         [6]: {
@@ -141,13 +124,10 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
-            items: {
-                rarity: 0.5,
-                items: [
-                    { id: Items.ORAN_BERRY, chance: 20 },
-                    { id: Items.COIN, chance: 50 },
-                ]
-            },
+            items: [
+                { id: Items.ORAN_BERRY, chance: 20 },
+                { id: Items.COIN, chance: 50 },
+            ],
             traps: null,
             weathers: [{
                 id: Weathers.CLEAR,
@@ -163,8 +143,8 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 extraCorridorsChance: 12,
                 layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .6,
-                tileDensity: 0,
-                groundItemDensity: 0,
+                // tileDensity: 4,
+                groundItemDensity: 16,
             },
         }
     }

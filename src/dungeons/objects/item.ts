@@ -22,15 +22,20 @@ export class ItemMaterial extends StandardMaterial {
 export class DungeonItem extends DungeonObject {
     private id: number;
     private mesh!: Mesh;
+    private light!: SpotLight;
 
     constructor(pos: Vec2, id: number) {
         super(pos, ObjectTypes.ITEM);
         this.id = id;
     }
 
+    public getId(start = ""): string {
+        return start + "_" + this.id.toString() + this.pos.x.toString() + this.pos.y.toString();
+    }
+
     public async render(scene: Scene): Promise<void> {
         //Create a plane
-        const plane = MeshBuilder.CreatePlane("plane", { size: 1 }, scene);
+        const plane = MeshBuilder.CreatePlane(this.getId("plane"), { size: 1 }, scene);
 
         plane.position = V3(this.pos.x + .5, 0, this.pos.y + .5).gameFormat;
         plane.rotate(Vector3.Right(), Math.PI / 2 - Math.PI / 6);
@@ -43,16 +48,17 @@ export class DungeonItem extends DungeonObject {
         plane.material = material;
 
         // Add a spot light on top of the plane
-        const light = new SpotLight("spotLight", plane.position.add(V3(0, 0.5, 0.1)), V3(0, -1, 0), Math.PI / 2, 1, scene);
-        light.exponent = 4;
-        light.intensity = 0.2;
-
-        this.mesh = plane;
+        // this.light = new SpotLight(this.getId("spotLight"),
+        //     plane.position.add(V3(0, 0.5, 0.1)), V3(0, -1, 0), Math.PI / 2, 1, scene);
+        // this.light.exponent = 4;
+        // this.light.intensity = 0.2;
+        // this.mesh = plane;
     }
 
     public dispose() {
         if (!this.mesh) return false;
         this.mesh.dispose();
+        this.light.dispose();
         return true;
     }
 }

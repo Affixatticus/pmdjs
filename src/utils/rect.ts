@@ -66,6 +66,11 @@ export class Rect {
         return horizontal + vertical;
     }
 
+    /** Creates a rect that stands in the middle of this rect, spaced from the sides by the input amount */
+    public centralRect(bordersOut: Vec2) {
+        return Rect.fromLTRB(this.left + bordersOut.x, this.top + bordersOut.y, this.right - bordersOut.x, this.bottom - bordersOut.y);
+    }
+
     /**
      * @param delta The max distance from each edge of the rect in percentage to that edge's distacne to its parallel edge
      * @returns An rect contained in this one
