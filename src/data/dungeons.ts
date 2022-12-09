@@ -1,3 +1,4 @@
+import { GenerationRules as GeneratorLayouts } from "../dungeons/map/dungeon_generator";
 import { V2, Vec2 } from "../utils/vectors";
 import { ItemChance, Items } from "./items";
 import { Pokedex, PokemonChance } from "./pokemon";
@@ -10,39 +11,31 @@ export enum Dungeons {
 
 export type DungeonFloorInfoFromLevel = Record<number, DungeonFloorInfo>;
 
-/**
- * For instance:
- * ```
- * {
- *  maxRoomSize: V2(4, 3),
- *  borderSize: V2(3, 3),
- *  roomsLayout: V2(3, 2),
- *  roomsAmount: 4
- * }
- * ```
- * ```
- * RRRR+++\\\\+++RRRR+++
- * RRRR+++\\\\+++RRRR+++
- * RRRR+++\\\\+++RRRR+++
- * +++++++++++++++++++++
- * +++++++++++++++++++++
- * RRRR+++RRRR+++\\\\+++
- * RRRR+++RRRR+++\\\\+++
- * RRRR+++RRRR+++\\\\+++
- * +++++++++++++++++++++
- * +++++++++++++++++++++
- * ```
- */
-export interface DungeonSize {
-    maxRoomSize: Vec2,
-    paddingSize: Vec2,
-    roomsLayout: Vec2,
-    roomsAmount: number,
-};
 
-export interface GeneratorFlags {
+export interface GeneratorParams {
+    // Generation Parameters
+    maxRoomSize: Vec2;
+    bordersSize: Vec2;
+    mapSize: Vec2;
+    /** Number that specified how many of the spaces are rooms
+     * + `n < 0`:       All spaces but n are rooms
+     * + `0 < n < 1`:   n% of the spaces are rooms
+     * + `n > 1`:       n rooms are generated 
+     */
+    roomDensity?: number;
+    groundItemDensity?: number;
+    tileDensity?: number;
+    buriedItemDensity?: number;
+
+    // Generation Methods
+    layoutType: GeneratorLayouts;
+    connectionRate: number;
+    extraCorridorsChance?: number;
+
+    // Water Generation
     /** Whether the dungeon should have water tiles */
-    water: boolean,
+    generateWater: boolean,
+    terrainDensity?: number;
 }
 
 export interface DungeonFloorInfo {
@@ -50,8 +43,6 @@ export interface DungeonFloorInfo {
     name: string;
     /** Information for the graphic rendering */
     path: string;
-    /** Dungeon's sizes */
-    size: DungeonSize;
     /** List of possible enemies to spawn */
     enemies: PokemonChance[] | null;
     /** Chance of spawning in items */
@@ -61,7 +52,7 @@ export interface DungeonFloorInfo {
     /** List of possible weathers to spawn */
     weathers: WeatherChance[] | null;
     /** Flags */
-    flags: GeneratorFlags;
+    generation: GeneratorParams;
 };
 
 export interface ItemRarity {
@@ -110,13 +101,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
     [Dungeons.GRASSY_COVE]: {
         [4]: {
             name: "Grass Cove",
-            path: "deep_boulder_quarry_01",
-            size: {
-                paddingSize: V2(5, 5),
-                maxRoomSize: V2(8, 8),
-                roomsLayout: V2(1, 1),
-                roomsAmount: 1
-            },
+            path: "grass_cove_01",
             enemies: null,
             items: {
                 rarity: 0.5,
@@ -139,19 +124,20 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 id: Weathers.CLEAR,
                 chance: 100
             }],
-            flags: {
-                water: false
+            generation: {
+                maxRoomSize: V2(9, 7),
+                connectionRate: 50,
+                bordersSize: V2(4, 6),
+                mapSize: V2(6, 6),
+                generateWater: false,
+                layoutType: GeneratorLayouts.ALL_ROOMS,
+                roomDensity: .75,
+                terrainDensity: 10,
             }
         },
         [6]: {
             name: "Grass Cave",
-            path: "grass_cove_01",
-            size: {
-                paddingSize: V2(5, 5),
-                maxRoomSize: V2(8, 8),
-                roomsLayout: V2(6, 3),
-                roomsAmount: 9
-            },
+            path: "deep_boulder_quarry_01",
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
@@ -167,8 +153,18 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 id: Weathers.CLEAR,
                 chance: 100
             }],
-            flags: {
-                water: true
+            generation: {
+                maxRoomSize: V2(7, 5),
+                connectionRate: 50,
+                bordersSize: V2(4, 6),
+                mapSize: V2(4, 5),
+                generateWater: true,
+                terrainDensity: 40,
+                extraCorridorsChance: 12,
+                layoutType: GeneratorLayouts.ALL_ROOMS,
+                roomDensity: .6,
+                tileDensity: 0,
+                groundItemDensity: 0,
             },
         }
     }

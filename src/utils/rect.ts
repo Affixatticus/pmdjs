@@ -1,4 +1,4 @@
-import { int } from "./Random";
+import { randInt } from "./random";
 import { V2, Vec2 } from "./vectors";
 
 export class Rect {
@@ -7,7 +7,7 @@ export class Rect {
     public right: number;
     public bottom: number;
     get x() { return this.left; }
-    get y() { return this.right; }
+    get y() { return this.top; }
     get width() { return this.right - this.left }
     get height() { return this.bottom - this.top }
 
@@ -16,6 +16,11 @@ export class Rect {
         this.top = y;
         this.right = x + width;
         this.bottom = y + height;
+    }
+
+
+    static fromCenter(point: Vec2, inflateX: number = 1, inflateY: number = inflateX): Rect {
+        return new Rect(point.x - inflateX, point.y - inflateY, inflateX * 2 + 1, inflateY * 2 + 1);
     }
 
     static fromLTRB(left: number, top: number, right: number, bottom: number) {
@@ -65,20 +70,51 @@ export class Rect {
      * @param delta The max distance from each edge of the rect in percentage to that edge's distacne to its parallel edge
      * @returns An rect contained in this one
      */
-    public subrect(delta: number): Rect {
-        const left = int(this.left, this.left + (this.width * delta | 0));
-        const top = int(this.top, this.top + (this.height * delta | 0));
-        const right = int(this.right - (this.width * delta | 0), this.right);
-        const bottom = int(this.bottom - (this.height * delta | 0), this.bottom);
+    public subrect(options: { maxWidth: number, maxHeight: number }): Rect {
+        // let width = randInt(5, this.width - 3);
+        // let height = randInt(4, this.height - 3);
 
-        return Rect.fromLTRB(left, top, right, bottom);
+        const minWidth = Math.min(5, this.width);
+        const minHeight = Math.min(4, this.height);
+        const maxWidth = options.maxWidth ?? this.width - 3;
+        const maxHeight = options.maxHeight ?? this.height - 3;;
+
+        let width = randInt(minWidth, maxWidth);
+        let height = randInt(minHeight, maxHeight);
+
+        if (width > height * 2 - 1)
+            width = (width / 2 | 0) + 1;
+
+        // Modify the width and height to be odd
+        // if (width % 2 == 0) width--;
+        // if (height % 2 == 0) height--;
+
+        let x = randInt(this.left + 2, this.right - width - 1);
+        let y = randInt(this.top + 2, this.bottom - height - 1);
+
+        return new Rect(x, y, width, height);
     }
 
     /** Returns a random point withing the rect's bounds */
-    get randomPoint(): Vec2 {
+    public getRandomPoint(): Vec2 {
         return V2(
-            this.left + 1 + int(0, this.width - 2),
-            this.top + 1 + int(0, this.height - 2),
+            this.left + 1 + randInt(0, this.width - 2),
+            this.top + 1 + randInt(0, this.height - 2),
+        );
+    }
+
+    public toString(): string {
+        return `Rect(${this.left}, ${this.top}, ${this.right}, ${this.bottom})`;
+    }
+
+    public getRandomPointAroundCenter(): Vec2 {
+        const randomPoint = this.getRandomPoint();
+        const middle = this.middle;
+
+        // Average the random point with the middle
+        return V2(
+            (randomPoint.x + middle.x) / 2 | 0,
+            (randomPoint.y + middle.y) / 2 | 0,
         );
     }
 
@@ -88,5 +124,9 @@ export class Rect {
             this.left + this.width / 2 | 0,
             this.top + this.height / 2 | 0,
         );
+    }
+
+    public getCenter(): Vec2 {
+        return this.middle;
     }
 };

@@ -2,6 +2,10 @@ import { Vector2, Vector3 } from "@babylonjs/core";
 
 export class Vec2 extends Vector2 {
 
+    static sorted(...vectors: Vec2[]): Vec2[] {
+        return vectors.sort((a, b) => a.x - b.x || a.y - b.y);
+    }
+
     constructor(x: Vector2 | number, y?: number) {
         if (typeof x === "number")
             super(x, y);
@@ -50,7 +54,6 @@ export class Vec2 extends Vector2 {
     public dist(other: Vec2) {
         return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
     }
-
 }
 
 export class Vec3 extends Vector3 {

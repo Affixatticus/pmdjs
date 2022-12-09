@@ -6,13 +6,19 @@ export enum Tiles {
     WATER,
     TRAP,
     STAIRS,
+    UNBREAKABLE_WALL,
 
     MARKER_ITEM,
     MARKER_TRAP,
     MARKER_STAIRS,
 
+    KECKLEON_CARPET,
+    KECKLEON_ITEM,
+    KECKLEON_MARKER,
+
+    UNOBSTRUCTABLE,
     UNKNOWN,
-    OUT_OF_BOUNDS
+    OUT_OF_BOUNDS = -1
 };
 
 export const TILE_WIDTH = 48;

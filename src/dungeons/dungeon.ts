@@ -1,12 +1,12 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
+import { AxesViewer, Color3, Color4, DirectionalLight, Engine, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Controls } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
-import { DungeonFloor } from "./floor";
+import { DungeonFloor, TileRenderingGroupIds } from "./floor";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
-const CAMERA_OFFSET = V3(0, 11, 4);
+const CAMERA_OFFSET = V3(0, 10, 2);
 
 
 export interface DungeonStateData {
@@ -51,7 +51,7 @@ export class DungeonState {
         document.body.addEventListener("keydown", e => {
             if (e.key === "Escape") {
                 // Loads another chunk of the map
-                this.floor.renderToScreen(this.floor.grid.getFreePosition() as Vec2);
+                this.floor.renderToScreen(this.floor.grid.getRandomPosition() as Vec2);
             }
         });
     }
@@ -59,11 +59,7 @@ export class DungeonState {
     // Game Logic Methods
     private chooseSpawnPosition(): Vec2 {
         // Choose a position to spawn the party
-        const spawn = this.floor.getSpawnPosition();
-        // Assert spawn
-        if (!spawn) throw Error(`No spawn position found`);
-
-        return spawn;
+        return this.floor.getSpawnPosition();
     }
 
     // Loading methods
@@ -104,6 +100,7 @@ export class DungeonState {
 
     private createGlobalLighting() {
         const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
+        lighting.intensity = 0.4;
         lighting.intensity = 0.8;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
 
@@ -147,7 +144,14 @@ export class DungeonState {
         // Draw the floor
         await this.buildFloor(spawn);
         // Move the camera to the spawn position
-        this.moveCamera(spawn.toVec3());
+        this.moveCamera(spawn.toVec3().add(V3(0.5, 0, 0.5)));
+
+        // Place a vertical line at the spawn
+        const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);
+        cylinder.position = spawn.gameFormat.subtract(V3(0.025, -2.5, -0.025)).add(V3(0.5, 0, 0.5));
+        cylinder.renderingGroupId = TileRenderingGroupIds.WALL;
+
+
 
 
         await this.scene.whenReadyAsync();
@@ -159,18 +163,12 @@ export class DungeonState {
     private controlCamera() {
         // Get the camera's current position
         const pos = this.camera.position;
-        // Get the camera's current rotation
-        const rot = this.camera.cameraRotation;
 
         // Get the camera's movement
         const move = this.controls.LS.scale(0.1);
-        // Get the camera's rotation
-        const rotation = this.controls.RS.scale(0.01);
 
         // Move the camera
-        this.camera.position = pos.add(move.toVec3(this.controls.RS.y));
-        // Rotate the camera
-        this.camera.cameraRotation = rot.add(V2(rotation.x, 0));
+        this.camera.position = pos.add(move.toVec3(this.controls.RS.y * 0.1));
     }
 
     private tick = 0;

@@ -5,10 +5,10 @@ enum Keys {
     L_DOWN = "ArrowDown",
     L_LEFT = "ArrowLeft",
     L_RIGHT = "ArrowRight",
-    R_UP = "KeyW",
-    R_DOWN = "KeyS",
-    R_LEFT = "KeyA",
-    R_RIGHT = "KeyD",
+    R_UP = "w",
+    R_DOWN = "s",
+    R_LEFT = "a",
+    R_RIGHT = "d",
 };
 
 /** 

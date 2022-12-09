@@ -20,13 +20,14 @@ export class WaterTileMaterial extends StandardMaterial {
         this.texturesCount = sources.length;
         this.animationTime = animationTime;
 
+        this.specularPower = 10000000;
         this.generateTextures(scene, sources, params);
         this.setTexture(0);
     }
 
     public setTexture(index: number) {
         if (index > this.texturesCount || index < 0) return;
-
+        
         this.diffuseTexture = this.textures[index];
     }
 

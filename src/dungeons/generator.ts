@@ -1,5 +1,5 @@
 import Random from '../utils/random';
-import { DungeonFloorInfo, GeneratorFlags } from "../data/dungeons";
+import { DungeonFloorInfo, GeneratorParams } from "../data/dungeons";
 import { V2, Vec2 } from "../utils/vectors"
 import { TileObjects, Tiles, TrapChance } from '../data/tiles';
 import { DungeonGrid } from './map/grid';
@@ -17,7 +17,7 @@ export class DungeonGenerator {
     private paddingSize: Vec2;
     private roomsLayout: Vec2;
     private roomsAmount: number;
-    private flags: GeneratorFlags;
+    private flags: GeneratorParams;
     private itemRarity: number;
     private itemChances: [number, number][];
     private trapRarity: number;
@@ -76,7 +76,7 @@ export class DungeonGenerator {
         this.trapRarity = info.traps?.rarity ?? 0;
         this.trapChances = this.generateTrapChances(info.traps?.traps ?? []);
 
-        this.flags = info.flags;
+        this.flags = info.generation;
 
         this.width = this.maxRoomSize.x * this.roomsLayout.x +
             this.paddingSize.x * (this.roomsLayout.x - 1) + DungeonGenerator.ROOM_BORDERS.x * 2;
@@ -190,7 +190,7 @@ export class DungeonGenerator {
         this.drawCorridors(corridors);
 
         // Generate some pools of water
-        if (this.flags.water) {
+        if (this.flags.generateWater) {
             const pools = this.generatePools();
             this.drawPools(pools);
         }
