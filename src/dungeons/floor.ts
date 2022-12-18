@@ -13,6 +13,7 @@ export enum TileRenderingGroupIds {
     WATER,
     FLOOR,
     WALL,
+    ALWAYS_VISIBLE
 };
 
 /** Class that builds the structure of the dungeon */

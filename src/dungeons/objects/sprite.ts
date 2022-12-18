@@ -1,4 +1,4 @@
-import { Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
+import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
 import Random from "../../utils/random";
 import { Directions } from "./pokemon";
 
@@ -66,6 +66,11 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.animation = "Idle";
         this.direction = Directions.SOUTH;
     }
+
+    public _shouldTurnAlphaTestOn(mesh: AbstractMesh): boolean {
+        return this.needAlphaTesting();
+    };
+
 
     private draw() {
         const ctx = this.texture.getContext();

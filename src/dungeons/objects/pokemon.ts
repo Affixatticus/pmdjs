@@ -30,7 +30,8 @@ export class DungeonPokemon {
     public id: PokemonFormIdentifier;
     public direction: Directions;
 
-    private mesh!: Mesh;
+    private opaqMesh!: Mesh;
+    private tranMesh!: Mesh;
     private material!: DungeonPokemonMaterial;
 
     constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
@@ -48,23 +49,27 @@ export class DungeonPokemon {
             throw new Error(`Pokemon ${this.id} not found`);
         }
 
-        const mesh = MeshBuilder.CreatePlane("pokemon", {
+        const opaqMesh = MeshBuilder.CreatePlane("pokemon", {
             width: 1,
             height: 1,
         }, scene);
 
-        mesh.position = this.pos.gameFormat.subtract(V3(0.5, 0, 0.5));
+        opaqMesh.position = this.pos.gameFormat.subtract(V3(0.5, 0, 0.5));
 
-        mesh.scalingDeterminant = 8;
-        mesh.renderingGroupId = TileRenderingGroupIds.WALL;
-        mesh.rotate(Vector3.Right(), Math.PI / 4);
+        opaqMesh.scalingDeterminant = 8;
+        opaqMesh.renderingGroupId = TileRenderingGroupIds.WALL;
+        opaqMesh.rotate(Vector3.Right(), Math.PI / 4);
 
         const material = new DungeonPokemonMaterial(data, scene);
         material.init("Idle", Random.int(7));
-
         this.material = material;
-        this.mesh = mesh;
-        mesh.material = this.material;
+        this.opaqMesh = opaqMesh;
+        opaqMesh.material = this.material;
+
+        const tranMesh = opaqMesh.clone("pokemon-tran");
+        tranMesh.renderingGroupId = TileRenderingGroupIds.ALWAYS_VISIBLE;
+        tranMesh.visibility = 0.5;
+        this.tranMesh = tranMesh;
     }
 
     public animate(tick: number) {
@@ -73,7 +78,8 @@ export class DungeonPokemon {
     }
 
     public dispose = () => {
-        this.mesh.dispose();
+        this.opaqMesh.dispose();
+        this.tranMesh.dispose();
         this.material.dispose();
     };
 }
