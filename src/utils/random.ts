@@ -24,10 +24,13 @@ export function shuffleArray<T>(array: Array<T>): Array<T> {
     let currentIndex = array.length;
     let temporaryValue, randomIndex;
 
+    // Shuffle the elements inside the array
     while (0 !== currentIndex) {
-        randomIndex = randInt(currentIndex);
+        // Pick a remaining element
+        randomIndex = randInt(currentIndex - 1);
         currentIndex -= 1;
 
+        // Swap it with the current element
         temporaryValue = array[currentIndex];
         array[currentIndex] = array[randomIndex];
         array[randomIndex] = temporaryValue;

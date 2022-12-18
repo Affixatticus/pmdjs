@@ -42,6 +42,10 @@ export class Rect {
                 yield V2(x, y);
     }
 
+    public contains(point: Vec2) {
+        return (point.x >= this.left) && (point.x < this.right) && (point.y >= this.top) && (point.y < this.bottom);
+    }
+
     public distanceTo = (other: Rect) => {
         let vertical: number;
         if (this.top >= other.bottom)

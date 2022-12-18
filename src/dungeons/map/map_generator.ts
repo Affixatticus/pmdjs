@@ -22,6 +22,9 @@ enum CellTypes {
     CORRIDOR,
 };
 
+type Connection = Vec2[];
+type Room = Rect | null;
+
 export const AssignmentFunctions: Record<GenerationRules, (mapSize: Vec2, roomCount: number) => ByteGrid> = {
     [GenerationRules.ALL_ROOMS]: (mapSize, roomCount) => {
         // Create the grid
@@ -46,10 +49,12 @@ export const AssignmentFunctions: Record<GenerationRules, (mapSize: Vec2, roomCo
         grid.fill(CellTypes.EMPTY);
 
         // Get all the possible positions
-        const positions = grid.getPositions().filter(pos => pos.x < mapSize.x / 2);
+        const positions = grid.getPositions().filter(pos => pos.x < (mapSize.x / 2 | 0));
 
         // Shuffle the positions
         Random.shuffle(positions);
+
+        console.log(positions);
 
         for (let i = 0; i < Math.min(roomCount, positions.length); i++)
             grid.set(...positions[i].spread(), CellTypes.ROOM);
@@ -934,6 +939,3 @@ export class DungeonGenerator {
         this.grid.set(...carpetArea.getRandomPoint().spread(), Tiles.KECLEON_MARKER);
     }
 }
-
-type Connection = Vec2[];
-type Room = Rect | null;

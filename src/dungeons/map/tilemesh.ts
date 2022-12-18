@@ -6,6 +6,8 @@ import { TileRenderingGroupIds } from "../floor";
 import { ByteGrid } from "./grid";
 import { Tilings, DungeonTiling, TilingTextureMode } from "./tiling";
 
+const TILEMESH_SUBDIVISIONS = 6;
+
 export type MeshGroup = TileMesh | Map<number, TileMesh> | null;
 export type MeshInstance = [instance: number, tiling: Tilings, variant: number];
 
@@ -27,7 +29,7 @@ export class WaterTileMaterial extends StandardMaterial {
 
     public setTexture(index: number) {
         if (index > this.texturesCount || index < 0) return;
-        
+
         this.diffuseTexture = this.textures[index];
     }
 
@@ -150,9 +152,7 @@ export class TileMeshContainer {
     }
 
     public dispose() {
-        for (const mesh of this.getMeshes()) {
-            mesh.dispose();
-        }
+        for (const mesh of this.getMeshes()) { mesh.dispose() }
     }
 
     public createWallTileMesh(tiling: Tilings, texture: CanvasImageSource, heightmap: CanvasImageSource, scene: Scene,
@@ -242,7 +242,7 @@ export class WallTileMesh extends TileMesh {
             heightmapURL, {
             width: 1,
             height: 1,
-            subdivisions: 24,
+            subdivisions: TILEMESH_SUBDIVISIONS,
             minHeight: 0,
             maxHeight: options.height ?? 1,
         }, scene);

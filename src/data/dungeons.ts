@@ -137,14 +137,14 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 maxRoomSize: V2(7, 5),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
-                mapSize: V2(4, 5),
+                mapSize: V2(10, 5),
                 generateWater: true,
                 terrainDensity: 40,
                 extraCorridorsChance: 12,
                 layoutType: GeneratorLayouts.ALL_ROOMS,
-                roomDensity: .6,
+                roomDensity: .8,
                 // tileDensity: 4,
-                groundItemDensity: 16,
+                groundItemDensity: .16,
             },
         }
     }

@@ -190,6 +190,14 @@ export class OffsetGrid extends ByteGrid {
         return super.get(x - this.start.x, y - this.start.y);
     }
 
+    public getValueAt(x: number, y: number) {
+        return super.get(x, y);
+    }
+
+    public getActualPosition(x: number, y: number): Vec2 {
+        return V2(x + this.start.x, y + this.start.y);
+    }
+
     public *[Symbol.iterator](): IterableIterator<[Vec2, number]> {
         for (let y = 0; y < this.height; y++)
             for (let x = 0; x < this.width; x++)

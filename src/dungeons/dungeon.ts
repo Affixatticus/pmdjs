@@ -1,4 +1,4 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
+import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HemisphericLight, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Controls } from "../utils/controls";
@@ -101,8 +101,13 @@ export class DungeonState {
     private createGlobalLighting() {
         const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
         lighting.intensity = 0.4;
+        lighting.intensity = 0.5;
         lighting.intensity = 0.8;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
+
+        const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
+        global.intensity = 0.2;
+        
 
         return lighting;
     }
@@ -118,12 +123,16 @@ export class DungeonState {
     }
 
     private async buildFloor(spawn: Vec2) {
+        const start = performance.now();
+        
         this.createGlobalLighting();
         // Load the assets for the map
         await this.floor.preloadAssets();
 
         // Render the visible area
         this.floor.build(spawn);
+
+        console.log(`Building the floor takes ${performance.now() - start}ms`);
     }
 
     /**
@@ -136,11 +145,14 @@ export class DungeonState {
 
         // LOADING CODE
 
+        const start = performance.now();
+
         /** Dungeon Floor Loading */
         // Generate the floor
         this.generateFloor();
         // Get the spawn position
-        const spawn = this.chooseSpawnPosition();
+        // const spawn = this.chooseSpawnPosition();
+        const spawn = V2(5, 5);
         // Draw the floor
         await this.buildFloor(spawn);
         // Move the camera to the spawn position
@@ -151,11 +163,10 @@ export class DungeonState {
         cylinder.position = spawn.gameFormat.subtract(V3(0.025, -2.5, -0.025)).add(V3(0.5, 0, 0.5));
         cylinder.renderingGroupId = TileRenderingGroupIds.WALL;
 
-
-
-
         await this.scene.whenReadyAsync();
 
+        console.log(`Loading the scene takes ${performance.now() - start}ms`);
+        
         this.engine.hideLoadingUI();
         this.isLoaded = true;
     }
@@ -165,10 +176,10 @@ export class DungeonState {
         const pos = this.camera.position;
 
         // Get the camera's movement
-        const move = this.controls.LS.scale(0.1);
+        const move = this.controls.RS.scale(0.1);
 
         // Move the camera
-        this.camera.position = pos.add(move.toVec3(this.controls.RS.y * 0.1));
+        this.camera.position = pos.add(move.toVec3(this.controls.LS.y * 0.1));
     }
 
     private tick = 0;

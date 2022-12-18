@@ -50,12 +50,13 @@ export {
     toDynamicTexture
 }
 
-export default {
+const Canvas = {
     create: createCanvas,
     putImage,
     toDataURL,
     createURL,
     getPixelColor,
     toDynamicTexture
-}
+};
 
+export default Canvas;

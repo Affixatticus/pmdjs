@@ -1,7 +1,6 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
 import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
-import { AssetsLoader } from "../utils/assets_loader";
 import { V2, Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
@@ -71,18 +70,17 @@ export class DungeonFloor {
         this.map = new DungeonMap(this.scene, this.info.path, this.grid);
         await this.map.preload();
 
-
         // Load the pokemon
-        const start = performance.now();
+        // const start = performance.now();
         // Preload the pokemon
-        await Promise.all(
-            [
-                ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0, false, 0))] : []),
-                ...this.party.map(e => AssetsLoader.loadPokemon(...e)),
-            ]
-        );
-        console.log(AssetsLoader.pokemon);
-        console.log(`-> Loaded ${this.info?.enemies?.length ?? 0 + this.party.length} pokemon in ${performance.now() - start}ms`);
+        // await Promise.all(
+        //     [
+        //         ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0, false, 0))] : []),
+        //         ...this.party.map(e => AssetsLoader.loadPokemon(...e)),
+        //     ]
+        // );
+        // console.log(AssetsLoader.pokemon);
+        // console.log(`-> Loaded ${this.info?.enemies?.length ?? 0 + this.party.length} pokemon in ${performance.now() - start}ms`);
     }
 
     // Rendering
