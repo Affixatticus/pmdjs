@@ -96,7 +96,7 @@ export class FloorMesh {
             }
 
 
-            if (tiling === Tilings.UNDEFINED) {
+            if (tiling === Tilings.BLANK) {
                 const tile = grid.get(...pos.spread());
                 // If the tile doesn't have a water tile, use the CENTER_FULL
                 if (tile !== Tiles.WATER && tile !== Tiles.CLEAR_TILE)

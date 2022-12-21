@@ -1,4 +1,4 @@
-import { Constants, DynamicTexture, Mesh, MeshBuilder, Scene, SpotLight, StandardMaterial, Vector3 } from "@babylonjs/core";
+import { Color3, Constants, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
 import { DungeonObject, ObjectTypes } from "./object";
@@ -15,7 +15,7 @@ export class TileMaterial extends StandardMaterial {
         texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         this.diffuseTexture = texture;
-        this.specularPower = 10;
+        this.specularColor = new Color3(0, 0, 0);
     }
 };
 

@@ -8,10 +8,10 @@ export class ByteGrid {
     private _height: number;
     private _data: Uint8Array;
 
-    constructor(width: number, height: number) {
+    constructor(width: number, height: number, data?: Uint8Array) {
         this._width = width;
         this._height = height;
-        this._data = new Uint8Array(width * height);
+        this._data = data ?? new Uint8Array(width * height);
     }
 
     public fill(value: number) {
@@ -198,6 +198,11 @@ export class OffsetGrid extends ByteGrid {
         return V2(x + this.start.x, y + this.start.y);
     }
 
+    /** Converts this offsetGrid to a grid */
+    public toOrigin() {
+        return this.getSubGrid(V2(0, 0), this.size);
+    }
+
     public *[Symbol.iterator](): IterableIterator<[Vec2, number]> {
         for (let y = 0; y < this.height; y++)
             for (let x = 0; x < this.width; x++)
@@ -206,26 +211,26 @@ export class OffsetGrid extends ByteGrid {
 }
 
 export class DungeonGrid extends ByteGrid {
-    constructor(width: number, height: number) {
-        super(width, height);
+    constructor(width: number, height: number, data?: Uint8Array) {
+        super(width, height, data);
     }
 
     /** Returns a new grid with each cell changed to the correct tiling based on the given tile */
-    public mapTilingsFor(tile: Tiles, ignoreTiles: Tiles[] = [], includeTiles: Tiles[] = [], start: Vec2 = V2(0, 0), size: Vec2 = this.size): OffsetGrid {
+    public mapTilingsFor(tile: number, ignoreTiles: number[] = [], includeTiles: number[] = [], start: Vec2 = V2(0, 0), size: Vec2 = this.size): OffsetGrid {
         const tilingGrid = new OffsetGrid(...size.spread(), start);
 
         for (let y = start.y; y < start.y + size.y; y++) {
             for (let x = start.x; x < start.x + size.x; x++) {
                 if (!includeTiles.includes(this.get(x, y)))
                     if (this.get(x, y) !== tile) {
-                        tilingGrid.set(x, y, Tilings.UNDEFINED);
+                        tilingGrid.set(x, y, Tilings.BLANK);
                         continue;
                     }
 
                 // Get the adjacent tiles
                 const neighbors = this.getNeighbors(x, y);
                 // Convert the adjacent tiles to a boolean if they are the same as the tile
-                const neighborsThatEqualToTile = neighbors.map(t => t === tile || ignoreTiles.includes(t) || t === Tiles.OUT_OF_BOUNDS);
+                const neighborsThatEqualToTile = neighbors.map(t => t === tile || ignoreTiles.includes(t));
                 // Get the tiling for the neighbors
                 const tiling = DungeonTiling.getTiling(neighborsThatEqualToTile);
                 tilingGrid.set(x, y, tiling);

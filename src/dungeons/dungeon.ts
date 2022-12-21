@@ -4,6 +4,8 @@ import { PokemonData } from "../data/pokemon";
 import { Controls } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor, TileRenderingGroupIds } from "./floor";
+import { OffsetGrid } from "./map/grid";
+import { LightOverlay } from "./map/light_overlay";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
 const CAMERA_OFFSET = V3(0, 10, 2);
@@ -27,6 +29,7 @@ export class DungeonState {
     public camera: TargetCamera;
     // -> Floor
     private floor!: DungeonFloor;
+    private lightOverlay!: LightOverlay;
     // State
     private isLoaded: boolean;
     private data: DungeonStateData;
@@ -101,13 +104,15 @@ export class DungeonState {
     private createGlobalLighting() {
         const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
         lighting.intensity = 0.4;
-        lighting.intensity = 0.5;
         lighting.intensity = 0.8;
+        lighting.intensity = 0.02;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
 
         const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
+        // TODO - Find best light intensity
         global.intensity = 0.2;
-        
+
+        this.lightOverlay = new LightOverlay(this.scene);
 
         return lighting;
     }
@@ -124,7 +129,7 @@ export class DungeonState {
 
     private async buildFloor(spawn: Vec2) {
         const start = performance.now();
-        
+
         this.createGlobalLighting();
         // Load the assets for the map
         await this.floor.preloadAssets();
@@ -157,6 +162,8 @@ export class DungeonState {
         await this.buildFloor(spawn);
         // Move the camera to the spawn position
         this.moveCamera(spawn.toVec3().add(V3(0.5, 0, 0.5)));
+        // Initialize the light overlay
+        await this.lightOverlay.init();
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);
@@ -166,7 +173,7 @@ export class DungeonState {
         await this.scene.whenReadyAsync();
 
         console.log(`Loading the scene takes ${performance.now() - start}ms`);
-        
+
         this.engine.hideLoadingUI();
         this.isLoaded = true;
     }

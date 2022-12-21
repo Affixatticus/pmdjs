@@ -75,7 +75,7 @@ export class TileMeshContainer {
     public instances!: Record<string, MeshInstance>;
 
     constructor() {
-        this.list = { [Tilings.UNDEFINED]: null };
+        this.list = { [Tilings.BLANK]: null };
         this.instances = {};
     }
 
@@ -159,21 +159,21 @@ export class TileMeshContainer {
         options: {
             variant: number, generateMaterial?: boolean, height?: number
         } = { variant: 0, generateMaterial: true, height: 1 }) {
-        if (tiling === Tilings.UNDEFINED) return;
+        if (tiling === Tilings.BLANK) return;
         this.add(tiling, new WallTileMesh(tiling, texture, heightmap, scene, options), options.variant);
     }
 
     public createWaterTileMesh(tiling: Tilings, textures: CanvasImageSource[], heightmap: CanvasImageSource, scene: Scene, options: {
         waterHeight: number, waterSpeed: number, waterLevel: number
     } = { waterHeight: 0.5, waterSpeed: 0.1, waterLevel: -0.5 }) {
-        if (tiling === Tilings.UNDEFINED) return;
+        if (tiling === Tilings.BLANK) return;
         this.add(tiling, new WaterTileMesh(tiling, textures, heightmap, scene, options), 0);
     }
 
     // Instances
     /** Creates an instance of the given tiling, and places it at the given coordinates */
     public instance(pos: Vec2, tiling: Tilings, loaded: ByteGrid) {
-        if (tiling === Tilings.UNDEFINED) return;
+        if (tiling === Tilings.BLANK) return;
 
         if (loaded.get(...pos.spread()) === 0) {
             const tileMesh = this.getVariantForPlacing(tiling, pos);

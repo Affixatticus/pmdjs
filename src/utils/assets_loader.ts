@@ -19,6 +19,7 @@ export class AssetsLoader {
     static itemsTextures: HTMLImageElement;
     static trapsTextures: HTMLImageElement;
     static pokemon: Map<string, PokemonSpriteData> = new Map();
+    static lightMap: HTMLImageElement;
 
     static async loadDungeonTextures(path: string): Promise<DungeonTextures> {
         // Return the textures if they are already loaded
@@ -132,6 +133,14 @@ export class AssetsLoader {
             return this.trapsTextures;
         }
         return this.loadImage(OBJS_URL + "tiles.png");
+    }
+
+    static async loadLightmap(): Promise<HTMLImageElement> {
+        // Return the textures if they are already loaded
+        if (this.lightMap) {
+            return this.lightMap;
+        }
+        return this.loadImage(OBJS_URL + "lightmap.png");
     }
 
     private static async loadPokemonSpriteSheets(rootFolder: string, sources: string[], type: string): Promise<Record<string, HTMLImageElement>> {

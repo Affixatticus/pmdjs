@@ -7,7 +7,7 @@ import { ByteGrid, DungeonGrid, OffsetGrid } from "./grid";
 import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { FloorMesh } from "./floormesh";
 import { Tilings } from "./tiling";
-import { TileOverlay } from "./overlay";
+import { LightOverlay } from "./light_overlay";
 
 const TILE_VIEWPORT = V2(24, 24);
 
@@ -25,7 +25,6 @@ export class DungeonMap {
     private wallMeshes: TileMeshContainer;
     private waterMeshes: TileMeshContainer;
     private floor: FloorMesh;
-    private overlay: TileOverlay;
 
     // Consts
     private static DEFAULT_BACKGROUND: [number, number, number] = [0, 0, 0];
@@ -37,7 +36,6 @@ export class DungeonMap {
         this.wallMeshes = new TileMeshContainer();
         this.waterMeshes = new TileMeshContainer();
         this.floor = new FloorMesh(this.grid.width, this.grid.height);
-        this.overlay = new TileOverlay(this.scene);
 
         // Create a matrix to keep track of the loaded tiles
         this.loaded = new ByteGrid(map.width, map.height);
@@ -123,7 +121,7 @@ export class DungeonMap {
         ));
 
         // Get all the used tile combinations
-        await this.createWallMeshes(this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL], [Tiles.UNBREAKABLE_WALL]).getUniqueValues());
+        await this.createWallMeshes(this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS], [Tiles.UNBREAKABLE_WALL]).getUniqueValues());
 
         // Get the water tilings
         await this.createWaterMeshes(this.grid.mapTilingsFor(Tiles.WATER).getUniqueValues());
@@ -139,7 +137,7 @@ export class DungeonMap {
         size = size ?? V2(this.grid.width, this.grid.height).subtract(start);
 
         // Get the map as a list of tilings
-        const gridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL], [Tiles.UNBREAKABLE_WALL], start, size);
+        const gridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS], [Tiles.UNBREAKABLE_WALL], start, size);
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings) {
@@ -161,13 +159,6 @@ export class DungeonMap {
         for (const [pos, tiling] of gridTilings) {
             this.waterMeshes.instance(pos, tiling, this.loaded);
         }
-    }
-
-    private updateOverlay(start: Vec2, size: Vec2) {
-        // Update the loaded area
-        const grid = new OffsetGrid(size.x, size.y, start);
-        grid.fill(1);
-        this.overlay.coverArea(grid);
     }
 
     /** Renders to screen the first tiles and builds the ground */
@@ -222,7 +213,7 @@ export class DungeonMap {
         const redoStart = start.subtract(V2(1, 1));
         const redoSize = V2(values.width + 2, values.height + 2);
 
-        const wallGridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL], [Tiles.UNBREAKABLE_WALL], redoStart, redoSize);
+        const wallGridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS], [Tiles.UNBREAKABLE_WALL], redoStart, redoSize);
         const waterGridTilings = this.grid.mapTilingsFor(Tiles.WATER, [], [], redoStart, redoSize);
 
         // Load the meshes necessary

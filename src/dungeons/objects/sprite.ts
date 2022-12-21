@@ -67,7 +67,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.direction = Directions.SOUTH;
     }
 
-    public _shouldTurnAlphaTestOn(mesh: AbstractMesh): boolean {
+    public _shouldTurnAlphaTestOn(_mesh: AbstractMesh): boolean {
         return this.needAlphaTesting();
     };
 
@@ -148,7 +148,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         return texture;
     }
 
-
+    // TODO - Add a way to set the animation
     public setAnimation(name: string, draw: boolean = true) {
         this.animation = Random.choose(Object.keys(this.data.animations));
         this.currentFrame = 0;

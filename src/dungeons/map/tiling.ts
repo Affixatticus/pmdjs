@@ -85,7 +85,7 @@ export enum Tilings {
     FULL_TO_SOUTH_WEST_AND_OPPOSITE,
     ___UNUSED_25___,
 
-    UNDEFINED = 255,
+    BLANK = 255,
 }
 
 const NeighborsLookupTable: Record<string, Tilings> = {
@@ -406,18 +406,18 @@ export const DungeonTilingStarts: Record<TilingTextureMode, Partial<Record<Tiles
 /** Helper class */
 export class DungeonTiling {
     static getTiling(neighbors: boolean[]): number {
-        return NeighborsLookupTable[neighbors.map(n => n ? "1" : "0").join("")] ?? Tilings.UNDEFINED;
+        return NeighborsLookupTable[neighbors.map(n => n ? "1" : "0").join("")] ?? Tilings.BLANK;
     }
 
     /** Generic function for getting texture crops from different parameters */
     static getCrop(
         tiling: Tilings,
-        tile: Tiles = Tiles.WALL,
+        tileType: Tiles = Tiles.WALL,
         variant: number = 0,
         textureMode: TilingTextureMode = TilingTextureMode.HEIGHTMAP
     ): CropParams {
-        const start = DungeonTilingStarts[textureMode][tile];
-        if (start === undefined) throw Error(`No valid texture for this kind of tile ${tile}`);
+        const start = DungeonTilingStarts[textureMode][tileType];
+        if (start === undefined) throw Error(`No valid texture for this kind of tile ${tileType}`);
         const x = ((tiling % 3) + start + 3 * variant) * 24;
         const y = Math.floor(tiling / 3) * 24;
         return [x, y, 24, 24];
