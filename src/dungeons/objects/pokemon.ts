@@ -58,7 +58,7 @@ export class DungeonPokemon {
 
         opaqMesh.scalingDeterminant = 8;
         opaqMesh.renderingGroupId = TileRenderingGroupIds.WALL;
-        opaqMesh.rotate(Vector3.Right(), Math.PI / 4);
+        opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
 
         const material = new DungeonPokemonMaterial(data, scene);
         material.init("Idle", Random.int(7));

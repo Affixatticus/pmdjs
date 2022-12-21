@@ -144,7 +144,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .8,
                 // tileDensity: 4,
-                groundItemDensity: .16,
+                groundItemDensity: 100,
             },
         }
     }
