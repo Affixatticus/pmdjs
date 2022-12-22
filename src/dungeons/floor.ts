@@ -55,12 +55,12 @@ export class DungeonFloor {
         this.pokemon = new DungeonPokemonList();
 
         // Add the party to the scene
-        for (const pokemon of party) {
+        for (const species of this.party) {
             this.pokemon.add(
                 new DungeonPokemon(
                     this.getSpawnPosition() ?? V2(0, 0),
                     PokemonTypes.PARTNER,
-                    pokemon.id,
+                    species,
                 ));
         };
     }
@@ -71,9 +71,6 @@ export class DungeonFloor {
         this.map = new DungeonMap(this.scene, this.info.path, this.grid);
         await this.map.preload();
 
-        // Load the pokemon
-        // const start = performance.now();
-        // Preload the pokemon
         // await Promise.all(
         //     [
         //         ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0, false, 0))] : []),

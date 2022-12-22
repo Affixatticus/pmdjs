@@ -1,13 +1,12 @@
 import { Color3, Color4, Scene, Vector3 } from "@babylonjs/core";
 import { DungeonTextures } from "../../data/dungeons";
-import { Tiles } from "../../data/tiles";
+import { FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, Tiles, WALL_IGNORE_TILES, WALL_INCLUDE_TILES } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { V2, V3, Vec2 } from "../../utils/vectors";
-import { ByteGrid, DungeonGrid, OffsetGrid } from "./grid";
+import { ByteGrid, DungeonGrid } from "./grid";
 import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { FloorMesh } from "./floormesh";
 import { Tilings } from "./tiling";
-import { LightOverlay } from "./light_overlay";
 
 const TILE_VIEWPORT = V2(24, 24);
 
@@ -121,7 +120,7 @@ export class DungeonMap {
         ));
 
         // Get all the used tile combinations
-        await this.createWallMeshes(this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS], [Tiles.UNBREAKABLE_WALL]).getUniqueValues());
+        await this.createWallMeshes(this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES).getUniqueValues());
 
         // Get the water tilings
         await this.createWaterMeshes(this.grid.mapTilingsFor(Tiles.WATER).getUniqueValues());
@@ -137,7 +136,7 @@ export class DungeonMap {
         size = size ?? V2(this.grid.width, this.grid.height).subtract(start);
 
         // Get the map as a list of tilings
-        const gridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS], [Tiles.UNBREAKABLE_WALL], start, size);
+        const gridTilings = this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, start, size);
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings) {
@@ -183,7 +182,7 @@ export class DungeonMap {
         const size = TILE_VIEWPORT;
         this.placeWallTiles(start, size);
         this.placeWaterTiles(start, size);
-        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE], [], start, size), this.grid);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, start, size), this.grid);
     }
 
 
@@ -213,7 +212,7 @@ export class DungeonMap {
         const redoStart = start.subtract(V2(1, 1));
         const redoSize = V2(values.width + 2, values.height + 2);
 
-        const wallGridTilings = this.grid.mapTilingsFor(Tiles.WALL, [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS], [Tiles.UNBREAKABLE_WALL], redoStart, redoSize);
+        const wallGridTilings = this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, redoStart, redoSize);
         const waterGridTilings = this.grid.mapTilingsFor(Tiles.WATER, [], [], redoStart, redoSize);
 
         // Load the meshes necessary
@@ -239,7 +238,7 @@ export class DungeonMap {
             }
 
         // Update the floor
-        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, [Tiles.WATER, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE], [Tiles.UNOBSTRUCTABLE], redoStart, redoSize), this.grid);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, redoStart, redoSize), this.grid);
     }
 
     // Disposing

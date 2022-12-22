@@ -20,6 +20,7 @@ export class ItemMaterial extends StandardMaterial {
         texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         this.diffuseTexture = texture;
         this.specularColor = BLACK_EC;
+        this.setDisabled(this.disabled);
     }
 
     public setDisabled(disabled = true) {
@@ -57,11 +58,6 @@ export class DungeonItem extends DungeonObject {
         const material = new ItemMaterial("item", source, scene, ...getItemCrop(this.id));
 
         plane.material = material;
-
-        // One in three, set the material to disabled
-        if (Math.random() < 1 / 3) {
-            material.setDisabled();
-        }
     }
 
     public dispose() {

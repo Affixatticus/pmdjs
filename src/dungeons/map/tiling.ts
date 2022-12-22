@@ -422,4 +422,21 @@ export class DungeonTiling {
         const y = Math.floor(tiling / 3) * 24;
         return [x, y, 24, 24];
     }
+    /** Get the tiling for a tile based on the adjacent tiles
+     * @param thisTile The tile to get the tiling for
+     * @param neighbors The adjacent tiles
+     * @param tile The tile to check for
+     * @param ignoreTiles These tiles will create an empty spot in the tiling, as if the tiling was cut off
+     * @param includeTiles These tiles will be treated the same as the tile
+     */
+    static getGridTiling(thisTile: Tiles, neighbors: Tiles[], tile: number, ignoreTiles: number[] = [], includeTiles: number[] = []) {
+        if (!includeTiles.includes(thisTile))
+            if (thisTile !== tile)
+                return Tilings.BLANK;
+
+        // Convert the adjacent tiles to a boolean if they are the same as the tile
+        const neighborsThatEqualToTile = neighbors.map(t => t === tile || ignoreTiles.includes(t));
+        // Get the tiling for the neighbors
+        return DungeonTiling.getTiling(neighborsThatEqualToTile);
+    }
 }

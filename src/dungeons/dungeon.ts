@@ -4,7 +4,6 @@ import { PokemonData } from "../data/pokemon";
 import { Controls } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor, TileRenderingGroupIds } from "./floor";
-import { OffsetGrid } from "./map/grid";
 import { LightOverlay } from "./map/light_overlay";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
@@ -104,8 +103,8 @@ export class DungeonState {
     private createGlobalLighting() {
         const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
         lighting.intensity = 0.4;
-        lighting.intensity = 0.8;
         lighting.intensity = 0.02;
+        lighting.intensity = 0.8;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
 
         const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
@@ -148,8 +147,6 @@ export class DungeonState {
         this.isLoaded = false;
         this.engine.displayLoadingUI();
 
-        // LOADING CODE
-
         const start = performance.now();
 
         /** Dungeon Floor Loading */
@@ -157,7 +154,7 @@ export class DungeonState {
         this.generateFloor();
         // Get the spawn position
         // const spawn = this.chooseSpawnPosition();
-        const spawn = V2(5, 5);
+        const spawn = this.chooseSpawnPosition();
         // Draw the floor
         await this.buildFloor(spawn);
         // Move the camera to the spawn position

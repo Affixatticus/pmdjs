@@ -1,7 +1,7 @@
 import { Tiles } from "../../data/tiles";
 import Random from "../../utils/random";
 import { V2, Vec2 } from "../../utils/vectors";
-import { DungeonTiling, Tilings } from "./tiling";
+import { DungeonTiling } from "./tiling";
 
 export class ByteGrid {
     private _width: number;
@@ -215,25 +215,21 @@ export class DungeonGrid extends ByteGrid {
         super(width, height, data);
     }
 
-    /** Returns a new grid with each cell changed to the correct tiling based on the given tile */
+    /** Returns a new grid with each cell changed to the correct tiling based on the given parameters
+     * @param tile The tile to check for
+     * @param ignoreTiles These tiles will create an empty spot in the tiling, as if the tiling was cut off
+     * @param includeTiles These tiles will be treated the same as the tile
+     * @param start The start position of the grid (to get the tilings subgrid with all the context)
+     * @param size The size of the grid (to get the tilings subgrid with all the context)
+     */
     public mapTilingsFor(tile: number, ignoreTiles: number[] = [], includeTiles: number[] = [], start: Vec2 = V2(0, 0), size: Vec2 = this.size): OffsetGrid {
         const tilingGrid = new OffsetGrid(...size.spread(), start);
 
         for (let y = start.y; y < start.y + size.y; y++) {
             for (let x = start.x; x < start.x + size.x; x++) {
-                if (!includeTiles.includes(this.get(x, y)))
-                    if (this.get(x, y) !== tile) {
-                        tilingGrid.set(x, y, Tilings.BLANK);
-                        continue;
-                    }
-
-                // Get the adjacent tiles
-                const neighbors = this.getNeighbors(x, y);
-                // Convert the adjacent tiles to a boolean if they are the same as the tile
-                const neighborsThatEqualToTile = neighbors.map(t => t === tile || ignoreTiles.includes(t));
-                // Get the tiling for the neighbors
-                const tiling = DungeonTiling.getTiling(neighborsThatEqualToTile);
-                tilingGrid.set(x, y, tiling);
+                tilingGrid.set(x, y, (DungeonTiling.getGridTiling(
+                    this.get(x, y), this.getNeighbors(x, y),
+                    tile, ignoreTiles, includeTiles)));
             }
         }
 
