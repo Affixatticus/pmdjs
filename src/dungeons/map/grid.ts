@@ -105,8 +105,8 @@ export class ByteGrid {
     public getOpenPosition(): Vec2 | undefined {
         const openPositions: Vec2[] = [];
 
-        for (let y = 1; y < this._height - 1; y++)
-            for (let x = 1; x < this._width - 1; x++) {
+        for (let y = 2; y < this._height - 1; y++)
+            for (let x = 2; x < this._width - 1; x++) {
                 if (this.get(x, y) !== Tiles.FLOOR)
                     continue;
 
@@ -116,10 +116,7 @@ export class ByteGrid {
                     openPositions.push(V2(x, y));
             }
 
-        if (openPositions.length === 0)
-            return undefined;
-
-        return Random.choose(openPositions);
+        return (openPositions.length === 0) ? undefined : Random.choose(openPositions);
     }
 
     /** Returns a random position where the value is 0 */

@@ -121,7 +121,7 @@ export class DungeonObjectGenerator {
     private createItem(pos: Vec2) {
         const item = this.getRandomItem();
         const object = new DungeonItem(pos, item);
-        this.clearTile(pos);
+        this.clearTile(pos, Tiles.ITEM);
         return object;
     }
     private createTrap(pos: Vec2) {

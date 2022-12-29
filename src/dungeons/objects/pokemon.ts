@@ -1,6 +1,7 @@
 import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
 import { PokemonFormIdentifier } from "../../data/pokemon";
 import { AssetsLoader } from "../../utils/assets_loader";
+import { Directions } from "../../utils/direction";
 import Random from "../../utils/random";
 import { V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
@@ -13,32 +14,30 @@ export const enum PokemonTypes {
     BOSS
 };
 
-export enum Directions {
-    SOUTH,
-    SOUTH_EAST,
-    EAST,
-    NORTH_EAST,
-    NORTH,
-    NORTH_WEST,
-    WEST,
-    SOUTH_WEST
-};
-
 export class DungeonPokemon {
-    public pos: Vec2;
+    public _position: Vec2;
+    public _direction: Directions;
     public type: PokemonTypes;
     public id: PokemonFormIdentifier;
-    public direction: Directions;
+
+    /** Turn calculation components */
+    public nextTurnPosition!: Vec2;
+    public nextTurnDirection!: Directions;
+    public keepWalking: boolean = false;
 
     private opaqMesh!: Mesh;
     private tranMesh!: Mesh;
-    private material!: DungeonPokemonMaterial;
+    public material!: DungeonPokemonMaterial;
+
 
     constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
-        this.pos = pos;
+        this._position = pos;
         this.type = type;
         this.id = id;
-        this.direction = Directions.SOUTH;
+        this._direction = Directions.SOUTH;
+
+        this.nextTurnPosition = pos.clone();
+        this.nextTurnDirection = this._direction;
     }
 
     public async addToScene(scene: Scene) {
@@ -54,14 +53,14 @@ export class DungeonPokemon {
             height: 1,
         }, scene);
 
-        opaqMesh.position = this.pos.gameFormat.subtract(V3(0.5, 0, 0.5));
+        opaqMesh.position = this._position.gameFormat.add(V3(0.5, 0, -0.5));
 
         opaqMesh.scalingDeterminant = 8;
         opaqMesh.renderingGroupId = TileRenderingGroupIds.WALL;
         opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
 
         const material = new DungeonPokemonMaterial(data, scene);
-        material.init("Idle", Random.int(7));
+        material.init("Idle", Directions.get(Random.int(7)));
         this.material = material;
         this.opaqMesh = opaqMesh;
         opaqMesh.material = this.material;
@@ -73,8 +72,8 @@ export class DungeonPokemon {
     }
 
     public animate(tick: number) {
-        // Animate the pokemon once the material is loaded
-        this.material?.animate(tick);
+        if (!this.material) return;
+        this.material.animate(tick);
     }
 
     public dispose = () => {
@@ -82,6 +81,34 @@ export class DungeonPokemon {
         this.tranMesh.dispose();
         this.material.dispose();
     };
+
+    // Getters and setters
+    public get position() {
+        return this._position;
+    }
+
+    public set position(pos: Vec2) {
+        this._position = pos;
+        this.opaqMesh.position = pos.gameFormat.add(V3(0.5, 0, -0.5));
+        this.tranMesh.position = pos.gameFormat.add(V3(0.5, 0, -0.5));
+    }
+
+    public get direction() {
+        return this._direction;
+    }
+
+    public set direction(dir: Directions) {
+        this._direction = dir;
+        this.nextTurnDirection = dir;
+        this.material?.setDirection(dir);
+    }
+
+    public setAnimation(animName: string) {
+        if (!this.material) return;
+
+        if (animName === this.material.animation) return;
+        this.material.setAnimation(animName);
+    }
 }
 
 export class DungeonPokemonList {
@@ -91,12 +118,16 @@ export class DungeonPokemonList {
         this.objects = [];
     }
 
-    public getLeader() {
-        return this.objects.find(obj => obj.type === PokemonTypes.LEADER);
+    public getLeader(): DungeonPokemon {
+        return this.objects.find(obj => obj.type === PokemonTypes.LEADER) as DungeonPokemon;
     }
 
     public getPartners() {
         return this.objects.filter(obj => obj.type === PokemonTypes.PARTNER);
+    }
+
+    public getAll() {
+        return this.objects;
     }
 
     public render(scene: Scene) {
@@ -112,7 +143,11 @@ export class DungeonPokemonList {
     }
 
     public sort() {
-        this.objects.sort((a, b) => a.pos.x - b.pos.x || a.pos.y - b.pos.y);
+        this.objects.sort((a, b) => a._position.x - b._position.x || a._position.y - b._position.y);
+    }
+
+    public get(x: number, y: number): DungeonPokemon | undefined {
+        return this.objects.find(obj => obj._position.x === x && obj._position.y === y);
     }
 
     public add(obj: DungeonPokemon) {

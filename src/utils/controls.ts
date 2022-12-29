@@ -1,72 +1,166 @@
 import { V2, Vec2 } from "./vectors";
 
-enum Keys {
-    L_UP = "ArrowUp",
-    L_DOWN = "ArrowDown",
-    L_LEFT = "ArrowLeft",
-    L_RIGHT = "ArrowRight",
-    R_UP = "w",
-    R_DOWN = "s",
-    R_LEFT = "a",
-    R_RIGHT = "d",
+export class Button {
+    static readonly A: Button = new Button("a", "KeyZ");
+    static readonly B: Button = new Button("b", "KeyX");
+    static readonly X: Button = new Button("x", "KeyA");
+    static readonly Y: Button = new Button("y", "KeyS");
+    static readonly L: Button = new Button("l", "KeyQ");
+    static readonly R: Button = new Button("r", "KeyW");
+    static readonly ZL: Button = new Button("zl", "KeyE");
+    static readonly ZR: Button = new Button("zr", "KeyD");
+    static readonly MINUS: Button = new Button("minus", "Backspace");
+    static readonly PLUS: Button = new Button("plus", "Enter");
+    static readonly LCLICK: Button = new Button("lclick", "1");
+    static readonly RCLICK: Button = new Button("rclick", "2");
+    static readonly HOME: Button = new Button("home", "Escape");
+    static readonly CAPTURE: Button = new Button("capture", "KeyP");
+    static readonly DPAD_UP: Button = new Button("dpad_up", "KeyT");
+    static readonly DPAD_DOWN: Button = new Button("dpad_down", "KeyG");
+    static readonly DPAD_LEFT: Button = new Button("dpad_left", "KeyF");
+    static readonly DPAD_RIGHT: Button = new Button("dpad_right", "KeyH");
+
+    static readonly list = [
+        Button.A,
+        Button.B,
+        Button.X,
+        Button.Y,
+        Button.L,
+        Button.R,
+        Button.ZL,
+        Button.ZR,
+        Button.MINUS,
+        Button.PLUS,
+        Button.LCLICK,
+        Button.RCLICK,
+        Button.HOME,
+        Button.CAPTURE,
+        Button.DPAD_UP,
+        Button.DPAD_DOWN,
+        Button.DPAD_LEFT,
+        Button.DPAD_RIGHT,
+    ];
+
+    // Non static part
+    public isPressed: boolean;
+    public isDown: boolean;
+    public isUp: boolean;
+    public button: string;
+    public keyCode: string;
+
+    constructor(button: string, keyboardKey: string) {
+        this.isPressed = false;
+        this.isDown = false;
+        this.isUp = false;
+        this.button = button;
+        this.keyCode = keyboardKey;
+    }
+
+    public Keyboard_update(isDown: boolean) {
+        this.isPressed = isDown;
+        this.isDown = isDown;
+        this.isUp = !isDown;
+    }
 };
 
-/** 
- * Container for the controls.
- */
-export class Controls {
-    private keys: Set<Keys>;
+export class Stick {
+    static readonly LEFT: Stick = new Stick("left",
+        [
+            new Button("left_stick_up", "ArrowUp"),
+            new Button("left_stick_down", "ArrowDown"),
+            new Button("left_stick_left", "ArrowLeft"),
+            new Button("left_stick_right", "ArrowRight"),
+        ]);
+    static readonly RIGHT: Stick = new Stick("right",
+        [
+            new Button("right_stick_up", "KeyI"),
+            new Button("right_stick_down", "KeyK"),
+            new Button("right_stick_left", "KeyJ"),
+            new Button("right_stick_right", "KeyL"),
+        ]);
 
-    /** Left Stick */
-    public LS: Vec2;
-    /** Right Stick */
-    public RS: Vec2;
+    public position: Vec2;
+
+    public stickId: string;
+    public buttonGroup: Button[];
+
+
+    constructor(stickId: string, buttonGroup: Button[]) {
+        this.position = V2(0, 0);
+
+        this.stickId = stickId;
+        this.buttonGroup = buttonGroup;
+    }
+
+    public Keyboard_updateButton(isDown: boolean, keyCode: string) {
+        // Check if the button is in the group
+        const button = this.buttonGroup.find((b) => b.keyCode === keyCode);
+
+        if (button)
+            button.Keyboard_update(isDown);
+
+        // Update the position
+        this.position.x =
+            (this.buttonGroup[3].isPressed ? 1 : 0) - (this.buttonGroup[2].isPressed ? 1 : 0);
+        this.position.y =
+            (this.buttonGroup[0].isPressed ? 1 : 0) - (this.buttonGroup[1].isPressed ? 1 : 0)
+    }
+}
+
+export class Controls {
+    static A = () => Button.A.isDown;
+    static B = () => Button.B.isDown;
+    static X = () => Button.X.isDown;
+    static Y = () => Button.Y.isDown;
+    static L = () => Button.L.isDown;
+    static R = () => Button.R.isDown;
+    static ZL = () => Button.ZL.isDown;
+    static ZR = () => Button.ZR.isDown;
+    static MINUS = () => Button.MINUS.isDown;
+    static PLUS = () => Button.PLUS.isDown;
+    static LCLICK = () => Button.LCLICK.isDown;
+    static RCLICK = () => Button.RCLICK.isDown;
+    static HOME = () => Button.HOME.isDown;
+    static CAPTURE = () => Button.CAPTURE.isDown;
+    static DPAD_UP = () => Button.DPAD_UP.isDown;
+    static DPAD_DOWN = () => Button.DPAD_DOWN.isDown;
+    static DPAD_LEFT = () => Button.DPAD_LEFT.isDown;
+    static DPAD_RIGHT = () => Button.DPAD_RIGHT.isDown;
+
+    static leftStick() {
+        return Stick.LEFT.position;
+    }
+    static rightStick() {
+        return Stick.RIGHT.position;
+    }
+
+    private onMouseDown(e: KeyboardEvent) {
+        // Find the corresponding button
+        const button = Button.list.find((b) => b.keyCode === e.code);
+        if (button) {
+            button.Keyboard_update(true);
+        }
+        // Find the corresponding stick
+        Stick.LEFT.Keyboard_updateButton(true, e.code);
+        Stick.RIGHT.Keyboard_updateButton(true, e.code);
+    }
+    private onMouseUp(e: KeyboardEvent) {
+        // Find the corresponding button
+        const button = Button.list.find((b) => b.keyCode === e.code);
+        if (button) {
+            button.Keyboard_update(false);
+        }
+        // Find the corresponding stick
+        Stick.LEFT.Keyboard_updateButton(false, e.code);
+        Stick.RIGHT.Keyboard_updateButton(false, e.code);
+    }
 
     constructor() {
-        this.keys = new Set();
-        this.LS = V2(0, 0);
-        this.RS = V2(0, 0);
+        const mouseDown = this.onMouseDown.bind(this);
+        const mouseUp = this.onMouseUp.bind(this);
 
         // Add event listeners
-        document.addEventListener("keydown", (e) => this.mouseDown(e));
-        document.addEventListener("keyup", (e) => this.mouseUp(e));
-    }
-
-    private updateSticks() {
-        // Update the left stick
-        this.LS.x = 0, this.LS.y = 0;
-        if (this.isPressed(Keys.L_UP)) this.LS.y += 1;
-        if (this.isPressed(Keys.L_DOWN)) this.LS.y -= 1;
-        if (this.isPressed(Keys.L_LEFT)) this.LS.x -= 1;
-        if (this.isPressed(Keys.L_RIGHT)) this.LS.x += 1;
-
-        // Update the right stick
-        this.RS.x = 0, this.RS.y = 0;
-        if (this.isPressed(Keys.R_UP)) this.RS.y += 1;
-        if (this.isPressed(Keys.R_DOWN)) this.RS.y -= 1;
-        if (this.isPressed(Keys.R_LEFT)) this.RS.x -= 1;
-        if (this.isPressed(Keys.R_RIGHT)) this.RS.x += 1;
-    }
-
-    private mouseDown(e: KeyboardEvent) {
-        // Return if the element was already in the array
-        if (this.keys.has(e.key as Keys)) return;
-        // Add the current keyCode to the keys array
-        this.keys.add(e.key as Keys);
-        // Update the sticks
-        this.updateSticks();
-    }
-
-    private mouseUp(e: KeyboardEvent) {
-        // Return if the element was not in the set
-        if (!this.keys.has(e.key as Keys)) return;
-        // Remove the current keyCode from the keys set
-        this.keys.delete(e.key as Keys);
-        // Update the sticks
-        this.updateSticks();
-    }
-
-    public isPressed(key: string): boolean {
-        return this.keys.has(key as Keys);
+        document.addEventListener("keydown", (e) => mouseDown(e));
+        document.addEventListener("keyup", (e) => mouseUp(e));
     }
 }

@@ -12,9 +12,14 @@ export function randomChoice<T>(arr: Array<T>): T {
     return arr[randInt(arr.length - 1)];
 }
 
+export function randomPick<T>(arr: Array<T>): T {
+    return arr.splice(randInt(arr.length - 1), 1)[0];
+}
+
 export function randomChance(percentage: number) {
     return randInt(100) < percentage;
 }
+
 
 export function oneInChance(n: number) {
     return randInt(n) === 0;
@@ -43,6 +48,7 @@ const Random = {
     int: randInt,
     float: randFloat,
     choose: randomChoice,
+    pick: randomPick,
     chance: randomChance,
     oneIn: oneInChance,
     shuffle: shuffleArray,

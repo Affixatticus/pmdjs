@@ -1,13 +1,15 @@
 import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HemisphericLight, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
-import { Controls } from "../utils/controls";
+import { Button, Controls, Stick } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor, TileRenderingGroupIds } from "./floor";
+import { DungeonLogic } from "./logic/logic";
+import { DungeonStartup } from "./logic/startup";
 import { LightOverlay } from "./map/light_overlay";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
-const CAMERA_OFFSET = V3(0, 10, 2);
+const CAMERA_OFFSET = V3(0.5, 10, 2);
 
 
 export interface DungeonStateData {
@@ -22,17 +24,18 @@ export interface DungeonStateData {
 export class DungeonState {
     // Engine
     private engine: Engine;
-    private controls: Controls;
+    public controls: Controls;
     // Scene
     private scene: Scene;
     public camera: TargetCamera;
     // -> Floor
-    private floor!: DungeonFloor;
+    public floor!: DungeonFloor;
     private lightOverlay!: LightOverlay;
     // State
-    private isLoaded: boolean;
+    public isLoaded: boolean;
     private data: DungeonStateData;
     private info: DungeonFloorInfo;
+    private logic: DungeonLogic;
 
     constructor(engine: Engine, data: DungeonStateData, controls: Controls) {
         // Definition
@@ -44,6 +47,7 @@ export class DungeonState {
         this.scene.clearColor = new Color4(0, 0, 0, 1);
         this.data = data;
         this.info = this.getFloorInfo();
+        this.logic = new DungeonLogic(this);
 
         // Loading
         this.isLoaded = false;
@@ -154,17 +158,17 @@ export class DungeonState {
         this.generateFloor();
         // Get the spawn position
         // const spawn = this.chooseSpawnPosition();
-        const spawn = this.chooseSpawnPosition();
+        const spawn = DungeonStartup.getStartingLeaderPosition();
         // Draw the floor
         await this.buildFloor(spawn);
         // Move the camera to the spawn position
-        this.moveCamera(spawn.toVec3().add(V3(0.5, 0, 0.5)));
+        this.moveCamera(spawn.toVec3());
         // Initialize the light overlay
         await this.lightOverlay.init();
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);
-        cylinder.position = spawn.gameFormat.subtract(V3(0.025, -2.5, -0.025)).add(V3(0.5, 0, 0.5));
+        cylinder.position = spawn.gameFormat.add(V3(0.5, 2.5, -0.5));
         cylinder.renderingGroupId = TileRenderingGroupIds.WALL;
 
         await this.scene.whenReadyAsync();
@@ -180,10 +184,12 @@ export class DungeonState {
         const pos = this.camera.position;
 
         // Get the camera's movement
-        const move = this.controls.RS.scale(0.1);
+        const move = Stick.RIGHT.position.scale(0.1);
+
+        const yDifference = Button.DPAD_UP.isDown ? 0.1 : Button.DPAD_DOWN.isDown ? -0.1 : 0;
 
         // Move the camera
-        this.camera.position = pos.add(move.toVec3(this.controls.LS.y * 0.1));
+        this.camera.position = pos.add(move.toVec3(yDifference));
     }
 
     private tick = 0;
@@ -194,6 +200,7 @@ export class DungeonState {
             this.floor.update(this.tick);
             this.controlCamera();
         }
+        this.logic.update();
         this.tick++;
     }
 }

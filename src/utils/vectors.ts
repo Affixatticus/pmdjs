@@ -24,6 +24,10 @@ export class Vec2 extends Vector2 {
         return [this.x, this.y];
     }
 
+    public get xy(): [number, number] {
+        return this.spread();
+    }
+
     public round() {
         return V2(Math.round(this.x), Math.round(this.y));
     }
@@ -76,6 +80,11 @@ export class Vec3 extends Vector3 {
     public spread(): [number, number, number] {
         return [this.x, this.y, this.z];
     }
+
+    public get xyz(): [number, number, number] { return this.spread(); }
+    public get xy(): [number, number] { return [this.x, this.y]; }
+    public get xz(): [number, number] { return [this.x, this.z]; }
+    public get yz(): [number, number] { return [this.y, this.z]; }
 
     public round() {
         return V3(Math.round(this.x), Math.round(this.y), Math.round(this.z));

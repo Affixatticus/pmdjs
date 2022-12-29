@@ -1,6 +1,5 @@
 import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
-import Random from "../../utils/random";
-import { Directions } from "./pokemon";
+import { Directions } from "../../utils/direction";
 
 export interface PokemonSpriteAnimationData {
     /** Name of the animation */
@@ -43,18 +42,21 @@ export interface PokemonSpriteData {
 };
 
 const SHEET_SIZE = 24 * 8;
+/** Animation Speed */
 const T = 120;
 export class DungeonPokemonMaterial extends StandardMaterial {
     private data: PokemonSpriteData;
     public texture: DynamicTexture;
 
-    private animation: string;
-    private direction: Directions;
+    public animation: string;
+    public direction: Directions;
 
     /** The current frame */
-    private currentFrame!: number;
+    public currentFrame!: number;
     /** Check again time */
-    private caTime: number = 0;
+    public caTime: number = 0;
+
+    public animCallback: ((material: DungeonPokemonMaterial) => void) | null = null;
 
     private firstAnimation: boolean = true;
 
@@ -81,7 +83,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
 
         // Determine how many frames there are
         const dirs = sheet.height / anim.frameHeight;
-        const sourceY = dirs === 8 ? this.direction : dirs === 4 ? (this.direction / 2 | 0) : 0;
+        const sourceY = dirs === 8 ? this.direction.index : dirs === 4 ? (this.direction.index / 2 | 0) : 0;
 
         // Draw the frame
         // Clear the ctx
@@ -125,8 +127,19 @@ export class DungeonPokemonMaterial extends StandardMaterial {
             this.setFrame(tick % T | 0, this.currentFrame + 1);
         }
 
+        if (this.currentFrame === anim.durations.length - 1) {
+            this.runCallback();
+        }
+
         this.currentFrame = this.currentFrame % anim.durations.length;
+
         this.draw();
+    }
+
+    private runCallback() {
+        const result = this.animCallback?.(this);
+        // Clear the callback
+        if (!result) this.animCallback = null;
     }
 
     public init(animation: string, direction: Directions) {
@@ -150,7 +163,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
 
     // TODO - Add a way to set the animation
     public setAnimation(name: string, draw: boolean = true) {
-        this.animation = Random.choose(Object.keys(this.data.animations));
+        this.animation = name;
         this.currentFrame = 0;
         this.caTime = 0;
         this.firstAnimation = true;

@@ -1,13 +1,17 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
-import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
-import { V2, Vec2 } from "../utils/vectors";
+import { PokemonData, PokemonFormIdentifier, PokemonForms } from "../data/pokemon";
+import { Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
 import { DungeonGrid } from "./map/grid";
 import { DungeonMap } from "./map/scene";
 import { DungeonObjectContainer } from "./objects/object";
 import { DungeonPokemon, DungeonPokemonList, PokemonTypes } from "./objects/pokemon";
+import { DungeonStartup } from "./logic/startup";
+import { Tiles } from "../data/tiles";
+import { AssetsLoader } from "../utils/assets_loader";
+import { Directions } from "../utils/direction";
 
 export enum TileRenderingGroupIds {
     WATER,
@@ -20,13 +24,12 @@ export enum TileRenderingGroupIds {
 export class DungeonFloor {
     private scene: Scene;
     private info: DungeonFloorInfo;
-    private party: PokemonFormIdentifier[] = [];
 
     public grid!: DungeonGrid;
     public map!: DungeonMap;
     public objects!: DungeonObjectContainer;
     public pokemon!: DungeonPokemonList;
-
+    private partySpecies: PokemonFormIdentifier[] = [];
 
     constructor(scene: Scene, info: DungeonFloorInfo) {
         this.scene = scene;
@@ -49,20 +52,20 @@ export class DungeonFloor {
     }
 
     public generatePokemon(party: PokemonData[]) {
-        this.party = party.map(p => p.id);
+        this.partySpecies = party.map(p => p.id);
 
         // Generate the pokemon
         this.pokemon = new DungeonPokemonList();
 
-        // Add the party to the scene
-        for (const species of this.party) {
-            this.pokemon.add(
-                new DungeonPokemon(
-                    this.getSpawnPosition() ?? V2(0, 0),
-                    PokemonTypes.PARTNER,
-                    species,
-                ));
-        };
+        // Place the leader
+        this.pokemon.add(new DungeonPokemon(DungeonStartup.placeLeader(this), PokemonTypes.LEADER, party[0].id));
+
+        // Place the partners
+        party.forEach((p, i) => {
+            if (i > 0) {
+                this.pokemon.add(new DungeonPokemon(DungeonStartup.placePartner(this), PokemonTypes.PARTNER, p.id));
+            }
+        })
     }
 
     /** Loads the tiles */
@@ -71,14 +74,14 @@ export class DungeonFloor {
         this.map = new DungeonMap(this.scene, this.info.path, this.grid);
         await this.map.preload();
 
-        // await Promise.all(
-        //     [
-        //         ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0, false, 0))] : []),
-        //         ...this.party.map(e => AssetsLoader.loadPokemon(...e)),
-        //     ]
-        // );
-        // console.log(AssetsLoader.pokemon);
-        // console.log(`-> Loaded ${this.info?.enemies?.length ?? 0 + this.party.length} pokemon in ${performance.now() - start}ms`);
+        const start = performance.now();
+        await Promise.all(
+            [
+                ...(this.info.enemies ? [this.info.enemies.map(e => AssetsLoader.loadPokemon(e.species, 0, false, 0))] : []),
+                ...this.partySpecies.map(e => AssetsLoader.loadPokemon(...e)),
+            ]
+        );
+        console.log(`-> Loaded ${this.info?.enemies?.length ?? 0 + this.partySpecies.length} pokemon in ${performance.now() - start}ms`);
     }
 
     // Rendering
@@ -99,11 +102,32 @@ export class DungeonFloor {
 
     public update(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate(tick / 4 | 0);
+        this.pokemon.animate(tick / 3 | 0);
     }
 
     // Utility
     public getSpawnPosition(): Vec2 {
         return this.grid.getOpenPosition() ?? this.grid.getFreePosition() ?? this.grid.getRandomPosition();
+    }
+
+    public isObstacle(x: number, y: number, pokemon: DungeonPokemon): boolean {
+        const OBSTACLES = [
+            Tiles.WALL,
+            Tiles.UNBREAKABLE_WALL,
+        ];
+
+        return OBSTACLES.includes(this.grid.get(x, y));
+    }
+
+    public canMoveTowards(pokemon: DungeonPokemon, dir: Directions): boolean {
+        const pos = pokemon.position.add(dir.toVector());
+
+        // Check if the position in the grid is usable for this pokemon
+        if (this.isObstacle(pos.x, pos.y, pokemon)) return false;
+
+        // Check if no pokemon will occupy this position
+        if (this.pokemon.getAll().some(p => p.nextTurnPosition.equals(pos))) return false;
+
+        return true;
     }
 }

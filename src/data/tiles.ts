@@ -6,6 +6,7 @@ export enum Tiles {
     WATER,
     TILE,
     CLEAR_TILE,
+    ITEM,
     UNBREAKABLE_WALL,
 
     MARKER_ITEM,
@@ -24,8 +25,8 @@ export enum Tiles {
 /** Tiles that should render as FLOOR */
 export const WALL_IGNORE_TILES = [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS];
 export const WALL_INCLUDE_TILES = [Tiles.UNBREAKABLE_WALL];
-export const FLOOR_IGNORE_TILES = [Tiles.WATER, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE];
-export const FLOOR_INCLUDE_TILES = [Tiles.UNOBSTRUCTABLE];
+export const FLOOR_IGNORE_TILES = [Tiles.WATER, Tiles.ITEM, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE];
+export const FLOOR_INCLUDE_TILES = [Tiles.ITEM, Tiles.UNOBSTRUCTABLE];
 
 export const TILE_WIDTH = 48;
 
