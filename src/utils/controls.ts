@@ -108,29 +108,29 @@ export class Stick {
 }
 
 export class Controls {
-    static A = () => Button.A.isDown;
-    static B = () => Button.B.isDown;
-    static X = () => Button.X.isDown;
-    static Y = () => Button.Y.isDown;
-    static L = () => Button.L.isDown;
-    static R = () => Button.R.isDown;
-    static ZL = () => Button.ZL.isDown;
-    static ZR = () => Button.ZR.isDown;
-    static MINUS = () => Button.MINUS.isDown;
-    static PLUS = () => Button.PLUS.isDown;
-    static LCLICK = () => Button.LCLICK.isDown;
-    static RCLICK = () => Button.RCLICK.isDown;
-    static HOME = () => Button.HOME.isDown;
-    static CAPTURE = () => Button.CAPTURE.isDown;
-    static DPAD_UP = () => Button.DPAD_UP.isDown;
-    static DPAD_DOWN = () => Button.DPAD_DOWN.isDown;
-    static DPAD_LEFT = () => Button.DPAD_LEFT.isDown;
-    static DPAD_RIGHT = () => Button.DPAD_RIGHT.isDown;
+    static get A() { return Button.A.isDown; };
+    static get B() { return Button.B.isDown; };
+    static get X() { return Button.X.isDown; };
+    static get Y() { return Button.Y.isDown; };
+    static get L() { return Button.L.isDown; };
+    static get R() { return Button.R.isDown; };
+    static get ZL() { return Button.ZL.isDown; };
+    static get ZR() { return Button.ZR.isDown; };
+    static get MINUS() { return Button.MINUS.isDown; };
+    static get PLUS() { return Button.PLUS.isDown; };
+    static get LCLICK() { return Button.LCLICK.isDown; };
+    static get RCLICK() { return Button.RCLICK.isDown; };
+    static get HOME() { return Button.HOME.isDown; };
+    static get CAPTURE() { return Button.CAPTURE.isDown; };
+    static get DPAD_UP() { return Button.DPAD_UP.isDown; };
+    static get DPAD_DOWN() { return Button.DPAD_DOWN.isDown; };
+    static get DPAD_LEFT() { return Button.DPAD_LEFT.isDown; };
+    static get DPAD_RIGHT() { return Button.DPAD_RIGHT.isDown; };
 
-    static leftStick() {
+    static get leftStick() {
         return Stick.LEFT.position;
     }
-    static rightStick() {
+    static get rightStick() {
         return Stick.RIGHT.position;
     }
 

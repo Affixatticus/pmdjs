@@ -46,6 +46,7 @@ export class DungeonMap {
             const point = V3(event.pickInfo.pickedPoint as Vector3).toVec2().roundDown().subtract(V2(0, -1)).multiply(V2(1, -1));
             const area = new ByteGrid(1, 1);
 
+            console.log(point);
 
             // If the tile is Unbreakable, return
             if (this.grid.get(...point.spread()) === Tiles.UNBREAKABLE_WALL) return;

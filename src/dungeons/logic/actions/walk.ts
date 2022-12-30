@@ -13,6 +13,20 @@ export class WalkAction implements TurnAction {
     public doLogging: boolean = false;
     public logMessage!: string | never;
 
+
+    // Animation
+    private static ANIMATION_LENGTH = 48;
+    private static TURNING_LENGTH = 4;
+
+    private currentStep: number = 0;
+    private turnStep: number = 0;
+    private rotations: Directions[];
+
+    /** Step at which the moving can begin */
+    private walkStart: number;
+    /** Distance travelled each step */
+    private walkDelta: number;
+
     constructor(pokemon: DungeonPokemon, direction: Directions) {
         this.done = false;
         this.pokemon = pokemon;
@@ -22,22 +36,46 @@ export class WalkAction implements TurnAction {
         this.pokemon.nextTurnPosition = pokemon.position.add(direction.toVector());
         // Set the next turn direction of this pokemon
         this.pokemon.nextTurnDirection = direction;
-    }
 
-    static MAX_STEP = 48;
-    private step: number = WalkAction.MAX_STEP;
-    private firstStep = () => this.step === WalkAction.MAX_STEP;
+        // Get the number of rotations needed to get to the target direction
+        this.rotations = this.pokemon.direction.getRotationsTo(direction);
+        // Based on the number of rotations, determine how long the turn animation should be
+        const ticksForTurning = this.rotations.length * WalkAction.TURNING_LENGTH;
+        // The walk animation should start after the turn animation
+        this.walkStart = ticksForTurning;
+        // The distance travelled each step
+        this.walkDelta = 1 / (WalkAction.ANIMATION_LENGTH - ticksForTurning);
+    }
 
     public tick(): boolean {
         if (this.done) return true;
 
-        if (this.firstStep()) {
-            this.pokemon.direction = this.direction;
+        // For the first step
+        if (this.currentStep === 0) {
             this.pokemon.setAnimation("Walk");
         }
 
-        // Move the pokemon
-        if (this.step-- <= 0) {
+        // Turning time
+        if (this.currentStep < this.walkStart) {
+            if (this.turnStep++ > WalkAction.TURNING_LENGTH) {
+                // Get the direction of the next rotation
+                const nextDir = this.rotations[Math.floor(this.currentStep / WalkAction.TURNING_LENGTH)];
+                // Set the direction of the pokemon
+                this.pokemon.direction = nextDir;
+                // Increment the step
+                this.turnStep = 0;
+            } else {
+                this.turnStep++;
+            }
+        }
+        // While you are still animating
+        else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
+            this.pokemon.position = this.pokemon.position.add(
+                this.direction.toVector().scale(this.walkDelta));
+            this.pokemon.setAnimation("Walk");
+        }
+        // When stopping
+        else {
             this.pokemon.position = this.pokemon.nextTurnPosition;
             if (this.pokemon.material) {
                 this.pokemon.material.animCallback = (material: DungeonPokemonMaterial) => {
@@ -45,11 +83,10 @@ export class WalkAction implements TurnAction {
                 }
             }
             return this.done = true;
-        } else {
-            this.pokemon.position = this.pokemon.position.add(
-                this.direction.toVector().scale(1 / WalkAction.MAX_STEP));
-            this.pokemon.setAnimation("Walk");
         }
+
+        // Increment the step
+        this.currentStep++;
 
         return false;
     }

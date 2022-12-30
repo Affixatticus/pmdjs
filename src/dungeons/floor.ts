@@ -110,23 +110,43 @@ export class DungeonFloor {
         return this.grid.getOpenPosition() ?? this.grid.getFreePosition() ?? this.grid.getRandomPosition();
     }
 
+    /** If a tile cannot possibly be occupied by this pokemon */
     public isObstacle(x: number, y: number, pokemon: DungeonPokemon): boolean {
         const OBSTACLES = [
             Tiles.WALL,
             Tiles.UNBREAKABLE_WALL,
+            Tiles.WATER,
         ];
 
         return OBSTACLES.includes(this.grid.get(x, y));
     }
 
+    /** If this tile cannot be traversed by this pokemon while walking diagonally */
+    public isUntraversable(x: number, y: number, pokemon: DungeonPokemon): boolean {
+        const UNPASSABLE = [
+            Tiles.WALL,
+            Tiles.UNBREAKABLE_WALL,
+        ];
+
+        return UNPASSABLE.includes(this.grid.get(x, y));
+    }
+
     public canMoveTowards(pokemon: DungeonPokemon, dir: Directions): boolean {
-        const pos = pokemon.position.add(dir.toVector());
+        const position = pokemon.position;
+        const nextPosition = position.add(dir.toVector());
 
         // Check if the position in the grid is usable for this pokemon
-        if (this.isObstacle(pos.x, pos.y, pokemon)) return false;
-
+        if (this.isObstacle(nextPosition.x, nextPosition.y, pokemon)) return false;
+        
+        // If the pokemon is moving diagonally, check if the two adjacent tiles are free
+        if (dir.isDiagonal()) {
+            // Check the two adjacent tiles
+            if (this.isUntraversable(position.x + dir.horizontal, position.y, pokemon)) return false;
+            if (this.isUntraversable(position.x, position.y + dir.vertical, pokemon)) return false;
+        }
+        
         // Check if no pokemon will occupy this position
-        if (this.pokemon.getAll().some(p => p.nextTurnPosition.equals(pos))) return false;
+        if (this.pokemon.getAll().some(p => p.nextTurnPosition.equals(nextPosition))) return false;
 
         return true;
     }

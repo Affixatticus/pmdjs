@@ -31,9 +31,9 @@ export class DungeonPokemon {
 
 
     constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
-        this._position = pos;
         this.type = type;
         this.id = id;
+        this._position = pos;
         this._direction = Directions.SOUTH;
 
         this.nextTurnPosition = pos.clone();
@@ -60,7 +60,7 @@ export class DungeonPokemon {
         opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
 
         const material = new DungeonPokemonMaterial(data, scene);
-        material.init("Idle", Directions.get(Random.int(7)));
+        material.init("Idle", this._direction);
         this.material = material;
         this.opaqMesh = opaqMesh;
         opaqMesh.material = this.material;
@@ -101,6 +101,11 @@ export class DungeonPokemon {
         this._direction = dir;
         this.nextTurnDirection = dir;
         this.material?.setDirection(dir);
+    }
+
+    /** Makes a single turn that gets the direction closer to the target */
+    public turnTowards(dir: Directions) {
+        this.direction = this.direction.getNextClosest(dir);
     }
 
     public setAnimation(animName: string) {

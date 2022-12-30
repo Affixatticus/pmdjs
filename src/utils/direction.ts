@@ -1,3 +1,4 @@
+import Random from "./random";
 import { Vec2 } from "./vectors";
 
 export enum DirectionIndexes {
@@ -39,6 +40,14 @@ export class Directions {
         return Directions.ALL[index];
     }
 
+    static random() {
+        return Directions.ALL[Math.floor(Math.random() * Directions.ALL.length)];
+    }
+
+    static rollIndex(index: number) {
+        return (index < 0 ? (8 - (index * - 1)) : index) % 8;
+    }
+
     static fromVector(vector: Vec2) {
         for (const direction of Directions.ALL) {
             if (direction.horizontal === vector.x && direction.vertical === vector.y) {
@@ -48,8 +57,12 @@ export class Directions {
         return Directions.NONE;
     }
 
-    static random() {
-        return Directions.ALL[Math.floor(Math.random() * Directions.ALL.length)];
+    public toVector(): Vec2 {
+        return new Vec2(this.horizontal, this.vertical);
+    }
+
+    public isDiagonal(): boolean {
+        return this.diagonal
     }
 
     public horizontal: number;
@@ -57,6 +70,7 @@ export class Directions {
     public index: number;
     public name: string;
     public isNone: boolean;
+    private diagonal: boolean;
 
     constructor(horizontal: number, vertical: number, index: number) {
         this.horizontal = horizontal;
@@ -64,10 +78,11 @@ export class Directions {
         this.index = index;
         this.name = DirectionIndexes[index];
         this.isNone = index === -1;
+        this.diagonal = this.horizontal !== 0 && this.vertical !== 0;
     }
 
-    public toVector(): Vec2 {
-        return new Vec2(this.horizontal, this.vertical);
+    public opposite(other: Directions) {
+        return this.horizontal === -other.horizontal && this.vertical === -other.vertical;
     }
 
     public static flipMap: Record<number, Directions> = {
@@ -83,7 +98,43 @@ export class Directions {
     };
 
     public flipY(): Directions {
-        return Directions.flipMap[this.index];
+        return Directions.flipMap[this.index] ?? null;
     }
 
+    public getNextClosest(other: Directions) {
+        if (!other) return this;
+
+        const start = this.index;
+        const end = other.index;
+
+        if (start === end) return this;
+
+        const mod8 = Directions.rollIndex(start - end);
+        let result: number;
+
+        if (mod8 === 4)
+            result = Random.choose([start - 1, start + 1]);
+        else if (mod8 < 4)
+            result = start - 1;
+        else if (mod8 > 4)
+            result = start + 1;
+        else
+            throw Error("You shouldn't be here")
+
+        return Directions.get(Directions.rollIndex(result));
+    }
+
+    public getRotationsTo(other: Directions): Directions[] {
+        const rotations: Directions[] = [];
+        let current = this as Directions;
+
+        if (current === other) return rotations;
+
+        do {
+            current = current.getNextClosest(other);
+            rotations.push(current);
+        } while (current !== other);
+
+        return rotations;
+    }
 }
