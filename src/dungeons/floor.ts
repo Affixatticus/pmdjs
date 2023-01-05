@@ -1,6 +1,6 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
-import { PokemonData, PokemonFormIdentifier, PokemonForms } from "../data/pokemon";
+import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
 import { Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
@@ -102,7 +102,7 @@ export class DungeonFloor {
 
     public update(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate(tick / 3 | 0);
+        this.pokemon.animate(tick / 2.5 | 0);
     }
 
     // Utility

@@ -16,7 +16,7 @@ export class WalkAction implements TurnAction {
 
     // Animation
     private static ANIMATION_LENGTH = 48;
-    private static TURNING_LENGTH = 4;
+    private static TURNING_LENGTH = 3;
 
     private currentStep: number = 0;
     private turnStep: number = 0;
@@ -70,16 +70,20 @@ export class WalkAction implements TurnAction {
         }
         // While you are still animating
         else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
-            this.pokemon.position = this.pokemon.position.add(
+            this.pokemon.position = this.pokemon.spritePosition.add(
                 this.direction.toVector().scale(this.walkDelta));
-            this.pokemon.setAnimation("Walk");
+            // this.pokemon.setAnimation("Walk");
         }
         // When stopping
         else {
             this.pokemon.position = this.pokemon.nextTurnPosition;
             if (this.pokemon.material) {
-                this.pokemon.material.animCallback = (material: DungeonPokemonMaterial) => {
-                    material.setAnimation("Idle");
+                this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
+                    // Quick check to see if the pokemon is still moving
+                    if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
+                        console.log("Intercepted")
+                        this.pokemon.setAnimation("Idle");
+                    }
                 }
             }
             return this.done = true;

@@ -2,19 +2,20 @@ import json
 import os
 
 
-root = "..\\public\\assets\\textures\\pokemon\\sprite\\"
+sprite_root = "public\\assets\\textures\\pokemon\\sprite\\"
 
 
 def create_json(path: str):
     # Open the file
     with open(path, "r") as f:
-        print(path)
+        # print(path)
 
         # Read the contents
         c = f.read()
 
         # Replace the XML tags with JSON
         c = c.replace("<?xml version=\"1.0\" ?>", "{")
+        c = c.replace("<?xml version=\"1.0\"?>", "{")
         c = c.replace("<AnimData>", "")
         c = c.replace("<ShadowSize>", '"shadowSize": ')
         c = c.replace("</ShadowSize>", ",")
@@ -61,18 +62,16 @@ def create_json(path: str):
 
         # Write the new contents to a new file
         with open(path.replace(".xml", ".json"), "w") as f:
-
             json.dump(data, f, indent=2)
 
 
 # Loop through all the folders in the root directory
-for species in os.listdir(root):
+for species in os.listdir(sprite_root):
     # Explore all the subfolders recursively
-    for root, dirs, files in os.walk(root + species):
+    for root, dirs, files in os.walk(sprite_root + species):
         # Loop through all the files in the current folder
         for file in files:
             # Check if the file is an animation data file
             if file == "AnimData.xml":
                 # Create a JSON file from the XML file
                 create_json(root + "\\" + file)
-

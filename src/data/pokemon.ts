@@ -12,7 +12,12 @@ export enum PokemonForms {
 export enum Pokedex {
     BULBASAUR = 1,
     IVYSAUR = 2,
+    VENUSAUR = 3,
+    CHARMANDER = 4,
+    CHARMELEON = 5,
+    CHARIZARD = 6,
     EEVEE = 133,
+    TORCHIC = 255,
 };
 
 

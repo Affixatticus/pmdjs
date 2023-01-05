@@ -1,4 +1,4 @@
-import { Button, Controls, Stick } from "../../utils/controls";
+import { Controls } from "../../utils/controls";
 import { Directions } from "../../utils/direction";
 import { DungeonState } from "../dungeon";
 import { WalkAction } from "./actions/walk";
@@ -112,6 +112,7 @@ export class DungeonLogic {
                 if (this.turningDelay++ >= 4) {
                     if (player.direction !== this.turningDirection) {
                         player.turnTowards(this.turningDirection);
+                        // Set the player's animation to Idle
                         player.setAnimation("Idle");
                         this.turningDelay = 0;
                     }

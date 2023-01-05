@@ -167,7 +167,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.currentFrame = 0;
         this.caTime = 0;
         this.firstAnimation = true;
-
+        
         if (draw)
             this.draw();
     }

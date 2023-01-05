@@ -180,9 +180,6 @@ export class AssetsLoader {
         if (this.pokemon.get(this.serializeFormId(id)))
             return this.pokemon.get(this.serializeFormId(id));
 
-        // Time
-        const start = performance.now();
-
         // Get the path
         const rootFolder = this.getPokemonFormPath(id);
         // Get the AnimData.json
@@ -196,9 +193,9 @@ export class AssetsLoader {
             // shadow
         ] =
             await Promise.all([
-                await this.loadPokemonSpriteSheets(rootFolder, sources, "Anim"),
-                // await this.loadPokemonSpriteSheets(rootFolder, sources, "Offsets"),
-                // await this.loadPokemonSpriteSheets(rootFolder, sources, "Shadow"),
+                this.loadPokemonSpriteSheets(rootFolder, sources, "Anim"),
+                // this.loadPokemonSpriteSheets(rootFolder, sources, "Offsets"),
+                // this.loadPokemonSpriteSheets(rootFolder, sources, "Shadow"),
             ]);
 
         const output: PokemonSpriteData = {
@@ -212,9 +209,6 @@ export class AssetsLoader {
         };
 
         this.pokemon.set(this.serializeFormId(id), output);
-
-        console.log(`Loaded ${id.join(", ")} in ${(performance.now() - start).toFixed(2)} ms`);
-
         return output;
     }
 

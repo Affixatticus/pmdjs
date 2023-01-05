@@ -2,7 +2,6 @@ import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
 import { PokemonFormIdentifier } from "../../data/pokemon";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { Directions } from "../../utils/direction";
-import Random from "../../utils/random";
 import { V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
 import { DungeonPokemonMaterial } from "./sprite";
@@ -15,8 +14,9 @@ export const enum PokemonTypes {
 };
 
 export class DungeonPokemon {
-    public _position: Vec2;
-    public _direction: Directions;
+    private _position: Vec2;
+    private _spritePosition: Vec2;
+    private _direction: Directions;
     public type: PokemonTypes;
     public id: PokemonFormIdentifier;
 
@@ -34,6 +34,7 @@ export class DungeonPokemon {
         this.type = type;
         this.id = id;
         this._position = pos;
+        this._spritePosition = pos;
         this._direction = Directions.SOUTH;
 
         this.nextTurnPosition = pos.clone();
@@ -87,10 +88,19 @@ export class DungeonPokemon {
         return this._position;
     }
 
+    public get spritePosition() {
+        return this._spritePosition;
+    }
+
+    public set spritePosition(pos: Vec2) {
+        this._spritePosition = pos;
+        this.opaqMesh.position = this._spritePosition.gameFormat.add(V3(0.5, 0, -0.5));
+        this.tranMesh.position = this._spritePosition.gameFormat.add(V3(0.5, 0, -0.5));
+    }
+
     public set position(pos: Vec2) {
         this._position = pos;
-        this.opaqMesh.position = pos.gameFormat.add(V3(0.5, 0, -0.5));
-        this.tranMesh.position = pos.gameFormat.add(V3(0.5, 0, -0.5));
+        this.spritePosition = pos;
     }
 
     public get direction() {
@@ -148,11 +158,11 @@ export class DungeonPokemonList {
     }
 
     public sort() {
-        this.objects.sort((a, b) => a._position.x - b._position.x || a._position.y - b._position.y);
+        this.objects.sort((a, b) => a.position.x - b.position.x || a.position.y - b.position.y);
     }
 
     public get(x: number, y: number): DungeonPokemon | undefined {
-        return this.objects.find(obj => obj._position.x === x && obj._position.y === y);
+        return this.objects.find(obj => obj.position.x === x && obj.position.y === y);
     }
 
     public add(obj: DungeonPokemon) {
