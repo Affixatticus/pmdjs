@@ -3,7 +3,6 @@ import { Tiles } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
-import { DungeonState } from "../dungeon";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
 import { DungeonTiling, TilingTextureMode } from "./tiling";
@@ -22,9 +21,12 @@ export enum LightOverlayColors {
 /** Places lights over each of the tiles of the visible map */
 export class LightOverlay {
     private scene: Scene;
-    private light!: SpotLight;
-    private texture!: DynamicTexture;
-    private lightMap!: CanvasImageSource;
+    private lightMapTileset!: CanvasImageSource;
+
+    public light!: SpotLight;
+    public texture!: DynamicTexture;
+    public lastLight!: SpotLight;
+    public lastTexture!: DynamicTexture;
 
     constructor(scene: Scene) {
         this.scene = scene;
@@ -32,11 +34,12 @@ export class LightOverlay {
 
     /** Loads the texture for the overlay */
     public async init() {
-        this.lightMap = await AssetsLoader.loadLightmap();
+        this.lightMapTileset = await AssetsLoader.loadLightmap();
     }
 
     public place(area: OffsetGrid) {
-        this.reset();
+        this.lastLight = this.light;
+        this.lastTexture = this.texture;
 
         // Get the size of the area
         const width = area.width;
@@ -65,7 +68,7 @@ export class LightOverlay {
                 const params: CropParams = DungeonTiling.getCrop(tiling, Tiles.WALL, 0, TilingTextureMode.TEXTURE);
 
                 // Draw the light map
-                ctx.drawImage(this.lightMap, ...params, x * LMT + size * LMSS, y * LMT + size * LMSS, LMT, LMT);
+                ctx.drawImage(this.lightMapTileset, ...params, x * LMT + size * LMSS, y * LMT + size * LMSS, LMT, LMT);
             }
         }
 
@@ -78,11 +81,13 @@ export class LightOverlay {
             .add(V3(size / 2, size * 16 - (size > 10 ? size / 100 : 0), size / 2)).gameFormat;
 
         const light = new SpotLight("light", position, Vec3.Down(), Math.PI / 33.33333333333, 0, this.scene);
-        light.intensity = 1.5;
+        light.intensity = 0;
         light.projectionTexture = texture;
 
         this.texture = texture;
         this.light = light;
+
+        this.swapLights();
     }
 
     public overlayPokemon(grid: DungeonGrid, pokemon: DungeonPokemon) {
@@ -90,8 +95,21 @@ export class LightOverlay {
             pokemon.nextTurnPosition).inflate(1));
     }
 
-    public reset() {
-        this.light?.dispose();
-        this.texture?.dispose();
+    /** Gradually switches from lastLight to the new light, 
+     * and deletes the old ones once it's done */
+    public swapLights(): void {
+        let intensity = 0;
+        const interval = setInterval(() => {
+            this.light.intensity = intensity;
+            if (this.lastLight) {
+                this.lastLight.intensity = 1.5 - intensity;
+            }
+            intensity += 0.05;
+            if (intensity >= 1.5) {
+                this.lastLight.dispose();
+                this.lastTexture.dispose();
+                clearInterval(interval);
+            }
+        }, 10);
     }
 }
