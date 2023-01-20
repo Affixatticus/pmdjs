@@ -3,6 +3,8 @@ import { Tiles } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
+import { DungeonState } from "../dungeon";
+import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
 import { DungeonTiling, TilingTextureMode } from "./tiling";
 
@@ -81,6 +83,11 @@ export class LightOverlay {
 
         this.texture = texture;
         this.light = light;
+    }
+
+    public overlayPokemon(grid: DungeonGrid, pokemon: DungeonPokemon) {
+        this.place(grid.getViewArea(
+            pokemon.nextTurnPosition).inflate(1));
     }
 
     public reset() {

@@ -35,6 +35,13 @@ export class Directions {
         Directions.SOUTH_WEST
     ];
 
+    static readonly CARDINAL: Directions[] = [
+        Directions.SOUTH,
+        Directions.EAST,
+        Directions.NORTH,
+        Directions.WEST
+    ];
+
     static get(index: number) {
         if (index === -1) return Directions.NONE;
         return Directions.ALL[index];

@@ -27,6 +27,22 @@ export class Rect {
         return new Rect(left, top, right - left, bottom - top);
     }
 
+    static fromPositions(positions: Vec2[]) {
+        // Get the minimum and maximum coordinates from all vectors
+        let minX = positions[0].x;
+        let minY = positions[0].y;
+        let maxX = positions[0].x;
+        let maxY = positions[0].y;
+        for (let i = 1; i < positions.length; i++) {
+            const p = positions[i];
+            if (p.x < minX) minX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+        }
+        return Rect.fromLTRB(minX, minY, maxX + 1, maxY + 1);
+    }
+    
     /**
      * @param d Amount by which to inflate (or deflate if `d < 0`) the rect
      * @returns Returns a new, inflated `Rect` 

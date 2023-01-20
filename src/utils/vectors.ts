@@ -40,6 +40,10 @@ export class Vec2 extends Vector2 {
         return V2(Math.floor(this.x), Math.floor(this.y));
     }
 
+    /** Adds the specified amount to all directions of the vector
+     * @param amount The amount to add to the vector
+     * @returns A new vector with the added amount
+     */
     public move(amount: number) {
         return V2(this.x, this.y).add(V2(amount, amount));
     }

@@ -7,6 +7,7 @@ import { Turn } from "./turn";
 import { PokemonTypes } from "../objects/pokemon";
 import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
+import { V3 } from "../../utils/vectors";
 
 enum PlayerStates {
     /** In this state, the player can choose whichever action available */
@@ -52,6 +53,11 @@ export class DungeonLogic {
     /** Updates the player movement and starts off the turn */
     public update() {
         if (!this.state.isLoaded) return;
+        const leader = this.state.floor.pokemon.getLeader();
+
+
+        // Move the camera to the player
+        this.state.moveCamera(this.state.floor.pokemon.getLeader().spritePosition.toVec3().add(V3(0, 0, 2)));
 
         // Await for the player input
         if (this.walkDirection === null) {
@@ -63,9 +69,14 @@ export class DungeonLogic {
         if (!this.turn) {
             this.turn = new Turn();
             if (this.walkDirection === Directions.NONE)
-                this.turn.calculate(new NilAction(this.state.floor.pokemon.getLeader()), this.state);
-            else
-                this.turn.calculate(new WalkAction(this.state.floor.pokemon.getLeader(), this.walkDirection), this.state);
+                this.turn.calculate(new NilAction(leader), this.state);
+            else {
+                this.turn.calculate(new WalkAction(leader, this.walkDirection), this.state);
+                // Update the screen
+                this.state.floor.renderToScreen(leader.position);
+                // Update the light overlay
+                this.state.lightOverlay.overlayPokemon(this.state.floor.grid, leader);
+            }
         }
 
         // Execute the turn

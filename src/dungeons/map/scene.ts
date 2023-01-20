@@ -1,4 +1,4 @@
-import { Color3, Color4, Scene, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, PositionGizmo, Scene, Vector3 } from "@babylonjs/core";
 import { DungeonTextures } from "../../data/dungeons";
 import { FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, Tiles, WALL_IGNORE_TILES, WALL_INCLUDE_TILES } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
@@ -38,29 +38,6 @@ export class DungeonMap {
 
         // Create a matrix to keep track of the loaded tiles
         this.loaded = new ByteGrid(map.width, map.height);
-
-        // Mouse down listener
-        this.scene.onPointerObservable.add((event) => {
-            if (event.type !== 1) return;
-            if (!event.pickInfo) return;
-            const point = V3(event.pickInfo.pickedPoint as Vector3).toVec2().roundDown().subtract(V2(0, -1)).multiply(V2(1, -1));
-            const area = new ByteGrid(1, 1);
-
-            console.log(point);
-
-            // If the tile is Unbreakable, return
-            if (this.grid.get(...point.spread()) === Tiles.UNBREAKABLE_WALL) return;
-
-            if (event.event.button == 0) {
-                area.fill(Tiles.FLOOR);
-            } else if (event.event.button == 1) {
-                area.fill(Tiles.WATER);
-            } else if (event.event.button == 2) {
-                area.fill(Tiles.WALL);
-            }
-
-            this.changeGridSection(point, area);
-        });
     }
 
     // Loading

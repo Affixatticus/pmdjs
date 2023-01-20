@@ -1,5 +1,6 @@
 import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
 import { PokemonFormIdentifier } from "../../data/pokemon";
+import { Tiles } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { Directions } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
@@ -129,6 +130,12 @@ export class DungeonPokemon {
     public resetAnimation(animName: string) {
         if (!this.material) return;
         this.material.setAnimation(animName);
+    }
+
+    /** TODO: Implement this to work with types 
+     * Returns true if this pokemon can pass over the specified tile */
+    public specialWalkable(_tile: Tiles): boolean {
+        return false;
     }
 }
 

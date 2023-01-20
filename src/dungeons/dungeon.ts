@@ -1,11 +1,13 @@
 import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HemisphericLight, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
+import { Tiles } from "../data/tiles";
 import { Button, Controls, Stick } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor, TileRenderingGroupIds } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
+import { ByteGrid, OffsetGrid } from "./map/grid";
 import { LightOverlay } from "./map/light_overlay";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
@@ -30,7 +32,7 @@ export class DungeonState {
     public camera: TargetCamera;
     // -> Floor
     public floor!: DungeonFloor;
-    private lightOverlay!: LightOverlay;
+    public lightOverlay!: LightOverlay;
     // State
     public isLoaded: boolean;
     private data: DungeonStateData;
@@ -53,12 +55,25 @@ export class DungeonState {
         this.isLoaded = false;
         this.load();
 
-        // Add a keydown listener for the body
-        document.body.addEventListener("keydown", e => {
-            if (e.key === "Escape") {
-                // Loads another chunk of the map
-                this.floor.renderToScreen(this.floor.grid.getRandomPosition() as Vec2);
+        // Mouse down listener
+        this.scene.onPointerObservable.add((event) => {
+            if (event.type !== 1) return;
+            if (!event.pickInfo) return;
+            const point = V3(event.pickInfo.pickedPoint as Vector3).toVec2().roundDown().subtract(V2(0, -1)).multiply(V2(1, -1));
+            const area = new ByteGrid(1, 1);
+
+            // If the tile is Unbreakable, return
+            if (this.floor.grid.get(...point.spread()) === Tiles.UNBREAKABLE_WALL) return;
+
+            if (event.event.button == 0) {
+                area.fill(Tiles.FLOOR);
+            } else if (event.event.button == 1) {
+                area.fill(Tiles.WATER);
+            } else if (event.event.button == 2) {
+                area.fill(Tiles.WALL);
             }
+
+            this.floor.map.changeGridSection(point, area);
         });
     }
 
@@ -100,15 +115,15 @@ export class DungeonState {
         return camera;
     }
 
-    private moveCamera(newPos: Vec3) {
+    public moveCamera(newPos: Vec3) {
         this.camera.position = newPos.add(CAMERA_OFFSET).gameFormat;
     }
 
     private createGlobalLighting() {
         const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
         lighting.intensity = 0.4;
-        lighting.intensity = 0.02;
         lighting.intensity = 0.8;
+        lighting.intensity = 0.02;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
 
         const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
@@ -167,6 +182,8 @@ export class DungeonState {
         this.moveCamera(spawn.toVec3());
         // Initialize the light overlay
         await this.lightOverlay.init();
+        // Update the light overlay
+        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader());
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);
