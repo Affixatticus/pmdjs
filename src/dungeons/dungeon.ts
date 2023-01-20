@@ -120,9 +120,9 @@ export class DungeonState {
         lighting.intensity = 0.1;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
 
-        const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
-        // TODO - Find best light intensity
-        global.intensity = 0.02;
+        // const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
+        // // TODO - Find best light intensity
+        // global.intensity = 0.02;
 
         this.lightOverlay = new LightOverlay(this.scene);
 
@@ -178,9 +178,6 @@ export class DungeonState {
         await this.lightOverlay.init();
         // Update the light overlay
         this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-        // TODO: Find a neater way to do this
-        // Executing this twice fixes the lighting issue
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);
@@ -213,6 +210,7 @@ export class DungeonState {
     public render() {
         if (this.isLoaded) {
             this.scene.render();
+            this.lightOverlay.update();
             this.floor.update(this.tick);
             this.controlCamera();
         }

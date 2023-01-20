@@ -65,6 +65,8 @@ export class FloorMesh {
         material.diffuseTexture = texture;
         material.specularPower = 10000000;
 
+        material.maxSimultaneousLights = 5;
+
         this.ctx = texture.getContext() as CanvasRenderingContext2D;
 
         return material;

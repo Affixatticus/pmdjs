@@ -21,12 +21,11 @@ export enum LightOverlayColors {
 /** Places lights over each of the tiles of the visible map */
 export class LightOverlay {
     private scene: Scene;
+    /** The lightmap image, imported just once */
     private lightMapTileset!: CanvasImageSource;
-
-    public light!: SpotLight;
-    public texture!: DynamicTexture;
-    public lastLight!: SpotLight;
-    public lastTexture!: DynamicTexture;
+    /** List of lights that are waiting to be turned off */
+    private queue: [light: SpotLight, texture: DynamicTexture, reachedMaxIntensity: boolean][] = [];
+    /** Last checked area needed to see if you should update the lights */
     private lastOffsetGrid!: OffsetGrid;
 
     constructor(scene: Scene) {
@@ -38,10 +37,46 @@ export class LightOverlay {
         this.lightMapTileset = await AssetsLoader.loadLightmap();
     }
 
-    public placeSpotlight(area: OffsetGrid) {
-        this.lastLight = this.light;
-        this.lastTexture = this.texture;
+    /** Updates the queue */
+    public update() {
+        // Decrease towards 0 all the lights that are not the last one
+        // And remove the lights that are completely off
+        for (let i = this.queue.length - 2; i >= 0; i--) {
+            const [light, texture] = this.queue[i];
+            light.intensity = Math.max(0, light.intensity -= 0.033);
+            if (light.intensity === 0) {
+                light.dispose();
+                texture.dispose();
+                this.queue.splice(i, 1);
+            }
+        }
+        // Increase the last light
+        const last = this.queue[this.queue.length - 1];
+        const [light, _, reachedMaxIntensity] = last;
 
+        if (!reachedMaxIntensity) {
+            light.intensity = Math.min(1.5, light.intensity += 0.033);
+            if (light.intensity === 1.5)
+                last[2] = true;
+        }
+
+        // If the last light has reached its max intensity, decrease it
+        else {
+            light.intensity = Math.sin(Date.now() / 1000) * 0.25 + 1.5;
+        }
+    }
+    
+    /** Turns on the lights around the specified pokemon */
+    public lightPokemon(grid: DungeonGrid, pokemon: DungeonPokemon, firstTime: boolean = false) {
+        const offsetGrid = grid.getViewArea(pokemon.nextTurnPosition);
+        if (!firstTime && this.lastOffsetGrid?.equals(offsetGrid))
+            return;
+        this.placeSpotlight(offsetGrid.inflate(1));
+        this.lastOffsetGrid = offsetGrid;
+    }
+
+    /** Places a spotlight given an area */
+    private placeSpotlight(area: OffsetGrid) {
         // Get the size of the area
         const width = area.width;
         const height = area.height;
@@ -81,40 +116,23 @@ export class LightOverlay {
         const position = area.getActualPosition(0, 0).toVec3()
             .add(V3(size / 2, size * 16 - (size > 10 ? size / 100 : 0), size / 2)).gameFormat;
 
-        const light = new SpotLight("light", position, Vec3.Down(), Math.PI / 33.33333333333, 0, this.scene);
+        const light = new SpotLight("light", position, Vec3.Down(), (Math.PI * 3) / 100, 0, this.scene);
         light.intensity = 0;
         light.projectionTexture = texture;
 
-        this.texture = texture;
-        this.light = light;
-
-        this.swapLights();
+        // Add a new light to the list of lights to animate
+        this.addLight(light, texture);
     }
 
-    public lightPokemon(grid: DungeonGrid, pokemon: DungeonPokemon, firstTime: boolean = false) {
-        const offsetGrid = grid.getViewArea(pokemon.nextTurnPosition);
-        if (!firstTime && this.lastOffsetGrid?.equals(offsetGrid))
-            return;
-        this.placeSpotlight(offsetGrid.inflate(1));
-        this.lastOffsetGrid = offsetGrid;
+    /** Adds a light to the queue */
+    private addLight(light: SpotLight, texture: DynamicTexture) {
+        if (this.queue.length === 3) {
+            // Remove the first light
+            const [firstLight, firstTexture] = this.queue.shift()!;
+            firstLight.dispose();
+            firstTexture.dispose();
+        }
+        this.queue.push([light, texture, false]);
     }
 
-    /** Gradually switches from lastLight to the new light, 
-     * and deletes the old ones once it's done */
-    public swapLights(): void {
-        let intensity = 0;
-        const interval = setInterval(() => {
-            this.light.intensity = intensity;
-            if (this.lastLight) {
-                this.lastLight.intensity = 1.5 - intensity;
-            }
-            if (intensity >= 1.5) {
-                this.lastLight?.dispose();
-                this.lastTexture?.dispose();
-                clearInterval(interval);
-            }
-            intensity += 0.05;
-        }, 7);
-        console.log(interval);
-    }
 }
