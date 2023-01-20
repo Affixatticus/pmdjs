@@ -134,7 +134,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
                 chance: 100
             }],
             generation: {
-                maxRoomSize: V2(20, 20),
+                maxRoomSize: V2(7, 5),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
                 mapSize: V2(3, 2),

@@ -7,7 +7,7 @@ import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor, TileRenderingGroupIds } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
-import { ByteGrid, OffsetGrid } from "./map/grid";
+import { ByteGrid } from "./map/grid";
 import { LightOverlay } from "./map/light_overlay";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
@@ -77,12 +77,6 @@ export class DungeonState {
         });
     }
 
-    // Game Logic Methods
-    private chooseSpawnPosition(): Vec2 {
-        // Choose a position to spawn the party
-        return this.floor.getSpawnPosition();
-    }
-
     // Loading methods
 
     /** Loads in this dungeons' graphics, found enemies, possible items... */
@@ -123,12 +117,12 @@ export class DungeonState {
         const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
         lighting.intensity = 0.4;
         lighting.intensity = 0.8;
-        lighting.intensity = 0.02;
+        lighting.intensity = 0.1;
         lighting.specular = new Color3(0.1, 0.1, 0.1);
 
         const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
         // TODO - Find best light intensity
-        global.intensity = 0.2;
+        global.intensity = 0.02;
 
         this.lightOverlay = new LightOverlay(this.scene);
 
@@ -183,10 +177,10 @@ export class DungeonState {
         // Initialize the light overlay
         await this.lightOverlay.init();
         // Update the light overlay
-        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
         // TODO: Find a neater way to do this
         // Executing this twice fixes the lighting issue
-        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);

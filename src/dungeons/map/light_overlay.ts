@@ -27,6 +27,7 @@ export class LightOverlay {
     public texture!: DynamicTexture;
     public lastLight!: SpotLight;
     public lastTexture!: DynamicTexture;
+    private lastOffsetGrid!: OffsetGrid;
 
     constructor(scene: Scene) {
         this.scene = scene;
@@ -37,7 +38,7 @@ export class LightOverlay {
         this.lightMapTileset = await AssetsLoader.loadLightmap();
     }
 
-    public place(area: OffsetGrid) {
+    public placeSpotlight(area: OffsetGrid) {
         this.lastLight = this.light;
         this.lastTexture = this.texture;
 
@@ -90,9 +91,12 @@ export class LightOverlay {
         this.swapLights();
     }
 
-    public overlayPokemon(grid: DungeonGrid, pokemon: DungeonPokemon) {
-        this.place(grid.getViewArea(
-            pokemon.nextTurnPosition).inflate(1));
+    public lightPokemon(grid: DungeonGrid, pokemon: DungeonPokemon, firstTime: boolean = false) {
+        const offsetGrid = grid.getViewArea(pokemon.nextTurnPosition);
+        if (!firstTime && this.lastOffsetGrid?.equals(offsetGrid))
+            return;
+        this.placeSpotlight(offsetGrid.inflate(1));
+        this.lastOffsetGrid = offsetGrid;
     }
 
     /** Gradually switches from lastLight to the new light, 
@@ -104,12 +108,13 @@ export class LightOverlay {
             if (this.lastLight) {
                 this.lastLight.intensity = 1.5 - intensity;
             }
-            intensity += 0.05;
             if (intensity >= 1.5) {
-                this.lastLight.dispose();
-                this.lastTexture.dispose();
+                this.lastLight?.dispose();
+                this.lastTexture?.dispose();
                 clearInterval(interval);
             }
-        }, 10);
+            intensity += 0.05;
+        }, 7);
+        console.log(interval);
     }
 }

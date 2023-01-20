@@ -61,7 +61,6 @@ export class DungeonMap {
 
     /** Creates all the tiles used for water */
     private async createWaterMeshes(tilings: Iterable<Tilings>) {
-        const start = performance.now();
         const { waterTextures, heightmaps, properties } = this.props;
 
         if (!properties.water) return;
@@ -79,9 +78,6 @@ export class DungeonMap {
 
             this.waterMeshes.createWaterTileMesh(tiling, waterTextures as CanvasImageSource[], heightmaps, this.scene, options);
         }
-
-        const end = performance.now();
-        console.log(`Loaded dungeon water textures in ${(end - start).toFixed(2)}ms`);
     }
 
 

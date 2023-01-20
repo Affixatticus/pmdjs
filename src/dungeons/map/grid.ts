@@ -203,6 +203,18 @@ export class OffsetGrid extends ByteGrid {
         return this.getSubGrid(V2(0, 0), this.size);
     }
 
+    /** Returns `true` if the two OffsetGrids are the same */
+    public equals(other: OffsetGrid) {
+        if (!this.start.equals(other.start) || !this.size.equals(other.size))
+            return false;
+
+        for (const [pos, value] of this)
+            if (value !== other.get(...pos.xy))
+                return false;
+
+        return true;
+    }
+
     /** Returns a new OffsetGrid with its size increased by the amount
      * and all internal tiles=1 expanded by the amount
      */

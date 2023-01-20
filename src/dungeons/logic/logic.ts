@@ -68,7 +68,7 @@ export class DungeonLogic {
                 // Update the screen
                 this.state.floor.renderToScreen(leader.position);
                 // Update the light overlay
-                this.state.lightOverlay.overlayPokemon(this.state.floor.grid, leader);
+                this.state.lightOverlay.lightPokemon(this.state.floor.grid, leader);
             }
         }
 
