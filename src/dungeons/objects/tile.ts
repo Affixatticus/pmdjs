@@ -1,4 +1,4 @@
-import { Color3, Constants, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
+import { Color3, Constants, DynamicTexture, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
 import { DungeonObject, ObjectTypes } from "./object";
@@ -15,6 +15,7 @@ export class TileMaterial extends StandardMaterial {
         texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         this.diffuseTexture = texture;
+        this.opacityTexture = texture;
         this.specularColor = new Color3(0, 0, 0);
     }
 };
@@ -63,7 +64,7 @@ export class DungeonTile extends DungeonObject {
             }, scene
         );
 
-        mesh.position = V3(this.pos.x + .5, -0.25, this.pos.y + .5).gameFormat;
+        mesh.position = V3(this.position.x + .5, -0.25, this.position.y + .5).gameFormat;
         mesh.renderingGroupId = TileRenderingGroupIds.FLOOR;
 
         const source = await AssetsLoader.loadTileSheet();
@@ -83,7 +84,7 @@ export class DungeonTile extends DungeonObject {
             }, scene
         );
 
-        mesh.position = V3(this.pos.x + .5, 0, this.pos.y + .5).gameFormat;
+        mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
         mesh.renderingGroupId = TileRenderingGroupIds.WALL;
 
         const source = await AssetsLoader.loadTileSheet();

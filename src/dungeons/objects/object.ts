@@ -8,18 +8,18 @@ export enum ObjectTypes {
 };
 
 export interface IDungeonObject {
-    pos: Vec2;
+    position: Vec2;
     type: number;
     render(scene: Scene, ...params: any): void;
     dispose(): boolean;
 };
 
 export abstract class DungeonObject implements IDungeonObject {
-    public pos: Vec2;
+    public position: Vec2;
     public type: ObjectTypes;
 
     constructor(pos: Vec2, type: ObjectTypes) {
-        this.pos = pos;
+        this.position = pos;
         this.type = type;
     }
 
@@ -46,11 +46,11 @@ export class DungeonObjectContainer {
     }
 
     public get(pos: Vec2) {
-        return this.objects.find(obj => obj.pos.equals(pos));
+        return this.objects.find(obj => obj.position.equals(pos));
     }
 
     public remove(pos: Vec2) {
-        this.objects = this.objects.filter(obj => !obj.pos.equals(pos));
+        this.objects = this.objects.filter(obj => !obj.position.equals(pos));
     }
 
     public add(obj: DungeonObject) {
@@ -58,6 +58,6 @@ export class DungeonObjectContainer {
     }
 
     public has(pos: Vec2) {
-        return this.objects.some(obj => obj.pos.equals(pos));
+        return this.objects.some(obj => obj.position.equals(pos));
     }
 }

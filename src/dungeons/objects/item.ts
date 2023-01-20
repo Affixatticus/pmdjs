@@ -42,14 +42,14 @@ export class DungeonItem extends DungeonObject {
     }
 
     public getId(start = ""): string {
-        return start + "_" + this.id.toString() + this.pos.x.toString() + this.pos.y.toString();
+        return start + "_" + this.id.toString() + this.position.x.toString() + this.position.y.toString();
     }
 
     public async render(scene: Scene): Promise<void> {
         //Create a plane
         const plane = MeshBuilder.CreatePlane(this.getId("plane"), { size: 1 }, scene);
 
-        plane.position = V3(this.pos.x + .5, 0.001, this.pos.y + .5).gameFormat;
+        plane.position = V3(this.position.x + .5, 0.001, this.position.y + .5).gameFormat;
         plane.rotate(Vector3.Right(), Math.PI / 2);
         plane.renderingGroupId = TileRenderingGroupIds.FLOOR;
 

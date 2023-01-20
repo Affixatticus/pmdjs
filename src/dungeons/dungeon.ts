@@ -7,6 +7,7 @@ import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
 import { DungeonFloor, TileRenderingGroupIds } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
+import { FloorGuide } from "./map/floor_guide";
 import { ByteGrid } from "./map/grid";
 import { LightOverlay } from "./map/light_overlay";
 
@@ -33,6 +34,7 @@ export class DungeonState {
     // -> Floor
     public floor!: DungeonFloor;
     public lightOverlay!: LightOverlay;
+    public floorGuide!: FloorGuide;
     // State
     public isLoaded: boolean;
     private data: DungeonStateData;
@@ -149,6 +151,9 @@ export class DungeonState {
         // Render the visible area
         this.floor.build(spawn);
 
+        // Build the floor guide
+        this.floorGuide = new FloorGuide(this.scene, this.floor, this.floor.pokemon.getLeader());
+
         console.log(`Building the floor takes ${performance.now() - start}ms`);
     }
 
@@ -178,6 +183,8 @@ export class DungeonState {
         await this.lightOverlay.init();
         // Update the light overlay
         this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        // Update the floor guide
+        await this.floorGuide.init();
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);

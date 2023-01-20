@@ -9,6 +9,8 @@ enum PlayerStates {
     TURNING,
     /** This is the walking state, on while the player is walking */
     WALKING,
+    /** This is the state in which you can turn freely (Holding Y) */
+    TURN,
 };
 
 
@@ -17,12 +19,9 @@ export class Player {
 
     private lastDirection = Directions.NONE;
     private directionTimeStamp = 0;
-
-    private turningDirection = Directions.NONE;
     private turningDelay = 0;
-
-    private walkingDirection = Directions.NONE;
     private walkingStartedTurn = 0;
+    private turnStateTicks = 0;
 
     constructor() {
 
@@ -30,11 +29,8 @@ export class Player {
 
     private setState(state: PlayerStates) {
         this.playerState = state;
-        this.walkingDirection = Directions.NONE;
         this.walkingStartedTurn = 0;
-        this.turningDirection = Directions.NONE;
         this.turningDelay = 0;
-        this.lastDirection = Directions.NONE;
     }
 
     private setIdle() {
@@ -43,12 +39,12 @@ export class Player {
 
     private setTurning(direction: Directions) {
         this.setState(PlayerStates.TURNING);
-        this.turningDirection = direction;
+        this.lastDirection = direction;
     }
 
     private setWalking(direction: Directions) {
         this.setState(PlayerStates.WALKING);
-        this.walkingDirection = direction;
+        this.lastDirection = direction;
     }
 
     /** Takes in the chosen movement of the player */
@@ -60,6 +56,23 @@ export class Player {
 
         switch (this.playerState) {
             case PlayerStates.IDLE: {
+                // If you press the Y button, you can turn freely
+                if (!Controls.Y) {
+                    if (this.turnStateTicks > 2) {
+                        // TODO: Choose the direction to turn to
+                        this.lastDirection = Directions.NORTH;
+                        this.setState(PlayerStates.TURNING);
+                    }
+                    this.turnStateTicks = 0;
+                }
+                if (Controls.Y && this.turnStateTicks >= 0) {
+                    this.turnStateTicks++;
+                    if (this.turnStateTicks === 20) {
+                        this.turnStateTicks = 0;
+                        this.setState(PlayerStates.TURN);
+                    }
+                }
+
                 // In whichever case, ignore null inputs
                 if (inputDirection === Directions.NONE) return null;
 
@@ -69,39 +82,34 @@ export class Player {
                 }
 
                 if (inputDirection === this.lastDirection
-                    && Date.now() - this.directionTimeStamp > 35
-                    && player.direction !== inputDirection) {
-                    // Change state to turning
-                    this.setTurning(inputDirection);
-                }
-                else if (inputDirection === this.lastDirection
                     && Date.now() - this.directionTimeStamp > 50) {
                     // Change state to walking
                     this.setWalking(inputDirection);
-                    this.lastDirection = Directions.NONE;
                 }
                 break;
             }
             case PlayerStates.TURNING: {
                 if (this.turningDelay++ >= 4) {
-                    if (player.direction !== this.turningDirection) {
-                        player.turnTowards(this.turningDirection);
+                    if (player.direction !== this.lastDirection) {
+                        player.turnTowards(this.lastDirection);
                         // Set the player's animation to Idle
                         player.setAnimation("Idle");
                         this.turningDelay = 0;
+                    }
+                    else if (this.turnStateTicks > 0) {
+                        this.setState(PlayerStates.TURN);
                     }
                     else {
                         this.setIdle();
                     }
                 }
-
                 break;
             }
             case PlayerStates.WALKING: {
                 // After the first turn, you are allowed to change direction
                 if (this.walkingStartedTurn !== logic.currentTurn) {
                     // If you want to, you can stop walking
-                    if (this.walkingDirection === Directions.NONE) {
+                    if (this.lastDirection === Directions.NONE) {
                         this.setIdle();
                         return null;
                     }
@@ -112,20 +120,46 @@ export class Player {
                         return null;
                     }
                     // Check if the player is going to turn the opposite direction
-                    if (this.walkingDirection.opposite(inputDirection)) {
+                    if (this.lastDirection.opposite(inputDirection)) {
                         this.setTurning(inputDirection);
                         return null;
                     }
                     // Keep walking in the input direction
-                    this.walkingDirection = inputDirection;
-                    return this.walkingDirection;
+                    this.lastDirection = inputDirection;
+                    return this.lastDirection;
                 } else {
-                    const canMove = logic.state.floor.canMoveTowards(player, this.walkingDirection);
+                    const canMove = logic.state.floor.canMoveTowards(player, this.lastDirection);
                     if (canMove) {
-                        return this.walkingDirection;
+                        return this.lastDirection;
                     }
                     this.setIdle();
                     return null;
+                }
+            }
+            case PlayerStates.TURN: {
+                if (Controls.Y && this.turnStateTicks === 0) {
+                    logic.state.floorGuide.show();
+                }
+                this.turnStateTicks++;
+                if (!Controls.Y && this.turnStateTicks > 20) {
+                    this.turnStateTicks = 0;
+                    logic.state.floorGuide.hide();
+                    this.setIdle();
+                    return null;
+                }
+                if (inputDirection === Directions.NONE) return null;
+
+                if (inputDirection !== this.lastDirection) {
+                    this.lastDirection = inputDirection;
+                    this.directionTimeStamp = Date.now();
+                }
+
+                if (inputDirection === this.lastDirection
+                    && Date.now() - this.directionTimeStamp > 50) {
+                    // Change state to walking
+                    this.setTurning(inputDirection);
+                    // Update the floor guide
+                    logic.state.floorGuide.update(inputDirection);
                 }
             }
         }

@@ -1,5 +1,6 @@
 import { CropParams } from "../utils/canvas";
 
+
 export enum Tiles {
     FLOOR,
     WALL,
@@ -19,7 +20,8 @@ export enum Tiles {
 
     UNOBSTRUCTABLE,
     UNKNOWN,
-    OUT_OF_BOUNDS = -1
+    OUT_OF_BOUNDS = -1,
+    WHITE_GUIDE
 };
 
 /** Tiles that should render as FLOOR */
@@ -57,6 +59,8 @@ export enum TileObjects {
     TOXIC_SPIKES_TRAP,
     SPIKES_TRAP,
     KECLEON_CARPET,
+    WHITE_GUIDE,
+    BLACK_GUIDE,
 };
 
 export interface TrapChance {
@@ -91,6 +95,8 @@ export const TileSheet: Record<TileObjects, CropParams> = {
     [TileObjects.TOXIC_SPIKES_TRAP]: [7, 2, 1, 1],
     [TileObjects.SPIKES_TRAP]: [0, 3, 1, 1],
     [TileObjects.KECLEON_CARPET]: [0, 3, 1, 1],
+    [TileObjects.WHITE_GUIDE]: [1, 3, 1, 1],
+    [TileObjects.BLACK_GUIDE]: [2, 3, 1, 1],
 };
 
 export function getTileCrop(tile: TileObjects): CropParams {

@@ -27,7 +27,7 @@ export class DungeonCarpet extends DungeonObject {
             subdivisions: 1,
         }, scene);
 
-        mesh.position = V3(this.pos.x + .5, 0, this.pos.y + .5).gameFormat;
+        mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
         mesh.renderingGroupId = TileRenderingGroupIds.WATER;
 
         const source = await AssetsLoader.loadTileSheet();
