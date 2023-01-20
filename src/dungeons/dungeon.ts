@@ -183,10 +183,10 @@ export class DungeonState {
         // Initialize the light overlay
         await this.lightOverlay.init();
         // Update the light overlay
-        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader());
+        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
         // TODO: Find a neater way to do this
         // Executing this twice fixes the lighting issue
-        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader());
+        this.lightOverlay.overlayPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
 
         // Place a vertical line at the spawn
         const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);

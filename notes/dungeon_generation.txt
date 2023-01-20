@@ -1,0 +1,71 @@
+Generators:
+0x01 STD Half rooms
+0x02 One room (monster house)
+0x03 Rooms inside, corridors out
+0x04 Corridors inside, rooms out
+0x05 Two large rooms, one MH
+0x06 Five rooms in a line
+0x07 Five rooms in a cross
+0x08 STD Full rooms
+0x09 Rooms inside, nothing out
+0x0A Rooms out, nothing inside
+0x0B STD 3/4 rooms
+
+STD Size is 56x32
+but only inside 52x28 are used
+
+(1) Room is cleared
+(2) Borders are placed
+(3) Place down rooms
++ Some full, some 1x1
+HOW:
+-Split available space by M vertical sectors and N horizontal sectors.
+- M and N change depending on floor and a random factor
+- Each room is at least 5 wide and 4 tall, at max sector size
+- Dimensions are preferrably odd
+- Ratio is at least 2:3
+WHAT ABOUT 1x1 ROOMS?
+- Some rooms are dummy rooms
+- Depending on room density (D)
+- Determines how many rooms will spawn and how many will be dummies
+- Negative number means exactly abs(D) rooms (still, not less than 2)
+and positive number adds some random variance
+MERGED ROOMS:
+- Additionally, each adjacent se of vertical rooms, has a 5% chance of getting merged
+- A merged room is created by creating a rectangle that covers both rooms
+
+
+
+(4) Connect rooms
++ Find a collinear point
++ Trace line between rooms, passing through the poin
+(5) Generate dead ends
++ Pick a random room
++ Draw a line, one point at a time, turning randomly
++ Ends when reach borders or another room
++ Repeat some times
+(6) Replace borders (see if necessary)
+(7) Place special triggers at intersections between rooms and corridors
+(8) Generate special features (like water)
+HOW:
+- Generate a random path going through the map (never overriding floor space)
+- Find n = terrainDensity points, and create 8x8 areas of randomly places water tiles (not full)
+(9) Placing items and traps
+- Ground item density
+  X-2:X+2 items
+- Tile density
+  X/2:X traps/magic tiles (max of 56)
+- Buried item density
+  X-2:X+2 items inside walls
+(10) Generate monster house
+- 0-100 percentage H
+- Only one room can be a monster house
+- Place additional traps and items in said room
+(11) Keckleon Shop
+- 0-100 pecentage K
+- Only one room can be a Keckleon shop
+- Carpet is roomSize.inflate(-1) big, but can be reduced in size up to a minumum of 3x3
+
+(12) Enjoy
+
+
