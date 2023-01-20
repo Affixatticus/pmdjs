@@ -2,7 +2,6 @@ import { DungeonState } from "../dungeon";
 import { PokemonTypes } from "../objects/pokemon";
 import { TurnAction } from "./actions/action";
 import { WalkAction, MoveActionGroup } from "./actions/walk";
-import { DungeonPokemonAI } from "./ai";
 
 /** A queue for actions */
 export class Turn {
@@ -37,9 +36,7 @@ export class Turn {
         state.floor.pokemon.getAll().forEach(pokemon => {
             // Skip the player's pokemon
             if (pokemon.type === PokemonTypes.LEADER) return;
-
-            const ai = new DungeonPokemonAI(pokemon, state.floor);
-            const action = ai.calculateAction();
+            const action = pokemon.ai.calculateNextAction();
             this.addAction(action);
         });
 

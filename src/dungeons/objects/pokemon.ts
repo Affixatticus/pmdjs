@@ -4,6 +4,7 @@ import { AssetsLoader } from "../../utils/assets_loader";
 import { Directions } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
+import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonPokemonMaterial } from "./sprite";
 
 export const enum PokemonTypes {
@@ -19,11 +20,11 @@ export class DungeonPokemon {
     private _direction: Directions;
     public type: PokemonTypes;
     public id: PokemonFormIdentifier;
+    public ai!: DungeonPokemonAI;
 
     /** Turn calculation components */
     public nextTurnPosition!: Vec2;
     public nextTurnDirection!: Directions;
-    public keepWalking: boolean = false;
 
     private opaqMesh!: Mesh;
     private tranMesh!: Mesh;
@@ -33,6 +34,7 @@ export class DungeonPokemon {
     constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
         this.type = type;
         this.id = id;
+        /** Create the AI */
         this._position = pos;
         this._spritePosition = pos;
         this._direction = Directions.SOUTH;
@@ -72,9 +74,9 @@ export class DungeonPokemon {
         this.tranMesh = tranMesh;
     }
 
-    public animate(tick: number) {
+    public animate() {
         if (!this.material) return;
-        this.material.animate(tick);
+        this.material.animate();
     }
 
     public dispose = () => {
@@ -120,8 +122,12 @@ export class DungeonPokemon {
 
     public setAnimation(animName: string) {
         if (!this.material) return;
-
         if (animName === this.material.animation) return;
+        this.material.setAnimation(animName);
+    }
+
+    public resetAnimation(animName: string) {
+        if (!this.material) return;
         this.material.setAnimation(animName);
     }
 }
@@ -151,9 +157,9 @@ export class DungeonPokemonList {
         }
     }
 
-    public animate(tick: number) {
+    public animate() {
         for (const obj of this.objects) {
-            obj.animate(tick);
+            obj.animate();
         }
     }
 

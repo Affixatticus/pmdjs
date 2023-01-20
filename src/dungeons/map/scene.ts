@@ -203,6 +203,10 @@ export class DungeonMap {
         this.animateWater(tick);
     }
 
+    public async setTile(pos: Vec2, tile: Tiles) {
+        this.changeGridSection(pos, new ByteGrid(1, 1, new Uint8Array([tile])));
+    }
+
     public async changeGridSection(start: Vec2, values: ByteGrid) {
         // Update the grid
         for (let x = start.x; x < start.x + values.width; x++)

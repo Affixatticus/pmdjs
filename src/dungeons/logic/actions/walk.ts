@@ -15,15 +15,10 @@ export class WalkAction implements TurnAction {
 
 
     // Animation
-    private static ANIMATION_LENGTH = 48;
-    private static TURNING_LENGTH = 3;
+    private static ANIMATION_LENGTH = 52;
 
     private currentStep: number = 0;
-    private turnStep: number = 0;
-    private rotations: Directions[];
 
-    /** Step at which the moving can begin */
-    private walkStart: number;
     /** Distance travelled each step */
     private walkDelta: number;
 
@@ -37,14 +32,7 @@ export class WalkAction implements TurnAction {
         // Set the next turn direction of this pokemon
         this.pokemon.nextTurnDirection = direction;
 
-        // Get the number of rotations needed to get to the target direction
-        this.rotations = this.pokemon.direction.getRotationsTo(direction);
-        // Based on the number of rotations, determine how long the turn animation should be
-        const ticksForTurning = this.rotations.length * WalkAction.TURNING_LENGTH;
-        // The walk animation should start after the turn animation
-        this.walkStart = ticksForTurning;
-        // The distance travelled each step
-        this.walkDelta = 1 / (WalkAction.ANIMATION_LENGTH - ticksForTurning);
+        this.walkDelta = 1 / (WalkAction.ANIMATION_LENGTH);
     }
 
     public tick(): boolean {
@@ -52,27 +40,19 @@ export class WalkAction implements TurnAction {
 
         // For the first step
         if (this.currentStep === 0) {
-            this.pokemon.setAnimation("Walk");
-        }
-
-        // Turning time
-        if (this.currentStep < this.walkStart) {
-            if (this.turnStep++ > WalkAction.TURNING_LENGTH) {
-                // Get the direction of the next rotation
-                const nextDir = this.rotations[Math.floor(this.currentStep / WalkAction.TURNING_LENGTH)];
-                // Set the direction of the pokemon
-                this.pokemon.direction = nextDir;
-                // Increment the step
-                this.turnStep = 0;
+            // If the direction is not the same as the sprite direction
+            if (this.pokemon.direction !== this.direction) {
+                this.pokemon.resetAnimation("Walk");
+                // Turn in the correct direction
+                this.pokemon.direction = this.direction;
             } else {
-                this.turnStep++;
+                this.pokemon.setAnimation("Walk");
             }
         }
         // While you are still animating
         else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
             this.pokemon.position = this.pokemon.spritePosition.add(
                 this.direction.toVector().scale(this.walkDelta));
-            // this.pokemon.setAnimation("Walk");
         }
         // When stopping
         else {
@@ -81,7 +61,6 @@ export class WalkAction implements TurnAction {
                 this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
                     // Quick check to see if the pokemon is still moving
                     if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
-                        console.log("Intercepted")
                         this.pokemon.setAnimation("Idle");
                     }
                 }

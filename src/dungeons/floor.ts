@@ -102,7 +102,7 @@ export class DungeonFloor {
 
     public update(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate(tick / 2.5 | 0);
+        this.pokemon.animate();
     }
 
     // Utility

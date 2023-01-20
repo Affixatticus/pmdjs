@@ -156,6 +156,8 @@ export class DungeonState {
         /** Dungeon Floor Loading */
         // Generate the floor
         this.generateFloor();
+        // Initialize the logic
+        this.logic.init();
         // Get the spawn position
         // const spawn = this.chooseSpawnPosition();
         const spawn = DungeonStartup.getStartingLeaderPosition();

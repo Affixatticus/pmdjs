@@ -4,6 +4,9 @@ import { DungeonState } from "../dungeon";
 import { WalkAction } from "./actions/walk";
 import { NilAction } from "./actions/nil";
 import { Turn } from "./turn";
+import { PokemonTypes } from "../objects/pokemon";
+import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
+import { DungeonPokemonAI } from "./ai/ai";
 
 enum PlayerStates {
     /** In this state, the player can choose whichever action available */
@@ -30,6 +33,20 @@ export class DungeonLogic {
         this.turn = null;
         this.turnsHistory = [];
         this.walkDirection = null;
+    }
+
+    /** Initializes the logic with all parameters that are created after its instancing */
+    public init() {
+        for (const pokemon of this.state.floor.pokemon.getAll()) {
+            // Assign the ai to the pokemon
+            switch (pokemon.type) {
+                case PokemonTypes.PARTNER:
+                    pokemon.ai = new DungeonPokemonPartnerAI(pokemon, this.state.floor);
+                    break;
+                default:
+                    pokemon.ai = new DungeonPokemonAI(pokemon, this.state.floor);
+            }
+        }
     }
 
     /** Updates the player movement and starts off the turn */

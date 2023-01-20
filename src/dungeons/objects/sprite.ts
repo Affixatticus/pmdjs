@@ -42,8 +42,7 @@ export interface PokemonSpriteData {
 };
 
 const SHEET_SIZE = 24 * 8;
-/** Animation Speed */
-const T = 120;
+const FRAME_DURATION = 144 / 52;
 export class DungeonPokemonMaterial extends StandardMaterial {
     private data: PokemonSpriteData;
     public texture: DynamicTexture;
@@ -51,14 +50,14 @@ export class DungeonPokemonMaterial extends StandardMaterial {
     public animation: string;
     public direction: Directions;
 
-    /** The current frame */
-    public currentFrame!: number;
-    /** Check again time */
-    public caTime: number = 0;
+
+    /** The currently displayed frame */
+    private _currentFrame: number = 0;
+    /** The time of animation ticks the current frame should remain onscreen */
+    private _currentFrameDuration: number = 0;
+
 
     public animCallback: ((material: DungeonPokemonMaterial) => void) | null = null;
-
-    private firstAnimation: boolean = true;
 
     constructor(data: PokemonSpriteData, scene: Scene) {
         super("dungeon_pokemon_sprite", scene);
@@ -90,7 +89,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         ctx.clearRect(0, 0, SHEET_SIZE, SHEET_SIZE);
 
         // Draw the sprite on top
-        const sx = anim.frameWidth * this.currentFrame;
+        const sx = anim.frameWidth * this._currentFrame;
         const sy = anim.frameHeight * sourceY;
         const dx = Math.floor((SHEET_SIZE - anim.frameWidth) / 2);
         const dy = Math.floor((SHEET_SIZE - anim.frameHeight) / 2);
@@ -107,33 +106,26 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.texture.update();
     }
 
-    private setFrame(tick: number, frame: number) {
-        const durations = this.data.animations[this.animation].durations;
-        this.currentFrame = frame >= durations.length ? 0 : frame;
-        this.caTime = tick + durations[this.currentFrame];
-        this.draw();
+    /** Updates the frame of the animation */
+    public animate() {
+        // Update the frame
+        this._currentFrameDuration--;
+        if (this._currentFrameDuration <= 0) {
+            this._currentFrame++;
+            const anim = this.data.animations[this.animation];
+            if (this._currentFrame >= anim.durations.length) {
+                this._currentFrame = 0;
+                this.runCallback();
+            }
+
+            this._currentFrameDuration = this.getDuration();
+            this.draw();
+        }
     }
 
-    // Determines the state of the animation at every given time
-    public animate(tick: number) {
+    private getDuration(currentFrame: number = this._currentFrame) {
         const anim = this.data.animations[this.animation];
-
-        if (this.firstAnimation) {
-            this.firstAnimation = false;
-            this.setFrame(tick % T | 0, this.currentFrame);
-        }
-
-        if ((tick % T | 0) === (this.caTime % T | 0)) {
-            this.setFrame(tick % T | 0, this.currentFrame + 1);
-        }
-
-        if (this.currentFrame === anim.durations.length - 1) {
-            this.runCallback();
-        }
-
-        this.currentFrame = this.currentFrame % anim.durations.length;
-
-        this.draw();
+        return anim.durations[currentFrame] * FRAME_DURATION;
     }
 
     private runCallback() {
@@ -161,13 +153,11 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         return texture;
     }
 
-    // TODO - Add a way to set the animation
     public setAnimation(name: string, draw: boolean = true) {
         this.animation = name;
-        this.currentFrame = 0;
-        this.caTime = 0;
-        this.firstAnimation = true;
-        
+        this._currentFrame = 0;
+        this._currentFrameDuration = this.getDuration();
+
         if (draw)
             this.draw();
     }
