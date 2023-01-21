@@ -3,6 +3,8 @@ import { Directions } from "../../utils/direction";
 import Random from "../../utils/random";
 import { Rect } from "../../utils/rect";
 import { V2, Vec2 } from "../../utils/vectors";
+import { DungeonFloor } from "../floor";
+import { DungeonCarpet } from "../objects/carpet";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonTiling } from "./tiling";
 
@@ -166,6 +168,30 @@ export class ByteGrid {
                 positions.push(V2(x, y));
 
         return positions;
+    }
+
+    /** Sets to zero all points that are occupied by:
+     * - Fellow pokemon
+     * - objects
+     * - untraversable tiles for the specified pokemon
+     */
+    public hideOccupiedPositions(floor: DungeonFloor, pokemon: DungeonPokemon = floor.pokemon.getLeader()) {
+        // Hide under all the pokemon on the floor
+        for (const pokemon of floor.pokemon.getAll()) {
+            this.set(...pokemon.position.xy, 0);
+        }
+        // Hide under all the objects on the floor
+        for (const object of floor.objects) {
+            // But keep it on the carpet
+            if (object instanceof DungeonCarpet) continue;
+            this.set(...object.position.xy, 0);
+        }
+        // Hide under all unpassable tiles
+        for (const [pos, visible] of this) {
+            if (!visible) continue;
+            if (floor.isObstacle(...pos.xy, pokemon)) this.set(...pos.xy, 0);
+        }
+        return this;
     }
 }
 
@@ -373,19 +399,19 @@ export class DungeonGrid extends ByteGrid {
                 offsetGrid.set(pos.x, pos.y, 1);
             }
 
-            return offsetGrid;
+            return offsetGrid.inflate(1);
         }
         else {
             // Find the biggest rectangle that contains all the room tiles
             // Find the top left corner
             let topLeft = position;
-            while (!this.isCorridor(topLeft.add(V2(-1, 0))) || !this.isCorridor(topLeft.add(V2(-2, 0)))) topLeft = topLeft.add(V2(-1, 0));
             while (!this.isCorridor(topLeft.add(V2(0, -1))) || !this.isCorridor(topLeft.add(V2(0, -2)))) topLeft = topLeft.add(V2(0, -1));
+            while (!this.isCorridor(topLeft.add(V2(-1, 0))) || !this.isCorridor(topLeft.add(V2(-2, 0)))) topLeft = topLeft.add(V2(-1, 0));
 
             // Find the bottom right corner
             let bottomRight = position;
-            while (!this.isCorridor(bottomRight.add(V2(1, 0))) || !this.isCorridor(bottomRight.add(V2(2, 0)))) bottomRight = bottomRight.add(V2(1, 0));
             while (!this.isCorridor(bottomRight.add(V2(0, 1))) || !this.isCorridor(bottomRight.add(V2(0, 2)))) bottomRight = bottomRight.add(V2(0, 1));
+            while (!this.isCorridor(bottomRight.add(V2(1, 0))) || !this.isCorridor(bottomRight.add(V2(2, 0)))) bottomRight = bottomRight.add(V2(1, 0));
 
             // Create the offsetGrid
             // const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 3, bottomRight.y - topLeft.y + 3, topLeft.move(-1));
@@ -393,9 +419,11 @@ export class DungeonGrid extends ByteGrid {
 
             // Set all tiles to 1
             offsetGrid.fill(1);
-            return offsetGrid;
+            return offsetGrid.inflate(1);
         }
     }
+
+
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, Tiles]> {
         for (const [pos, _value] of super[Symbol.iterator]())

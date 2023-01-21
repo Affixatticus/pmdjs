@@ -120,7 +120,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
         },
         [6]: {
             name: "Grass Cave",
-            path: "deep_boulder_quarry_01",
+            path: "western_cave",
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],

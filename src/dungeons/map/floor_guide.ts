@@ -70,23 +70,16 @@ export class FloorGuide {
         // Get the visible area of the pokemon
         const viewArea = this.grid.getViewArea(this.pokemon.position);
 
-
-        const moveOffset = direction.toVector();
+        // Place the guides
         let position = this.pokemon.position.clone();
         for (let i = 0; i < 10; i++) {
-            position.addInPlace(moveOffset);
+            position.addInPlace(direction.toVector());
             if (viewArea.get(...position.xy) === -1) break;
             viewArea.set(...position.xy, 2);
         }
-        // Get all the pokemon on the floor
-        for (const pokemon of this.floor.pokemon.getAll()) {
-            viewArea.set(...pokemon.position.xy, 0);
-        }
-        for (const object of this.floor.objects) {
-            if (object instanceof DungeonCarpet) continue;
-                
-            viewArea.set(...object.position.xy, 0);
-        }
+
+        // Remove hidden points
+        viewArea.hideOccupiedPositions(this.floor);
 
         // Loop through the view area and create instances
         for (const [pos, tile] of viewArea) {
