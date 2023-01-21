@@ -6,10 +6,12 @@ import { NilAction } from "../actions/nil";
 export class DungeonPokemonAI {
     public pokemon: DungeonPokemon;
     public floor: DungeonFloor;
+    public overwrittenAction: TurnAction | null;
 
     constructor(pokemon: DungeonPokemon, floor: DungeonFloor) {
         this.pokemon = pokemon;
         this.floor = floor;
+        this.overwrittenAction = null;
     }
 
     public setFloor(floor: DungeonFloor) {
@@ -17,6 +19,7 @@ export class DungeonPokemonAI {
     }
 
     public calculateNextAction(): TurnAction {
+        if (this.overwrittenAction) return this.overwrittenAction;
         return new NilAction(this.pokemon);
     }
 } 

@@ -1,5 +1,7 @@
 import { Controls } from "../../utils/controls";
 import { Directions } from "../../utils/direction";
+import { DungeonPokemon } from "../objects/pokemon";
+import { PushAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 
 enum PlayerStates {
@@ -22,15 +24,22 @@ export class Player {
     private turningDelay = 0;
     private walkingStartedTurn = 0;
     private turnStateTicks = 0;
+    private logic: DungeonLogic;
 
-    constructor() {
-
+    constructor(logic: DungeonLogic) {
+        this.logic = logic;
     }
 
+    public get leader() {
+        return this.logic.state.floor.pokemon.getLeader();
+    }
+
+    
     private setState(state: PlayerStates) {
         this.playerState = state;
         this.walkingStartedTurn = 0;
         this.turningDelay = 0;
+        this.walkingStartedTurn = this.logic.currentTurn;
     }
 
     private setIdle() {
@@ -47,11 +56,53 @@ export class Player {
         this.lastDirection = direction;
     }
 
+    // TODO: Implement this
+    private turnTowardsHotspot(): Directions {
+        return Directions.NORTH;
+    }
+
+    /** Returns the DungeonPokemon in the way that is a partner */
+    private partnerInTheWay(targetDirection: Directions, subject: DungeonPokemon = this.logic.state.floor.pokemon.getLeader()): DungeonPokemon | null {
+        const partners = this.logic.state.floor.pokemon.getPartners();
+        const subjectPosition = subject.position.add(targetDirection.toVector());
+
+        for (const partner of partners) {
+            if (partner === subject) continue;
+            if (partner.position.equals(subjectPosition)) {
+                return partner;
+            }
+        }
+        return null;
+    }
+
+    private pushPartnerBackwards(partner: DungeonPokemon, lastDirection: Directions): Directions | null {
+        // Check if the partner can move in the new position
+        if (this.logic.state.floor.canMoveTowards(partner, lastDirection)) {
+            // Add the new position to the action list
+            partner.ai.overwrittenAction = new PushAction(partner, lastDirection);
+            return this.lastDirection;
+        }
+        // If the partner can't move, check if the partner has a partner in the way
+        else {
+            const partnerInTheWay = this.partnerInTheWay(lastDirection, partner);
+
+            if (partnerInTheWay)
+                if (this.logic.state.floor.canMoveTowards(partnerInTheWay, lastDirection)) {
+                    // Add the new position to the action list
+                    partnerInTheWay.ai.overwrittenAction = new PushAction(partnerInTheWay, lastDirection);
+                    partner.ai.overwrittenAction = new PushAction(partner, lastDirection);
+                    return this.lastDirection;
+                }
+        }
+        this.setTurning(lastDirection);
+        return null;
+    }
+
     /** Takes in the chosen movement of the player */
-    public doInput(logic: DungeonLogic) {
+    public doInput() {
         const stick = Controls.leftStick;
         const inputDirection = Directions.fromVector(stick).flipY();
-        const player = logic.state.floor.pokemon.getLeader();
+        const player = this.logic.state.floor.pokemon.getLeader();
 
 
         switch (this.playerState) {
@@ -59,8 +110,7 @@ export class Player {
                 // If you press the Y button, you can turn freely
                 if (!Controls.Y) {
                     if (this.turnStateTicks > 2) {
-                        // TODO: Choose the direction to turn to
-                        this.lastDirection = Directions.NORTH;
+                        this.lastDirection = this.turnTowardsHotspot();
                         this.setState(PlayerStates.TURNING);
                     }
                     this.turnStateTicks = 0;
@@ -107,20 +157,20 @@ export class Player {
             }
             case PlayerStates.WALKING: {
                 // After the first turn, you are allowed to change direction
-                if (this.walkingStartedTurn !== logic.currentTurn) {
+                if (this.walkingStartedTurn !== this.logic.currentTurn) {
                     // If you want to, you can stop walking
                     if (this.lastDirection === Directions.NONE) {
                         this.setIdle();
                         return null;
                     }
                     // Depending on the direction you choose, you can either walk or turn
-                    const canMove = logic.state.floor.canMoveTowards(player, inputDirection);
+                    const canMove = this.logic.state.floor.canMoveTowards(player, inputDirection);
                     if (!canMove) {
                         this.setIdle();
                         return null;
                     }
                     // Check if the player is going to turn the opposite direction
-                    if (this.lastDirection.opposite(inputDirection)) {
+                    if (this.lastDirection.isOpposite(inputDirection)) {
                         this.setTurning(inputDirection);
                         return null;
                     }
@@ -128,9 +178,15 @@ export class Player {
                     this.lastDirection = inputDirection;
                     return this.lastDirection;
                 } else {
-                    const canMove = logic.state.floor.canMoveTowards(player, this.lastDirection);
+                    const canMove = this.logic.state.floor.canMoveTowards(player, this.lastDirection);
+                    const partner = this.partnerInTheWay(this.lastDirection);
                     if (canMove) {
                         return this.lastDirection;
+                    } else if (Controls.B && partner) {
+                        return this.lastDirection;
+                    } else if (inputDirection !== Directions.NONE && partner) {
+                        // Push the partners backwards
+                        return this.pushPartnerBackwards(partner, this.lastDirection);
                     }
                     this.setIdle();
                     return null;
@@ -138,12 +194,12 @@ export class Player {
             }
             case PlayerStates.TURN: {
                 if (Controls.Y && this.turnStateTicks === 0) {
-                    logic.state.floorGuide.show();
+                    this.logic.state.floorGuide.show();
                 }
                 this.turnStateTicks++;
                 if (!Controls.Y && this.turnStateTicks > 20) {
                     this.turnStateTicks = 0;
-                    logic.state.floorGuide.hide();
+                    this.logic.state.floorGuide.hide();
                     this.setIdle();
                     return null;
                 }
@@ -159,7 +215,7 @@ export class Player {
                     // Change state to walking
                     this.setTurning(inputDirection);
                     // Update the floor guide
-                    logic.state.floorGuide.update(inputDirection);
+                    this.logic.state.floorGuide.update(inputDirection);
                 }
             }
         }
@@ -167,4 +223,5 @@ export class Player {
 
         return null;
     }
+
 }

@@ -1,6 +1,7 @@
 import { Directions } from "../../../utils/direction";
 import { DungeonFloor } from "../../floor";
 import { DungeonPokemon } from "../../objects/pokemon";
+import { TurnAction } from "../actions/action";
 import { NilAction } from "../actions/nil";
 import { WalkAction } from "../actions/walk";
 import { DungeonPokemonAI } from "./ai";
@@ -10,7 +11,9 @@ export class DungeonPokemonPartnerAI extends DungeonPokemonAI {
         super(pokemon, floor);
     }
 
-    public calculateNextAction(): WalkAction | NilAction {
+    public calculateNextAction(): TurnAction {
+        if (this.overwrittenAction) return this.overwrittenAction;
+
         // Get the leader's position
         const leader = this.floor.pokemon.getLeader();
         const targetPosition = leader.position;
@@ -36,7 +39,7 @@ export class DungeonPokemonPartnerAI extends DungeonPokemonAI {
 
         return new WalkAction(this.pokemon, closestDir);
 
-        
+
         // // Get the previous partner
         // const partners = this.floor.pokemon.getPartners();
         // // Get the index of this pokemon

@@ -88,8 +88,12 @@ export class Directions {
         this.diagonal = this.horizontal !== 0 && this.vertical !== 0;
     }
 
-    public opposite(other: Directions) {
+    public isOpposite(other: Directions) {
         return this.horizontal === -other.horizontal && this.vertical === -other.vertical;
+    }
+
+    public getOpposite(): Directions {
+        return Directions.get(Directions.rollIndex(this.index + 4));
     }
 
     public static flipMap: Record<number, Directions> = {

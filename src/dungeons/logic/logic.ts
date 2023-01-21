@@ -24,7 +24,7 @@ export class DungeonLogic {
         this.currentTurn = 0;
         this.turn = null;
         this.turnsHistory = [];
-        this.player = new Player();
+        this.player = new Player(this);
         this.walkDirection = null;
     }
 
@@ -53,7 +53,7 @@ export class DungeonLogic {
 
         // Await for the player input
         if (this.walkDirection === null) {
-            this.walkDirection = this.player.doInput(this);
+            this.walkDirection = this.player.doInput();
             if (this.walkDirection === null) return;
         };
 
@@ -79,6 +79,10 @@ export class DungeonLogic {
             this.turn = null;
             this.currentTurn++;
             this.walkDirection = null;
+            // Reset all calcedActions
+            for (const pokemon of this.state.floor.pokemon.getAll()) {
+                pokemon.ai.overwrittenAction = null;
+            }
         }
     }
 }

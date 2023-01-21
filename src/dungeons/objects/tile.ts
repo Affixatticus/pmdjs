@@ -1,4 +1,4 @@
-import { Color3, Constants, DynamicTexture, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
+import { Color3, Constants, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
 import { TileRenderingGroupIds } from "../floor";
 import { DungeonObject, ObjectTypes } from "./object";
@@ -35,6 +35,10 @@ export class DungeonTile extends DungeonObject {
 
     public setVisibility(isVisible: boolean): void {
         this.mesh.isVisible = isVisible;
+    }
+
+    public isKeckleonRelated(): boolean {
+        return this.id === TileObjects.KECLEON_CARPET;
     }
 
 

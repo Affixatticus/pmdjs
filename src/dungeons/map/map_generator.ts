@@ -924,7 +924,7 @@ export class DungeonGenerator {
     // ANCHOR Special rooms
     private placeKecleonShopRoom(rooms: Room[][]) {
         const room = Random.choose(this.getRooms(rooms));
-        if (!room || !Random.chance(1)) return;
+        if (!room || !Random.chance(100)) return;
         const carpetArea = room;
         let itemArea = carpetArea.centralRect(V2(2, 2));
         if (itemArea.height <= 1 || itemArea.width <= 1)

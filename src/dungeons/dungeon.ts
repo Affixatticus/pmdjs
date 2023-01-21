@@ -1,4 +1,4 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HemisphericLight, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
+import { AxesViewer, Color3, Color4, DirectionalLight, Engine, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tiles } from "../data/tiles";
@@ -181,7 +181,10 @@ export class DungeonState {
         this.moveCamera(spawn.toVec3());
         // Initialize the light overlay
         await this.lightOverlay.init();
+        // TODO Understand why the light is less stuttery when you run this 2-3 times
         // Update the light overlay
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
         this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
         // Update the floor guide
         await this.floorGuide.init();

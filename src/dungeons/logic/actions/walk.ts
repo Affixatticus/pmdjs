@@ -15,12 +15,12 @@ export class WalkAction implements TurnAction {
 
 
     // Animation
-    private static ANIMATION_LENGTH = 52;
+    public static ANIMATION_LENGTH = 52;
 
-    private currentStep: number = 0;
+    public currentStep: number = 0;
 
     /** Distance travelled each step */
-    private walkDelta: number;
+    public walkDelta: number;
 
     constructor(pokemon: DungeonPokemon, direction: Directions) {
         this.done = false;
@@ -53,6 +53,53 @@ export class WalkAction implements TurnAction {
         else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
             this.pokemon.position = this.pokemon.spritePosition.add(
                 this.direction.toVector().scale(this.walkDelta));
+        }
+        // When stopping
+        else {
+            this.pokemon.position = this.pokemon.nextTurnPosition;
+            if (this.pokemon.material) {
+                this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
+                    // Quick check to see if the pokemon is still moving
+                    if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
+                        this.pokemon.setAnimation("Idle");
+                    }
+                }
+            }
+            return this.done = true;
+        }
+
+        // Increment the step
+        this.currentStep++;
+
+        return false;
+    }
+}
+
+export class PushAction extends WalkAction {
+    constructor(pokemon: DungeonPokemon, direction: Directions) {
+        super(pokemon, direction);
+        this.logMessage = `${pokemon.toString()} pushed ${direction.toString()}!`;
+    }
+
+    public tick(): boolean {
+        if (this.done) return true;
+
+        // For the first step
+        if (this.currentStep === 0) {
+            // If the direction is not the same as the sprite direction
+            if (this.pokemon.direction !== this.direction) {
+                this.pokemon.resetAnimation("Walk");
+            } else {
+                this.pokemon.setAnimation("Walk");
+            }
+        }
+        // While you are still animating
+        else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
+            this.pokemon.position = this.pokemon.spritePosition.add(
+                this.direction.toVector().scale(this.walkDelta));
+            // Modify the direction of the pokemon
+            const newDirection = Math.round((this.currentStep / WalkAction.ANIMATION_LENGTH) * 8);
+            this.pokemon.direction = Directions.ALL[Directions.rollIndex(this.direction.index + newDirection + 4)];
         }
         // When stopping
         else {

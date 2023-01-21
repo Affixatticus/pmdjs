@@ -1,12 +1,12 @@
-import { Constants, GroundMesh, InstancedMesh, Material, Matrix, MeshBuilder, Scene } from "@babylonjs/core";
-import { getTileCrop, TileObjects, Tiles } from "../../data/tiles";
+import { GroundMesh, InstancedMesh, MeshBuilder, Scene } from "@babylonjs/core";
+import { getTileCrop, TileObjects } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { DungeonPokemon } from "../objects/pokemon";
-import { DungeonGrid } from "./grid";
 import { TileMaterial } from "../objects/tile";
 import { DungeonFloor, TileRenderingGroupIds } from "../floor";
 import { Directions } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
+import { DungeonCarpet } from "../objects/carpet";
 
 export class FloorGuide {
     private scene: Scene;
@@ -59,7 +59,7 @@ export class FloorGuide {
     }
     public instanceWhite(pos: Vec2) {
         const instance = this.whiteGuide.createInstance(pos.x + "," + pos.y);
-        instance.position = V3(...pos.move(0.5).gameFormat.add(V3(0, 0.01, 0)).xyz);
+        instance.position = V3(...pos.move(0.5).gameFormat.add(V3(0, 0.02, 0)).xyz);
         this.whiteGuideInstances.push(instance);
     }
 
@@ -83,6 +83,8 @@ export class FloorGuide {
             viewArea.set(...pokemon.position.xy, 0);
         }
         for (const object of this.floor.objects) {
+            if (object instanceof DungeonCarpet) continue;
+                
             viewArea.set(...object.position.xy, 0);
         }
 
