@@ -71,7 +71,7 @@ export class LightOverlay {
         const offsetGrid = grid.getViewArea(pokemon.nextTurnPosition);
         if (!firstTime && this.lastOffsetGrid?.equals(offsetGrid))
             return;
-        this.placeSpotlight(offsetGrid);
+        this.placeSpotlight(offsetGrid.inflate(1));
         this.lastOffsetGrid = offsetGrid;
     }
 

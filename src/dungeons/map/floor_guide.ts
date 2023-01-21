@@ -6,7 +6,6 @@ import { TileMaterial } from "../objects/tile";
 import { DungeonFloor, TileRenderingGroupIds } from "../floor";
 import { Directions } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
-import { DungeonCarpet } from "../objects/carpet";
 
 export class FloorGuide {
     private scene: Scene;
@@ -68,21 +67,21 @@ export class FloorGuide {
         this.hide();
 
         // Get the visible area of the pokemon
-        const viewArea = this.grid.getViewArea(this.pokemon.position);
+        const actionArea = this.grid.getActionArea(this.pokemon.position);
 
         // Place the guides
         let position = this.pokemon.position.clone();
         for (let i = 0; i < 10; i++) {
             position.addInPlace(direction.toVector());
-            if (viewArea.get(...position.xy) === -1) break;
-            viewArea.set(...position.xy, 2);
+            if (actionArea.get(...position.xy) === -1) break;
+            actionArea.set(...position.xy, 2);
         }
 
         // Remove hidden points
-        viewArea.hideOccupiedPositions(this.floor);
+        actionArea.hideOccupiedPositions(this.floor);
 
         // Loop through the view area and create instances
-        for (const [pos, tile] of viewArea) {
+        for (const [pos, tile] of actionArea) {
             if (tile === 0) continue;
             if (tile === 1) this.instanceWhite(pos);
             if (tile === 2) this.instanceBlack(pos);

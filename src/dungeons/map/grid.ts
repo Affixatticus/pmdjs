@@ -344,6 +344,77 @@ export class DungeonGrid extends ByteGrid {
         return true;
     }
 
+    public getCorridorViewArea(position: Vec2) {
+        const savedPositions: Vec2[] = [position];
+
+        for (const dir of Directions.CARDINAL) {
+            const dirVec = dir.toVector();
+            const nextPos = position.add(dirVec);
+
+            // Check if the next position is walkable
+            if (!this.isWalkable(nextPos)) continue;
+            // Add it to the list
+            savedPositions.push(nextPos);
+            // Exit if you run into a room
+            if (!this.isCorridor(nextPos)) continue;
+            // Try continuing down the same road
+            const nextNextPos = nextPos.add(dirVec);
+            if (this.isWalkable(nextNextPos)) {
+                savedPositions.push(nextNextPos);
+                continue;
+            }
+            // Try the counter-clockwise direction
+            const ccwDir = Directions.ALL[Directions.rollIndex(dir.index - 2)];
+            const ccwDirVec = ccwDir.toVector();
+            const nextCCWPos = nextPos.add(ccwDirVec);
+            // Check if the next position is walkable
+            if (this.isWalkable(nextCCWPos)) {
+                savedPositions.push(nextCCWPos);
+                continue;
+            };
+            // Try the clockwise direction
+            const cwDir = Directions.ALL[Directions.rollIndex(dir.index + 2)];
+            const cwDirVec = cwDir.toVector();
+            const nextCWPos = nextPos.add(cwDirVec);
+            // Check if the next position is walkable
+            if (this.isWalkable(nextCWPos)) {
+                savedPositions.push(nextCWPos);
+                continue;
+            }
+        }
+
+        // Compose the offsetGrid
+        const rect = Rect.fromPositions(savedPositions);
+        const offsetGrid = new OffsetGrid(rect.width, rect.height, V2(rect.left, rect.top));
+
+        // Add all the points to the offsetGrid as 1s
+        for (const pos of savedPositions) {
+            offsetGrid.set(pos.x, pos.y, 1);
+        }
+
+        return offsetGrid;
+    }
+
+    public getRoomViewArea(position: Vec2) {
+        // Find the biggest rectangle that contains all the room tiles
+        // Find the top left corner
+        let topLeft = position;
+        while (!this.isCorridor(topLeft.add(V2(0, -1))) || !this.isCorridor(topLeft.add(V2(0, -2)))) topLeft = topLeft.add(V2(0, -1));
+        while (!this.isCorridor(topLeft.add(V2(-1, 0))) || !this.isCorridor(topLeft.add(V2(-2, 0)))) topLeft = topLeft.add(V2(-1, 0));
+
+        // Find the bottom right corner
+        let bottomRight = position;
+        while (!this.isCorridor(bottomRight.add(V2(0, 1))) || !this.isCorridor(bottomRight.add(V2(0, 2)))) bottomRight = bottomRight.add(V2(0, 1));
+        while (!this.isCorridor(bottomRight.add(V2(1, 0))) || !this.isCorridor(bottomRight.add(V2(2, 0)))) bottomRight = bottomRight.add(V2(1, 0));
+
+        // Create the offsetGrid
+        // const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 3, bottomRight.y - topLeft.y + 3, topLeft.move(-1));
+        const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 1, bottomRight.y - topLeft.y + 1, topLeft);
+
+        // Set all tiles to 1
+        offsetGrid.fill(1);
+        return offsetGrid;
+    }
 
     /** Returns an offsetgrid that marks with 1 all the positions that a
      * pokemon in the given position can see
@@ -351,79 +422,20 @@ export class DungeonGrid extends ByteGrid {
     public getViewArea(position: Vec2): OffsetGrid {
         // Calculate the area based on whether the pokemon is in a corridor or a room
         const isCorridor = this.isCorridor(position);
-        if (isCorridor) {
-            const savedPositions: Vec2[] = [position];
-
-            for (const dir of Directions.CARDINAL) {
-                const dirVec = dir.toVector();
-                const nextPos = position.add(dirVec);
-
-                // Check if the next position is walkable
-                if (!this.isWalkable(nextPos)) continue;
-                // Add it to the list
-                savedPositions.push(nextPos);
-                // Exit if you run into a room
-                if (!this.isCorridor(nextPos)) continue;
-                // Try continuing down the same road
-                const nextNextPos = nextPos.add(dirVec);
-                if (this.isWalkable(nextNextPos)) {
-                    savedPositions.push(nextNextPos);
-                    continue;
-                }
-                // Try the counter-clockwise direction
-                const ccwDir = Directions.ALL[Directions.rollIndex(dir.index - 2)];
-                const ccwDirVec = ccwDir.toVector();
-                const nextCCWPos = nextPos.add(ccwDirVec);
-                // Check if the next position is walkable
-                if (this.isWalkable(nextCCWPos)) {
-                    savedPositions.push(nextCCWPos);
-                    continue;
-                };
-                // Try the clockwise direction
-                const cwDir = Directions.ALL[Directions.rollIndex(dir.index + 2)];
-                const cwDirVec = cwDir.toVector();
-                const nextCWPos = nextPos.add(cwDirVec);
-                // Check if the next position is walkable
-                if (this.isWalkable(nextCWPos)) {
-                    savedPositions.push(nextCWPos);
-                    continue;
-                }
-            }
-
-            // Compose the offsetGrid
-            const rect = Rect.fromPositions(savedPositions);
-            const offsetGrid = new OffsetGrid(rect.width, rect.height, V2(rect.left, rect.top));
-
-            // Add all the points to the offsetGrid as 1s
-            for (const pos of savedPositions) {
-                offsetGrid.set(pos.x, pos.y, 1);
-            }
-
-            return offsetGrid.inflate(1);
-        }
-        else {
-            // Find the biggest rectangle that contains all the room tiles
-            // Find the top left corner
-            let topLeft = position;
-            while (!this.isCorridor(topLeft.add(V2(0, -1))) || !this.isCorridor(topLeft.add(V2(0, -2)))) topLeft = topLeft.add(V2(0, -1));
-            while (!this.isCorridor(topLeft.add(V2(-1, 0))) || !this.isCorridor(topLeft.add(V2(-2, 0)))) topLeft = topLeft.add(V2(-1, 0));
-
-            // Find the bottom right corner
-            let bottomRight = position;
-            while (!this.isCorridor(bottomRight.add(V2(0, 1))) || !this.isCorridor(bottomRight.add(V2(0, 2)))) bottomRight = bottomRight.add(V2(0, 1));
-            while (!this.isCorridor(bottomRight.add(V2(1, 0))) || !this.isCorridor(bottomRight.add(V2(2, 0)))) bottomRight = bottomRight.add(V2(1, 0));
-
-            // Create the offsetGrid
-            // const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 3, bottomRight.y - topLeft.y + 3, topLeft.move(-1));
-            const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 1, bottomRight.y - topLeft.y + 1, topLeft);
-
-            // Set all tiles to 1
-            offsetGrid.fill(1);
-            return offsetGrid.inflate(1);
-        }
+        if (isCorridor)
+            return this.getCorridorViewArea(position);
+        else
+            return this.getRoomViewArea(position);
     }
 
-
+    public getActionArea(position: Vec2): OffsetGrid {
+        // Calculate the area based on whether the pokemon is in a corridor or a room
+        const isCorridor = this.isCorridor(position);
+        if (isCorridor)
+            return this.getCorridorViewArea(position);
+        else
+            return this.getRoomViewArea(position).inflate(1);
+    }
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, Tiles]> {
         for (const [pos, _value] of super[Symbol.iterator]())

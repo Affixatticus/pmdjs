@@ -34,7 +34,6 @@ export class ItemMaterial extends StandardMaterial {
 export class DungeonItem extends DungeonObject {
     private id: number;
     private mesh!: Mesh;
-    private light!: SpotLight;
 
     constructor(pos: Vec2, id: number) {
         super(pos, ObjectTypes.ITEM);
@@ -63,7 +62,6 @@ export class DungeonItem extends DungeonObject {
     public dispose() {
         if (!this.mesh) return false;
         this.mesh.dispose();
-        this.light.dispose();
         return true;
     }
 }
