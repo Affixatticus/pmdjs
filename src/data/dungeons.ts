@@ -9,6 +9,13 @@ export enum Dungeons {
     GRASSY_COVE
 };
 
+export enum LightLevels {
+    DARKEST,
+    DARK,
+    NORMAL,
+    BRIGHT,
+};
+
 export type DungeonFloorInfoFromLevel = Record<number, DungeonFloorInfo>;
 
 
@@ -53,6 +60,8 @@ export interface DungeonFloorInfo {
     weathers: WeatherChance[] | null;
     /** Flags */
     generation: GeneratorParams;
+    /** Light Level */
+    lightLevel: LightLevels;
 };
 
 export interface DungeonTexturesProperties {
@@ -90,6 +99,7 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
             name: "Grass Cove",
             path: "grass_cove_01",
             enemies: null,
+            lightLevel: LightLevels.NORMAL,
             items: [
                 { id: Items.ORAN_BERRY, chance: 20 },
                 { id: Items.COIN, chance: 30 },
@@ -120,7 +130,8 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
         },
         [6]: {
             name: "Grass Cave",
-            path: "western_cave",
+            path: "grass_cove_01",
+            lightLevel: LightLevels.DARK,
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],

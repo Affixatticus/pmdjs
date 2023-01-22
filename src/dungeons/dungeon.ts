@@ -1,10 +1,10 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, MeshBuilder, Scene, TargetCamera, Vector3 } from "@babylonjs/core";
-import { DungeonFloorInfo, Dungeons, DungeonsInfo } from "../data/dungeons";
+import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MeshBuilder, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { DungeonFloorInfo, Dungeons, DungeonsInfo, LightLevels } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tiles } from "../data/tiles";
 import { Button, Controls, Stick } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
-import { DungeonFloor, TileRenderingGroupIds } from "./floor";
+import { DungeonFloor, RenderingGroupIds } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
 import { FloorGuide } from "./map/floor_guide";
@@ -29,12 +29,15 @@ export class DungeonState {
     private engine: Engine;
     public controls: Controls;
     // Scene
-    private scene: Scene;
+    public scene: Scene;
     public camera: TargetCamera;
     // -> Floor
     public floor!: DungeonFloor;
-    public lightOverlay!: LightOverlay;
     public floorGuide!: FloorGuide;
+    // |-> Lighting
+    public lightOverlay!: LightOverlay;
+    public directionalLight!: DirectionalLight;
+    public globalLight!: HemisphericLight;
     // State
     public isLoaded: boolean;
     private data: DungeonStateData;
@@ -115,46 +118,63 @@ export class DungeonState {
         this.camera.position = newPos.add(CAMERA_OFFSET).gameFormat;
     }
 
-    private createGlobalLighting() {
-        const lighting = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
-        lighting.intensity = 0.4;
-        lighting.intensity = 0.8;
-        lighting.intensity = 0.1;
-        lighting.specular = new Color3(0.1, 0.1, 0.1);
+    /** Creates the lighting based on the dungeon's light level */
+    private setLighting() {
+        // Delete the old lighting
+        this.directionalLight?.dispose();
+        this.globalLight?.dispose();
+        this.lightOverlay?.dispose();
 
-        // const global = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
-        // // TODO - Find best light intensity
-        // global.intensity = 0.02;
-
+        this.directionalLight = new DirectionalLight("directional-light", new Vector3(0, -1, Math.PI / 6), this.scene);
+        this.globalLight = new HemisphericLight("global-light", new Vector3(0, 1, 0), this.scene);
         this.lightOverlay = new LightOverlay(this.scene);
+        this.directionalLight.specular = new Color3(0, 0, 0);
 
-        return lighting;
+        switch (this.info.lightLevel) {
+            case LightLevels.DARKEST: {
+                this.directionalLight.intensity = 0;
+                this.globalLight.intensity = 0;
+                this.lightOverlay.intensity = 1;
+                this.lightOverlay.isEnabled = true;
+                break;
+            }
+            case LightLevels.DARK: {
+                this.directionalLight.intensity = 0;
+                this.globalLight.intensity = 0.3;
+                this.lightOverlay.isEnabled = true;
+                this.lightOverlay.intensity = 1;
+                break;
+            }
+            case LightLevels.NORMAL: {
+                this.directionalLight.intensity = 0.4;
+                this.globalLight.intensity = 0.5;
+                this.lightOverlay.isEnabled = false;
+                break;
+            }
+            case LightLevels.BRIGHT: {
+                this.directionalLight.intensity = 1;
+                this.globalLight.intensity = 1;
+                this.lightOverlay.isEnabled = false;
+                break;
+            }
+        }
     }
 
     private generateFloor() {
         this.floor = new DungeonFloor(this.scene, this.info);
-
         // Generate the dungeon
         this.floor.generate();
-
         // Generate the pokemon
         this.floor.generatePokemon(this.data.party);
     }
 
     private async buildFloor(spawn: Vec2) {
-        const start = performance.now();
-
-        this.createGlobalLighting();
+        // Add the lighting
+        this.setLighting();
         // Load the assets for the map
-        await this.floor.preloadAssets();
-
+        await this.floor.init();
         // Render the visible area
         this.floor.build(spawn);
-
-        // Build the floor guide
-        this.floorGuide = new FloorGuide(this.scene, this.floor, this.floor.pokemon.getLeader());
-
-        console.log(`Building the floor takes ${performance.now() - start}ms`);
     }
 
     /**
@@ -170,61 +190,55 @@ export class DungeonState {
         /** Dungeon Floor Loading */
         // Generate the floor
         this.generateFloor();
-        // Initialize the logic
-        this.logic.init();
         // Get the spawn position
-        // const spawn = this.chooseSpawnPosition();
         const spawn = DungeonStartup.getStartingLeaderPosition();
-        // Draw the floor
-        await this.buildFloor(spawn);
+        // Build the floor guide
+        this.floorGuide = new FloorGuide(this.scene, this.floor, this.floor.pokemon.getLeader());
+        await Promise.all([
+            // Draw the floor
+            this.buildFloor(spawn),
+            // Initialize the light overlay
+            this.lightOverlay.init(),
+            // Initialize the floor guide
+            await this.floorGuide.init(),
+        ]);
+
         // Move the camera to the spawn position
         this.moveCamera(spawn.toVec3());
-        // Initialize the light overlay
-        await this.lightOverlay.init();
         // TODO Understand why the light is less stuttery when you run this 2-3 times
         // Update the light overlay
         this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
         this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-        // Update the floor guide
-        await this.floorGuide.init();
-
-        // Place a vertical line at the spawn
-        const cylinder = MeshBuilder.CreateCylinder("spawn", { diameter: 0.05, height: 5 }, this.scene);
-        cylinder.position = spawn.gameFormat.add(V3(0.5, 2.5, -0.5));
-        cylinder.renderingGroupId = TileRenderingGroupIds.WALL;
 
         await this.scene.whenReadyAsync();
-
         console.log(`Loading the scene takes ${performance.now() - start}ms`);
+
+        // Initialize the logic
+        this.logic.init();
+
+
+        // Add optimizations
+        const options = new SceneOptimizerOptions(144);
+        options.addOptimization(new HardwareScalingOptimization(0, 1));
+        const optimizer = new SceneOptimizer(this.scene, options);
+        optimizer.start();
 
         this.engine.hideLoadingUI();
         this.isLoaded = true;
+
+        // @ts-ignore
+        window.tick = () => this.tick;
     }
 
-    private controlCamera() {
-        // Get the camera's current position
-        const pos = this.camera.position;
-
-        // Get the camera's movement
-        const move = Stick.RIGHT.position.scale(0.1);
-
-        const yDifference = Button.DPAD_UP.isDown ? 0.1 : Button.DPAD_DOWN.isDown ? -0.1 : 0;
-
-        // Move the camera
-        this.camera.position = pos.add(move.toVec3(yDifference));
-    }
+    /** Renders the scene if the scene is done loading */
+    public render = () => this.scene.render();
 
     private tick = 0;
-    /** Renders the scene if the scene is done loading */
-    public render() {
-        if (this.isLoaded) {
-            this.scene.render();
-            this.lightOverlay.update();
-            this.floor.update(this.tick);
-            this.controlCamera();
-        }
+    public update() {
         this.logic.update();
+        // this.controlCamera();
+        this.lightOverlay.update();
+        this.floor.update(this.tick);
         this.tick++;
     }
 }

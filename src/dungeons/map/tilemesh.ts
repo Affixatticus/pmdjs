@@ -1,8 +1,9 @@
-import { StandardMaterial, Texture, Scene, Constants, Mesh, GroundMesh, MeshBuilder, Matrix } from "@babylonjs/core";
+import { StandardMaterial, Texture, Scene, Constants, Mesh, GroundMesh, MeshBuilder, Matrix, Color3 } from "@babylonjs/core";
 import { Tiles } from "../../data/tiles";
 import Canvas, { CropParams } from "../../utils/canvas";
+import { fillOutStandardOptions } from "../../utils/material";
 import { Vec2, V3 } from "../../utils/vectors";
-import { TileRenderingGroupIds } from "../floor";
+import { RenderingGroupIds } from "../floor";
 import { ByteGrid } from "./grid";
 import { Tilings, DungeonTiling, TilingTextureMode } from "./tiling";
 
@@ -22,9 +23,9 @@ export class WaterTileMaterial extends StandardMaterial {
         this.texturesCount = sources.length;
         this.animationTime = animationTime;
 
-        this.specularPower = 10000000;
         this.generateTextures(scene, sources, params);
         this.setTexture(0);
+        fillOutStandardOptions(this);
     }
 
     public setTexture(index: number) {
@@ -58,13 +59,9 @@ export class TileMaterial extends StandardMaterial {
         super(name, scene);
 
         const texture = Canvas.toDynamicTexture(textures, scene, ...params);
-
         this.diffuseTexture = texture;
-        this.diffuseTexture.hasAlpha = true;
-        this.diffuseTexture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-        this.diffuseTexture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
+        fillOutStandardOptions(this);
 
-        this.specularPower = 10000000;
     }
 }
 
@@ -247,7 +244,7 @@ export class WallTileMesh extends TileMesh {
             maxHeight: options.height ?? 1,
         }, scene);
         this.mesh.isVisible = true;
-        this.mesh.renderingGroupId = TileRenderingGroupIds.WALL;
+        this.mesh.renderingGroupId = RenderingGroupIds.WALL;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
         // Create the material
@@ -313,7 +310,7 @@ export class WaterTileMesh extends TileMesh {
         this.mesh.isVisible = true;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
-        this.mesh.renderingGroupId = TileRenderingGroupIds.WATER;
+        this.mesh.renderingGroupId = RenderingGroupIds.WATER;
         this.material = new WaterTileMaterial("material_" + this.getId(), textures, this.waterSpeed, this.getTextureCrop(), scene);
         this.mesh.material = this.material;
     }

@@ -8,6 +8,7 @@ import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";
 import { Player } from "./player";
+import { LightLevels } from "../../data/dungeons";
 export class DungeonLogic {
     public state: DungeonState;
 
@@ -74,6 +75,7 @@ export class DungeonLogic {
 
         // Execute the turn
         const done = this.turn.execute();
+
         if (done) {
             this.turnsHistory.push(this.turn);
             this.turn = null;

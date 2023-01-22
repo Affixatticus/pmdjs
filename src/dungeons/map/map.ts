@@ -1,4 +1,4 @@
-import { Color3, Color4, PositionGizmo, Scene, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { DungeonTextures } from "../../data/dungeons";
 import { FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, Tiles, WALL_IGNORE_TILES, WALL_INCLUDE_TILES } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
@@ -40,9 +40,8 @@ export class DungeonMap {
         this.loaded = new ByteGrid(map.width, map.height);
     }
 
-    // Loading
-
-    /* Creates all the used tiles combinations */
+    // ANCHOR Loading
+    /** Creates all the specified tiles combinations for walls */
     private async createWallMeshes(tilings: Iterable<Tilings>) {
         // Load the image and time it
         const { textures, heightmaps, properties } = this.props;
@@ -58,8 +57,7 @@ export class DungeonMap {
             }
         }
     }
-
-    /** Creates all the tiles used for water */
+    /** Creates all the specified tiles combinations for water */
     private async createWaterMeshes(tilings: Iterable<Tilings>) {
         const { waterTextures, heightmaps, properties } = this.props;
 
@@ -79,19 +77,21 @@ export class DungeonMap {
             this.waterMeshes.createWaterTileMesh(tiling, waterTextures as CanvasImageSource[], heightmaps, this.scene, options);
         }
     }
-
-
     /** Creates the tiles from the assets */
     public async preload() {
         // Load the properties
         this.props = await AssetsLoader.loadDungeonTextures(this.path);
 
         // Change the clear color to the one in the info
-        const background = this.props.properties.background ?? DungeonMap.DEFAULT_BACKGROUND;
-        this.scene.clearColor = Color4.FromColor3(new Color3(
-            // TODO Scale to 255, right now it darkens the color to account for weak lighting
-            ...V3(...background).scale(1 / 359).spread()
-        ));
+        const background = new Color3(
+            ...this.props.properties.background ??
+            DungeonMap.DEFAULT_BACKGROUND)
+            .scale(1 / 255);
+
+        // Create the background color
+        this.scene.clearColor = Color4.FromColor3(background);
+        // Create a plane lying under the floor
+        this.createUnderPlane(background);
 
         // Get all the used tile combinations
         await this.createWallMeshes(this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES).getUniqueValues());
@@ -103,14 +103,37 @@ export class DungeonMap {
         await this.floor.preloadTexture(this.path);
     }
 
-    // Building
-    private placeWallTiles(start?: Vec2, size?: Vec2) {
+    // ANCHOR Building
+    private getBuildArea(start?: Vec2, size?: Vec2) {
         // Determine the area
         start = start ?? V2(0, 0);
         size = size ?? V2(this.grid.width, this.grid.height).subtract(start);
+        return [start, size];
+    }
+
+    private createUnderPlane(background: Color3) {
+        const underplane = MeshBuilder.CreateGround("underfloor", {
+            width: this.grid.width,
+            height: this.grid.height,
+            subdivisions: 1,
+        }, this.scene);
+        underplane.position = V3(
+            this.grid.width / 2,
+            -2,
+            -this.grid.height / 2
+        );
+        const underPlaneMaterial = new StandardMaterial("underfloor_material", this.scene);
+        underPlaneMaterial.diffuseColor = background;
+        underPlaneMaterial.specularColor = Color3.Black();
+        underplane.material = underPlaneMaterial;
+    }
+
+    private placeWallTiles(start?: Vec2, size?: Vec2) {
+        [start, size] = this.getBuildArea(start, size);
 
         // Get the map as a list of tilings
-        const gridTilings = this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, start, size);
+        const gridTilings = this.grid.mapTilingsFor(
+            Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, start, size);
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings) {
@@ -122,8 +145,7 @@ export class DungeonMap {
         if (!this.props.properties.water) return;
 
         // Determine the area
-        start = start ?? V2(0, 0);
-        size = size ?? V2(this.grid.width, this.grid.height).subtract(start);
+        [start, size] = this.getBuildArea(start, size);
 
         // Get the map as a list of tilings
         const gridTilings = this.grid.mapTilingsFor(Tiles.WATER, [], [], start, size);
@@ -144,8 +166,8 @@ export class DungeonMap {
 
         // Place the tiles and time it
         const tstart = performance.now();
-        const tend = performance.now();
         this.buildView(pos);
+        const tend = performance.now();
         console.log(`Placed dungeon tiles in ${tend - tstart}ms`);
     }
 
@@ -158,7 +180,6 @@ export class DungeonMap {
         this.placeWaterTiles(start, size);
         this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, start, size), this.grid);
     }
-
 
     // Updating
     private animateWater(tick: number) {

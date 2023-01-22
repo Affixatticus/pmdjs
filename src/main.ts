@@ -19,7 +19,7 @@ const INITIAL_GAME_DATA: Data = {
         floor: 6,
         party: [
             {
-                id: [495, 0, false, 0],
+                id: [6, 0, false, 0],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -53,7 +53,7 @@ const INITIAL_GAME_DATA: Data = {
             //     ]
             // },
             {
-                id: [Pokedex.TORCHIC, 0, false, 0],
+                id: [495, 0, false, 0],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -83,6 +83,8 @@ class App {
     private data: Data;
     private controls: Controls;
 
+    private deltaTime: number = 0;
+
 
     constructor() {
         // Engine
@@ -102,9 +104,15 @@ class App {
 
         // Render loop
         this.engine.runRenderLoop(() => {
-            this.state.render();
             this.updateFPSCounter();
+            this.state.render();
         });
+
+        setInterval(() => {
+            const now = performance.now();
+            this.state.update();
+            this.deltaTime = performance.now() - now;
+        }, 6);
     }
 
     private addFPSCounter() {
@@ -127,7 +135,12 @@ class App {
 
     private updateFPSCounter() {
         const fpsCounter = document.getElementById("fps-counter");
-        if (fpsCounter) fpsCounter.innerHTML = this.engine.getFps().toFixed() + " fps";
+        if (fpsCounter) {
+            fpsCounter.innerHTML = this.engine.getFps().toFixed() + " fps";
+            fpsCounter.innerHTML += "<br/>" + this.state.scene.getActiveMeshes().length + " active meshes";
+            fpsCounter.innerHTML += "<br/>" + this.state.scene.meshes.length + " total meshes";
+            fpsCounter.innerHTML += "<br/>" + this.deltaTime.toFixed(4) + "ms (Δ time)";
+        }
     }
 
     private createState(state: GameStates = this.gameState) {

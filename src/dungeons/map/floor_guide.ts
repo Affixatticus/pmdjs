@@ -3,7 +3,7 @@ import { getTileCrop, TileObjects } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { DungeonPokemon } from "../objects/pokemon";
 import { TileMaterial } from "../objects/tile";
-import { DungeonFloor, TileRenderingGroupIds } from "../floor";
+import { DungeonFloor, RenderingGroupIds } from "../floor";
 import { Directions } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
 
@@ -37,7 +37,7 @@ export class FloorGuide {
         const whiteMaterial = new TileMaterial("trap", source,
             this.scene, ...getTileCrop(TileObjects.WHITE_GUIDE));
         this.whiteGuide.material = whiteMaterial;
-        this.whiteGuide.renderingGroupId = TileRenderingGroupIds.FLOOR;
+        this.whiteGuide.renderingGroupId = RenderingGroupIds.FLOOR;
 
         // Create the black mesh
         this.blackGuide = MeshBuilder.CreateGround("floor_guide", {
@@ -48,7 +48,7 @@ export class FloorGuide {
         const blackMaterial = new TileMaterial("trap", source,
             this.scene, ...getTileCrop(TileObjects.BLACK_GUIDE));
         this.blackGuide.material = blackMaterial;
-        this.blackGuide.renderingGroupId = TileRenderingGroupIds.FLOOR;
+        this.blackGuide.renderingGroupId = RenderingGroupIds.FLOOR;
     }
 
     public instanceBlack(pos: Vec2) {

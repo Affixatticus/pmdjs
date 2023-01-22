@@ -1,5 +1,6 @@
 import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
 import { Directions } from "../../utils/direction";
+import { fillOutStandardOptions } from "../../utils/material";
 
 export interface PokemonSpriteAnimationData {
     /** Name of the animation */
@@ -63,7 +64,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         super("dungeon_pokemon_sprite", scene);
         this.data = data;
         this.texture = this.createTexture(scene);
-        this.specularPower = 100000;
+        fillOutStandardOptions(this, this.texture);
         this.animation = "Idle";
         this.direction = Directions.SOUTH;
     }

@@ -34,7 +34,7 @@ export class Player {
         return this.logic.state.floor.pokemon.getLeader();
     }
 
-    
+
     private setState(state: PlayerStates) {
         this.playerState = state;
         this.walkingStartedTurn = 0;
@@ -44,16 +44,19 @@ export class Player {
 
     private setIdle() {
         this.setState(PlayerStates.IDLE);
+        return null;
     }
 
     private setTurning(direction: Directions) {
         this.setState(PlayerStates.TURNING);
         this.lastDirection = direction;
+        return null;
     }
 
     private setWalking(direction: Directions) {
         this.setState(PlayerStates.WALKING);
         this.lastDirection = direction;
+        return null;
     }
 
     // TODO: Implement this
@@ -134,7 +137,7 @@ export class Player {
                 if (inputDirection === this.lastDirection
                     && Date.now() - this.directionTimeStamp > 50) {
                     // Change state to walking
-                    this.setWalking(inputDirection);
+                    return this.setWalking(inputDirection);
                 }
                 break;
             }
@@ -150,7 +153,7 @@ export class Player {
                         this.setState(PlayerStates.TURN);
                     }
                     else {
-                        this.setIdle();
+                        return this.setIdle();
                     }
                 }
                 break;
@@ -187,9 +190,10 @@ export class Player {
                     } else if (inputDirection !== Directions.NONE && partner) {
                         // Push the partners backwards
                         return this.pushPartnerBackwards(partner, this.lastDirection);
+                    } else if (!canMove) {
+                        return this.setTurning(this.lastDirection);
                     }
-                    this.setIdle();
-                    return null;
+                    return this.setIdle();
                 }
             }
             case PlayerStates.TURN: {
@@ -200,8 +204,7 @@ export class Player {
                 if (!Controls.Y && this.turnStateTicks > 20) {
                     this.turnStateTicks = 0;
                     this.logic.state.floorGuide.hide();
-                    this.setIdle();
-                    return null;
+                    return this.setIdle();
                 }
                 if (inputDirection === Directions.NONE) return null;
 
@@ -212,10 +215,10 @@ export class Player {
 
                 if (inputDirection === this.lastDirection
                     && Date.now() - this.directionTimeStamp > 50) {
-                    // Change state to walking
-                    this.setTurning(inputDirection);
                     // Update the floor guide
                     this.logic.state.floorGuide.update(inputDirection);
+                    // Change state to walking
+                    this.setTurning(inputDirection);
                 }
             }
         }

@@ -4,7 +4,7 @@ import { Tiles } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { Directions } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
-import { TileRenderingGroupIds } from "../floor";
+import { RenderingGroupIds } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonPokemonMaterial } from "./sprite";
 
@@ -60,7 +60,7 @@ export class DungeonPokemon {
         opaqMesh.position = this._position.gameFormat.add(V3(0.5, 0, -0.5));
 
         opaqMesh.scalingDeterminant = 8;
-        opaqMesh.renderingGroupId = TileRenderingGroupIds.WALL;
+        opaqMesh.renderingGroupId = RenderingGroupIds.WALL;
         opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
 
         const material = new DungeonPokemonMaterial(data, scene);
@@ -70,7 +70,7 @@ export class DungeonPokemon {
         opaqMesh.material = this.material;
 
         const tranMesh = opaqMesh.clone("pokemon-tran");
-        tranMesh.renderingGroupId = TileRenderingGroupIds.ALWAYS_VISIBLE;
+        tranMesh.renderingGroupId = RenderingGroupIds.ALWAYS_VISIBLE;
         tranMesh.visibility = 0.5;
         this.tranMesh = tranMesh;
     }

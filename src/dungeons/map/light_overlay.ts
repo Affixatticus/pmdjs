@@ -28,8 +28,13 @@ export class LightOverlay {
     /** Last checked area needed to see if you should update the lights */
     private lastOffsetGrid!: OffsetGrid;
 
+    public intensity = 1;
+
+    public isEnabled: boolean;
+
     constructor(scene: Scene) {
         this.scene = scene;
+        this.isEnabled = true;
     }
 
     /** Loads the texture for the overlay */
@@ -39,35 +44,49 @@ export class LightOverlay {
 
     /** Updates the queue */
     public update() {
+        if (!this.isEnabled) return;
+
         // Decrease towards 0 all the lights that are not the last one
         // And remove the lights that are completely off
         for (let i = this.queue.length - 2; i >= 0; i--) {
             const [light, texture] = this.queue[i];
-            light.intensity = Math.max(0, light.intensity -= 0.033);
+            light.intensity = Math.max(0, light.intensity -= this.intensity * 0.033);
             if (light.intensity === 0) {
                 light.dispose();
                 texture.dispose();
                 this.queue.splice(i, 1);
             }
         }
+
+        if (this.queue.length === 0) return;
+
         // Increase the last light
         const last = this.queue[this.queue.length - 1];
         const [light, _, reachedMaxIntensity] = last;
 
         if (!reachedMaxIntensity) {
-            light.intensity = Math.min(1.5, light.intensity += 0.033);
-            if (light.intensity === 1.5)
+            light.intensity = Math.min(this.intensity, light.intensity += this.intensity * 0.033);
+            if (light.intensity === 1)
                 last[2] = true;
         }
 
-        // If the last light has reached its max intensity, decrease it
-        else {
-            light.intensity = Math.sin(Date.now() / 1000) * 0.25 + 1.5;
+        // // If the last light has reached its max intensity, decrease it
+        // else {
+        //     light.intensity = Math.sin(Date.now() / 1000) * 0.25 + 1.5;
+        // }
+    }
+
+    public dispose() {
+        for (const [light, texture] of this.queue) {
+            light?.dispose();
+            texture?.dispose();
         }
     }
-    
+
     /** Turns on the lights around the specified pokemon */
     public lightPokemon(grid: DungeonGrid, pokemon: DungeonPokemon, firstTime: boolean = false) {
+        if (!this.isEnabled) return;
+
         const offsetGrid = grid.getViewArea(pokemon.nextTurnPosition);
         if (!firstTime && this.lastOffsetGrid?.equals(offsetGrid))
             return;
@@ -134,5 +153,4 @@ export class LightOverlay {
         }
         this.queue.push([light, texture, false]);
     }
-
 }
