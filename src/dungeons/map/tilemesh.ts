@@ -1,4 +1,4 @@
-import { StandardMaterial, Texture, Scene, Constants, Mesh, GroundMesh, MeshBuilder, Matrix, Color3 } from "@babylonjs/core";
+import { StandardMaterial, Texture, Scene, Constants, Mesh, GroundMesh, MeshBuilder, Matrix } from "@babylonjs/core";
 import { Tile } from "../../data/tiles";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { fillOutStandardOptions } from "../../utils/material";
@@ -310,7 +310,7 @@ export class WaterTileMesh extends TileMesh {
         this.mesh.isVisible = true;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
-        this.mesh.renderingGroupId = RenderingGroupId.WATER;
+        this.mesh.renderingGroupId = RenderingGroupId.FLOOR;
         this.material = new WaterTileMaterial("material_" + this.getId(), textures, this.waterSpeed, this.getTextureCrop(), scene);
         this.mesh.material = this.material;
     }

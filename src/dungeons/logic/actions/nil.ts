@@ -3,6 +3,7 @@ import { TurnAction } from "./action";
 
 export class NilAction implements TurnAction {
     public done: boolean;
+    /** @ts-ignore Unused */
     private pokemon: DungeonPokemon;
 
     /** Logging */

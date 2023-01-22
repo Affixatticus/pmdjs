@@ -1,22 +1,19 @@
-import { Color3, Constants, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
+import { Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
 import { RenderingGroupId } from "../floor";
 import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { getTileCrop, TileObject } from "../../data/tiles";
-
+import { fillOutStandardOptions } from "../../utils/material";
 
 export class TileMaterial extends StandardMaterial {
     constructor(name: string, source: CanvasImageSource, scene: Scene, ...params: CropParams) {
         super(name, scene);
         const texture = Canvas.toDynamicTexture(source, scene, ...params);
-        texture.hasAlpha = true;
-        texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-        texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         this.diffuseTexture = texture;
         this.opacityTexture = texture;
-        this.specularColor = new Color3(0, 0, 0);
+        fillOutStandardOptions(this);
     }
 };
 
@@ -33,15 +30,16 @@ export class DungeonTile extends DungeonObject {
         this.isHidden = isHidden ? this.isStairs : false;
     }
 
+    // ANCHOR Utility
     public setVisibility(isVisible: boolean): void {
         this.mesh.isVisible = isVisible;
     }
 
-    public isKeckleonRelated(): boolean {
+    public isKeckleonCarpet(): boolean {
         return this.id === TileObject.KECLEON_CARPET;
     }
 
-
+    // ANCHOR Render
     public async render(scene: Scene): Promise<void> {
         if (!this.isStairs) {
             await this.renderTile(scene);
@@ -50,13 +48,7 @@ export class DungeonTile extends DungeonObject {
         }
     }
 
-    public dispose() {
-        if (!this.mesh) return false;
-        this.mesh.dispose();
-        return true;
-    }
-
-    public async renderStairs(scene: Scene): Promise<void> {
+    private async renderStairs(scene: Scene): Promise<void> {
         const mesh = MeshBuilder.CreateGroundFromHeightMap(
             "stairs", "assets/textures/objects/stairs_down_heightmap.png",
             {
@@ -76,7 +68,7 @@ export class DungeonTile extends DungeonObject {
         mesh.material = material;
     }
 
-    public async renderTile(scene: Scene): Promise<void> {
+    private async renderTile(scene: Scene): Promise<void> {
         const mesh = MeshBuilder.CreateGroundFromHeightMap(
             "trap", "assets/textures/objects/trap_heightmap.png",
             {
@@ -89,12 +81,19 @@ export class DungeonTile extends DungeonObject {
         );
 
         mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupId.WALL;
+        mesh.renderingGroupId = RenderingGroupId.FLOOR;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("trap", source, scene, ...getTileCrop(this.id));
         mesh.material = material;
 
         mesh.isVisible = !this.isHidden;
+    }
+
+    // ANCHOR Dispose
+    public dispose() {
+        if (!this.mesh) return false;
+        this.mesh.dispose();
+        return true;
     }
 }

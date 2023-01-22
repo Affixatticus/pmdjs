@@ -97,7 +97,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
     [Dungeon.GRASSY_COVE]: {
         [4]: {
             name: "Grass Cove",
-            path: "grass_cove_01",
+            path: "western_cave",
             enemies: null,
             lightLevel: LightLevel.NORMAL,
             items: [
@@ -139,7 +139,11 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 { id: Item.ORAN_BERRY, chance: 20 },
                 { id: Item.COIN, chance: 50 },
             ],
-            traps: null,
+            traps: [
+                { id: TileObject.TRAP_01, chance: 100 },
+                { id: TileObject.FAN_TRAP, chance: 50 },
+                { id: TileObject.VOLTORB_TRAP, chance: 25 },
+            ],
             weathers: [{
                 id: Weather.CLEAR,
                 chance: 100
@@ -154,7 +158,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 extraCorridorsChance: 12,
                 layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .8,
-                // tileDensity: 4,
+                tileDensity: 10,
                 groundItemDensity: .7,
             },
         }

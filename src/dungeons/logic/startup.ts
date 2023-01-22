@@ -1,5 +1,5 @@
 import Random from "../../utils/random";
-import { V2, Vec2 } from "../../utils/vectors";
+import { Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 
 export class DungeonStartup {
