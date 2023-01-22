@@ -3,7 +3,7 @@ import { Pokedex } from './data/pokemon';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
 
-enum GameStates {
+enum GameState {
     MAIN_MENU,
     OVERWORLD,
     DUNGEONS,
@@ -77,7 +77,7 @@ const INITIAL_GAME_DATA: Data = {
 class App {
     private canvas: HTMLCanvasElement;
     private engine: Engine;
-    private gameState: GameStates;
+    private gameState: GameState;
     private state: DungeonState;
     private onResize = () => this.engine.resize();
     private data: Data;
@@ -93,7 +93,7 @@ class App {
         this.controls = new Controls();
         // State
         this.data = INITIAL_GAME_DATA;
-        this.gameState = GameStates.DUNGEONS;
+        this.gameState = GameState.DUNGEONS;
         this.state = this.createState(this.gameState);
 
         // Resize listener
@@ -143,9 +143,9 @@ class App {
         }
     }
 
-    private createState(state: GameStates = this.gameState) {
+    private createState(state: GameState = this.gameState) {
         switch (state) {
-            case GameStates.DUNGEONS:
+            case GameState.DUNGEONS:
                 return new DungeonState(this.engine, this.data.dungeon, this.controls);
         }
         throw Error(`No id correlated to that GameState (${state})`);

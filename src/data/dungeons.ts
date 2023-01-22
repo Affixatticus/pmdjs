@@ -1,15 +1,15 @@
-import { GenerationRules as GeneratorLayouts } from "../dungeons/map/map_generator";
+import { GenerationRule as GeneratorLayouts } from "../dungeons/map/map_generator";
 import { V2, Vec2 } from "../utils/vectors";
-import { ItemChance, Items } from "./items";
+import { ItemChance, Item } from "./items";
 import { Pokedex, PokemonChance } from "./pokemon";
-import { TileObjects, TrapChance } from "./tiles";
-import { WeatherChance, Weathers } from "./weather";
+import { TileObject, TrapChance } from "./tiles";
+import { WeatherChance, Weather } from "./weather";
 
-export enum Dungeons {
+export enum Dungeon {
     GRASSY_COVE
 };
 
-export enum LightLevels {
+export enum LightLevel {
     DARKEST,
     DARK,
     NORMAL,
@@ -61,7 +61,7 @@ export interface DungeonFloorInfo {
     /** Flags */
     generation: GeneratorParams;
     /** Light Level */
-    lightLevel: LightLevels;
+    lightLevel: LightLevel;
 };
 
 export interface DungeonTexturesProperties {
@@ -93,26 +93,26 @@ export interface DungeonTextures {
     properties: DungeonTexturesProperties;
 };
 
-export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
-    [Dungeons.GRASSY_COVE]: {
+export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
+    [Dungeon.GRASSY_COVE]: {
         [4]: {
             name: "Grass Cove",
             path: "grass_cove_01",
             enemies: null,
-            lightLevel: LightLevels.NORMAL,
+            lightLevel: LightLevel.NORMAL,
             items: [
-                { id: Items.ORAN_BERRY, chance: 20 },
-                { id: Items.COIN, chance: 30 },
-                { id: Items.APPLE, chance: 10 },
-                { id: Items.BIG_APPLE, chance: 1 },
+                { id: Item.ORAN_BERRY, chance: 20 },
+                { id: Item.COIN, chance: 30 },
+                { id: Item.APPLE, chance: 10 },
+                { id: Item.BIG_APPLE, chance: 1 },
             ],
             traps: [
-                { id: TileObjects.TRAP_01, chance: 100 },
-                { id: TileObjects.FAN_TRAP, chance: 50 },
-                { id: TileObjects.VOLTORB_TRAP, chance: 25 },
+                { id: TileObject.TRAP_01, chance: 100 },
+                { id: TileObject.FAN_TRAP, chance: 50 },
+                { id: TileObject.VOLTORB_TRAP, chance: 25 },
             ],
             weathers: [{
-                id: Weathers.CLEAR,
+                id: Weather.CLEAR,
                 chance: 100
             }],
             generation: {
@@ -131,17 +131,17 @@ export const DungeonsInfo: Record<Dungeons, DungeonFloorInfoFromLevel> = {
         [6]: {
             name: "Grass Cave",
             path: "grass_cove_01",
-            lightLevel: LightLevels.DARK,
+            lightLevel: LightLevel.DARK,
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
             items: [
-                { id: Items.ORAN_BERRY, chance: 20 },
-                { id: Items.COIN, chance: 50 },
+                { id: Item.ORAN_BERRY, chance: 20 },
+                { id: Item.COIN, chance: 50 },
             ],
             traps: null,
             weathers: [{
-                id: Weathers.CLEAR,
+                id: Weather.CLEAR,
                 chance: 100
             }],
             generation: {

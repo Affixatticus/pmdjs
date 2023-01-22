@@ -1,4 +1,4 @@
-export enum Weathers {
+export enum Weather {
     CLEAR,
     SUNNY_DAY,
     RAIN_DANCE,
@@ -14,7 +14,7 @@ export enum Weathers {
 
 export interface WeatherChance {
     /** Weather id */
-    id: Weathers;
+    id: Weather;
     /** A number between 1 and 100 */
     chance: number;
 }

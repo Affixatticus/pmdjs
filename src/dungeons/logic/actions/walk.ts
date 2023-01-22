@@ -1,4 +1,4 @@
-import { Directions } from "../../../utils/direction";
+import { Direction } from "../../../utils/direction";
 import { DungeonPokemon } from "../../objects/pokemon";
 import { DungeonPokemonMaterial } from "../../objects/sprite";
 import { TurnAction } from "./action";
@@ -7,7 +7,7 @@ import { TurnAction } from "./action";
 export class WalkAction implements TurnAction {
     public done: boolean;
     public readonly pokemon: DungeonPokemon;
-    public readonly direction: Directions;
+    public readonly direction: Direction;
 
     /** Logging */
     public doLogging: boolean = false;
@@ -22,7 +22,7 @@ export class WalkAction implements TurnAction {
     /** Distance travelled each step */
     public walkDelta: number;
 
-    constructor(pokemon: DungeonPokemon, direction: Directions) {
+    constructor(pokemon: DungeonPokemon, direction: Direction) {
         this.done = false;
         this.pokemon = pokemon;
         this.direction = direction;
@@ -76,7 +76,7 @@ export class WalkAction implements TurnAction {
 }
 
 export class PushAction extends WalkAction {
-    constructor(pokemon: DungeonPokemon, direction: Directions) {
+    constructor(pokemon: DungeonPokemon, direction: Direction) {
         super(pokemon, direction);
         this.logMessage = `${pokemon.toString()} pushed ${direction.toString()}!`;
     }
@@ -99,7 +99,7 @@ export class PushAction extends WalkAction {
                 this.direction.toVector().scale(this.walkDelta));
             // Modify the direction of the pokemon
             const newDirection = Math.round((this.currentStep / WalkAction.ANIMATION_LENGTH) * 8);
-            this.pokemon.direction = Directions.ALL[Directions.rollIndex(this.direction.index + newDirection + 4)];
+            this.pokemon.direction = Direction.ALL[Direction.rollIndex(this.direction.index + newDirection + 4)];
         }
         // When stopping
         else {

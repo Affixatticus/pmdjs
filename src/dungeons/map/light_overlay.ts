@@ -1,5 +1,5 @@
 import { Constants, DynamicTexture, Scene, SpotLight } from "@babylonjs/core";
-import { Tiles } from "../../data/tiles";
+import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
@@ -11,7 +11,7 @@ const LMS = 24; // Light map size
 const LMSS = Math.round(LMS / 6); // Light map size start
 const LMT = 16; // Light map tile size
 
-export enum LightOverlayColors {
+export enum LightOverlayColor {
     /** Black */
     BLACK = 0,
     /** White */
@@ -105,7 +105,7 @@ export class LightOverlay {
 
         // Get the tilings grid
         const tilings = new DungeonGrid(width, height, area.data).mapTilingsFor(
-            LightOverlayColors.WHITE, [], []
+            LightOverlayColor.WHITE, [], []
         );
 
         // Create a texture for the light
@@ -120,7 +120,7 @@ export class LightOverlay {
         for (let x = 0; x < width; x++) {
             for (let y = 0; y < height; y++) {
                 const tiling = tilings.get(x, y);
-                const params: CropParams = DungeonTiling.getCrop(tiling, Tiles.WALL, 0, TilingTextureMode.TEXTURE);
+                const params: CropParams = DungeonTiling.getCrop(tiling, Tile.WALL, 0, TilingTextureMode.TEXTURE);
 
                 // Draw the light map
                 ctx.drawImage(this.lightMapTileset, ...params, x * LMT + size * LMSS, y * LMT + size * LMSS, LMT, LMT);

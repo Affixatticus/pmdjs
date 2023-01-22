@@ -1,4 +1,4 @@
-import { Directions } from "../../../utils/direction";
+import { Direction } from "../../../utils/direction";
 import { DungeonFloor } from "../../floor";
 import { DungeonPokemon } from "../../objects/pokemon";
 import { TurnAction } from "../actions/action";
@@ -20,8 +20,8 @@ export class DungeonPokemonPartnerAI extends DungeonPokemonAI {
 
         // Get the closest direction to the leader
         let minDist = Infinity;
-        let closestDir = Directions.NONE;
-        for (const dir of Directions.ALL) {
+        let closestDir = Direction.NONE;
+        for (const dir of Direction.ALL) {
             const newPos = this.pokemon.position.add(dir.toVector());
             const dist = newPos.dist(targetPosition);
             // Skip if you cannot move there
@@ -33,7 +33,7 @@ export class DungeonPokemonPartnerAI extends DungeonPokemonAI {
             }
         }
 
-        if (closestDir === Directions.NONE) {
+        if (closestDir === Direction.NONE) {
             return new NilAction(this.pokemon);
         }
 

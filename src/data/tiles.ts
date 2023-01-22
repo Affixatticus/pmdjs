@@ -1,7 +1,7 @@
 import { CropParams } from "../utils/canvas";
 
 
-export enum Tiles {
+export enum Tile {
     FLOOR,
     WALL,
     WATER,
@@ -25,14 +25,14 @@ export enum Tiles {
 };
 
 /** Tiles that should render as FLOOR */
-export const WALL_IGNORE_TILES = [Tiles.UNBREAKABLE_WALL, Tiles.OUT_OF_BOUNDS];
-export const WALL_INCLUDE_TILES = [Tiles.UNBREAKABLE_WALL];
-export const FLOOR_IGNORE_TILES = [Tiles.WATER, Tiles.ITEM, Tiles.TILE, Tiles.CLEAR_TILE, Tiles.UNOBSTRUCTABLE];
-export const FLOOR_INCLUDE_TILES = [Tiles.ITEM, Tiles.UNOBSTRUCTABLE];
+export const WALL_IGNORE_TILES = [Tile.UNBREAKABLE_WALL, Tile.OUT_OF_BOUNDS];
+export const WALL_INCLUDE_TILES = [Tile.UNBREAKABLE_WALL];
+export const FLOOR_IGNORE_TILES = [Tile.WATER, Tile.ITEM, Tile.TILE, Tile.CLEAR_TILE, Tile.UNOBSTRUCTABLE];
+export const FLOOR_INCLUDE_TILES = [Tile.ITEM, Tile.UNOBSTRUCTABLE];
 
 export const TILE_WIDTH = 48;
 
-export enum TileObjects {
+export enum TileObject {
     STAIRS_UP,
     TRAP_01,
     TRAP_02,
@@ -64,41 +64,41 @@ export enum TileObjects {
 };
 
 export interface TrapChance {
-    id: TileObjects;
+    id: TileObject;
     chance: number;
 };
 
-export const TileSheet: Record<TileObjects, CropParams> = {
-    [TileObjects.STAIRS_UP]: [0, 0, 1, 1],
-    [TileObjects.TRAP_01]: [1, 0, 1, 1],
-    [TileObjects.TRAP_02]: [2, 0, 1, 1],
-    [TileObjects.FAN_TRAP]: [3, 0, 1, 1],
-    [TileObjects.TRAP_04]: [4, 0, 1, 1],
-    [TileObjects.VOLTORB_TRAP]: [5, 0, 1, 1],
-    [TileObjects.ELECTRODE_TRAP]: [6, 0, 1, 1],
-    [TileObjects.GRATE_TRAP]: [7, 0, 1, 1],
-    [TileObjects.STAIRS_DOWN]: [0, 1, 1, 1],
-    [TileObjects.EXPLOSION_TRAP]: [1, 1, 1, 1],
-    [TileObjects.STICKY_TRAP]: [2, 1, 1, 1],
-    [TileObjects.GRIMER_TRAP]: [3, 1, 1, 1],
-    [TileObjects.PP_DOWN_TRAP]: [4, 1, 1, 1],
-    [TileObjects.TRAP_13]: [5, 1, 1, 1],
-    [TileObjects.CONFUSE_TRAP]: [6, 1, 1, 1],
-    [TileObjects.HOLE_TRAP]: [7, 1, 1, 1],
-    [TileObjects.TRAP_16]: [0, 2, 1, 1],
-    [TileObjects.MAGIC_TILE]: [1, 2, 1, 1],
-    [TileObjects.TRAP_18]: [2, 2, 1, 1],
-    [TileObjects.BLOCK_TRAP]: [3, 2, 1, 1],
-    [TileObjects.BOULDER_TRAP]: [4, 2, 1, 1],
-    [TileObjects.TRAP_21]: [5, 2, 1, 1],
-    [TileObjects.MYSTERY_TRAP]: [6, 2, 1, 1],
-    [TileObjects.TOXIC_SPIKES_TRAP]: [7, 2, 1, 1],
-    [TileObjects.SPIKES_TRAP]: [0, 3, 1, 1],
-    [TileObjects.KECLEON_CARPET]: [0, 3, 1, 1],
-    [TileObjects.WHITE_GUIDE]: [1, 3, 1, 1],
-    [TileObjects.BLACK_GUIDE]: [2, 3, 1, 1],
+export const TileSheet: Record<TileObject, CropParams> = {
+    [TileObject.STAIRS_UP]: [0, 0, 1, 1],
+    [TileObject.TRAP_01]: [1, 0, 1, 1],
+    [TileObject.TRAP_02]: [2, 0, 1, 1],
+    [TileObject.FAN_TRAP]: [3, 0, 1, 1],
+    [TileObject.TRAP_04]: [4, 0, 1, 1],
+    [TileObject.VOLTORB_TRAP]: [5, 0, 1, 1],
+    [TileObject.ELECTRODE_TRAP]: [6, 0, 1, 1],
+    [TileObject.GRATE_TRAP]: [7, 0, 1, 1],
+    [TileObject.STAIRS_DOWN]: [0, 1, 1, 1],
+    [TileObject.EXPLOSION_TRAP]: [1, 1, 1, 1],
+    [TileObject.STICKY_TRAP]: [2, 1, 1, 1],
+    [TileObject.GRIMER_TRAP]: [3, 1, 1, 1],
+    [TileObject.PP_DOWN_TRAP]: [4, 1, 1, 1],
+    [TileObject.TRAP_13]: [5, 1, 1, 1],
+    [TileObject.CONFUSE_TRAP]: [6, 1, 1, 1],
+    [TileObject.HOLE_TRAP]: [7, 1, 1, 1],
+    [TileObject.TRAP_16]: [0, 2, 1, 1],
+    [TileObject.MAGIC_TILE]: [1, 2, 1, 1],
+    [TileObject.TRAP_18]: [2, 2, 1, 1],
+    [TileObject.BLOCK_TRAP]: [3, 2, 1, 1],
+    [TileObject.BOULDER_TRAP]: [4, 2, 1, 1],
+    [TileObject.TRAP_21]: [5, 2, 1, 1],
+    [TileObject.MYSTERY_TRAP]: [6, 2, 1, 1],
+    [TileObject.TOXIC_SPIKES_TRAP]: [7, 2, 1, 1],
+    [TileObject.SPIKES_TRAP]: [0, 3, 1, 1],
+    [TileObject.KECLEON_CARPET]: [0, 3, 1, 1],
+    [TileObject.WHITE_GUIDE]: [1, 3, 1, 1],
+    [TileObject.BLACK_GUIDE]: [2, 3, 1, 1],
 };
 
-export function getTileCrop(tile: TileObjects): CropParams {
+export function getTileCrop(tile: TileObject): CropParams {
     return TileSheet[tile].map(e => e * TILE_WIDTH) as CropParams;
 }

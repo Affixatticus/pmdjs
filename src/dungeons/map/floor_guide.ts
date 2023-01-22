@@ -1,10 +1,10 @@
 import { GroundMesh, InstancedMesh, MeshBuilder, Scene } from "@babylonjs/core";
-import { getTileCrop, TileObjects } from "../../data/tiles";
+import { getTileCrop, TileObject } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { DungeonPokemon } from "../objects/pokemon";
 import { TileMaterial } from "../objects/tile";
-import { DungeonFloor, RenderingGroupIds } from "../floor";
-import { Directions } from "../../utils/direction";
+import { DungeonFloor, RenderingGroupId } from "../floor";
+import { Direction } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
 
 export class FloorGuide {
@@ -35,9 +35,9 @@ export class FloorGuide {
             width: 1, height: 1, subdivisions: 1
         }, this.scene);
         const whiteMaterial = new TileMaterial("trap", source,
-            this.scene, ...getTileCrop(TileObjects.WHITE_GUIDE));
+            this.scene, ...getTileCrop(TileObject.WHITE_GUIDE));
         this.whiteGuide.material = whiteMaterial;
-        this.whiteGuide.renderingGroupId = RenderingGroupIds.FLOOR;
+        this.whiteGuide.renderingGroupId = RenderingGroupId.FLOOR;
 
         // Create the black mesh
         this.blackGuide = MeshBuilder.CreateGround("floor_guide", {
@@ -46,9 +46,9 @@ export class FloorGuide {
             subdivisions: 1
         }, this.scene);
         const blackMaterial = new TileMaterial("trap", source,
-            this.scene, ...getTileCrop(TileObjects.BLACK_GUIDE));
+            this.scene, ...getTileCrop(TileObject.BLACK_GUIDE));
         this.blackGuide.material = blackMaterial;
-        this.blackGuide.renderingGroupId = RenderingGroupIds.FLOOR;
+        this.blackGuide.renderingGroupId = RenderingGroupId.FLOOR;
     }
 
     public instanceBlack(pos: Vec2) {
@@ -62,7 +62,7 @@ export class FloorGuide {
         this.whiteGuideInstances.push(instance);
     }
 
-    public update(direction: Directions = this.pokemon.direction) {
+    public update(direction: Direction = this.pokemon.direction) {
         // Delete all guides
         this.hide();
 

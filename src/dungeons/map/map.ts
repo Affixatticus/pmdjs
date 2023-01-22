@@ -1,12 +1,12 @@
 import { Color3, Color4, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { DungeonTextures } from "../../data/dungeons";
-import { FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, Tiles, WALL_IGNORE_TILES, WALL_INCLUDE_TILES } from "../../data/tiles";
+import { FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, Tile, WALL_IGNORE_TILES, WALL_INCLUDE_TILES } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { V2, V3, Vec2 } from "../../utils/vectors";
 import { ByteGrid, DungeonGrid } from "./grid";
 import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { FloorMesh } from "./floormesh";
-import { Tilings } from "./tiling";
+import { Tiling } from "./tiling";
 
 const TILE_VIEWPORT = V2(24, 24);
 
@@ -42,7 +42,7 @@ export class DungeonMap {
 
     // ANCHOR Loading
     /** Creates all the specified tiles combinations for walls */
-    private async createWallMeshes(tilings: Iterable<Tilings>) {
+    private async createWallMeshes(tilings: Iterable<Tiling>) {
         // Load the image and time it
         const { textures, heightmaps, properties } = this.props;
         const variants = properties.variants.walls;
@@ -58,7 +58,7 @@ export class DungeonMap {
         }
     }
     /** Creates all the specified tiles combinations for water */
-    private async createWaterMeshes(tilings: Iterable<Tilings>) {
+    private async createWaterMeshes(tilings: Iterable<Tiling>) {
         const { waterTextures, heightmaps, properties } = this.props;
 
         if (!properties.water) return;
@@ -94,10 +94,10 @@ export class DungeonMap {
         this.createUnderPlane(background);
 
         // Get all the used tile combinations
-        await this.createWallMeshes(this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES).getUniqueValues());
+        await this.createWallMeshes(this.grid.mapTilingsFor(Tile.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES).getUniqueValues());
 
         // Get the water tilings
-        await this.createWaterMeshes(this.grid.mapTilingsFor(Tiles.WATER).getUniqueValues());
+        await this.createWaterMeshes(this.grid.mapTilingsFor(Tile.WATER).getUniqueValues());
 
         // Create the floor
         await this.floor.preloadTexture(this.path);
@@ -133,7 +133,7 @@ export class DungeonMap {
 
         // Get the map as a list of tilings
         const gridTilings = this.grid.mapTilingsFor(
-            Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, start, size);
+            Tile.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, start, size);
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings) {
@@ -148,7 +148,7 @@ export class DungeonMap {
         [start, size] = this.getBuildArea(start, size);
 
         // Get the map as a list of tilings
-        const gridTilings = this.grid.mapTilingsFor(Tiles.WATER, [], [], start, size);
+        const gridTilings = this.grid.mapTilingsFor(Tile.WATER, [], [], start, size);
 
         // Loop through the tilings
         for (const [pos, tiling] of gridTilings) {
@@ -178,7 +178,7 @@ export class DungeonMap {
         const size = TILE_VIEWPORT;
         this.placeWallTiles(start, size);
         this.placeWaterTiles(start, size);
-        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, start, size), this.grid);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tile.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, start, size), this.grid);
     }
 
     // Updating
@@ -197,7 +197,7 @@ export class DungeonMap {
         this.animateWater(tick);
     }
 
-    public async setTile(pos: Vec2, tile: Tiles) {
+    public async setTile(pos: Vec2, tile: Tile) {
         this.changeGridSection(pos, new ByteGrid(1, 1, new Uint8Array([tile])));
     }
 
@@ -211,8 +211,8 @@ export class DungeonMap {
         const redoStart = start.subtract(V2(1, 1));
         const redoSize = V2(values.width + 2, values.height + 2);
 
-        const wallGridTilings = this.grid.mapTilingsFor(Tiles.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, redoStart, redoSize);
-        const waterGridTilings = this.grid.mapTilingsFor(Tiles.WATER, [], [], redoStart, redoSize);
+        const wallGridTilings = this.grid.mapTilingsFor(Tile.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES, redoStart, redoSize);
+        const waterGridTilings = this.grid.mapTilingsFor(Tile.WATER, [], [], redoStart, redoSize);
 
         // Load the meshes necessary
         await this.createWallMeshes(wallGridTilings.getUniqueValues());
@@ -230,14 +230,14 @@ export class DungeonMap {
         for (let x = redoStart.x; x < redoStart.x + redoSize.x; x++)
             for (let y = redoStart.y; y < redoStart.y + redoSize.y; y++) {
                 const tile = this.grid.get(x, y);
-                if (tile === Tiles.WALL || tile === Tiles.UNBREAKABLE_WALL)
+                if (tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL)
                     this.wallMeshes.instance(V2(x, y), wallGridTilings.get(x, y), this.loaded);
-                else if (tile === Tiles.WATER)
+                else if (tile === Tile.WATER)
                     this.waterMeshes.instance(V2(x, y), waterGridTilings.get(x, y), this.loaded);
             }
 
         // Update the floor
-        this.floor.updateTexture(this.grid.mapTilingsFor(Tiles.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, redoStart, redoSize), this.grid);
+        this.floor.updateTexture(this.grid.mapTilingsFor(Tile.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, redoStart, redoSize), this.grid);
     }
 
     // Disposing

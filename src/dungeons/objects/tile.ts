@@ -1,10 +1,10 @@
 import { Color3, Constants, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
-import { RenderingGroupIds } from "../floor";
-import { DungeonObject, ObjectTypes } from "./object";
+import { RenderingGroupId } from "../floor";
+import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { getTileCrop, TileObjects } from "../../data/tiles";
+import { getTileCrop, TileObject } from "../../data/tiles";
 
 
 export class TileMaterial extends StandardMaterial {
@@ -22,12 +22,12 @@ export class TileMaterial extends StandardMaterial {
 
 export class DungeonTile extends DungeonObject {
     private mesh!: Mesh;
-    private id: TileObjects;
+    private id: TileObject;
     private isHidden: boolean;
     private isStairs: boolean;
 
-    constructor(pos: Vec2, id: TileObjects, isHidden?: boolean, isStairs?: boolean) {
-        super(pos, ObjectTypes.ITEM);
+    constructor(pos: Vec2, id: TileObject, isHidden?: boolean, isStairs?: boolean) {
+        super(pos, ObjectType.ITEM);
         this.id = id;
         this.isStairs = isStairs ?? false;
         this.isHidden = isHidden ? this.isStairs : false;
@@ -38,7 +38,7 @@ export class DungeonTile extends DungeonObject {
     }
 
     public isKeckleonRelated(): boolean {
-        return this.id === TileObjects.KECLEON_CARPET;
+        return this.id === TileObject.KECLEON_CARPET;
     }
 
 
@@ -69,7 +69,7 @@ export class DungeonTile extends DungeonObject {
         );
 
         mesh.position = V3(this.position.x + .5, -0.25, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupIds.FLOOR;
+        mesh.renderingGroupId = RenderingGroupId.FLOOR;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("stairs", source, scene, ...getTileCrop(this.id));
@@ -89,7 +89,7 @@ export class DungeonTile extends DungeonObject {
         );
 
         mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupIds.WALL;
+        mesh.renderingGroupId = RenderingGroupId.WALL;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("trap", source, scene, ...getTileCrop(this.id));

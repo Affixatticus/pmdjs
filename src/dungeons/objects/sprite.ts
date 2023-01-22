@@ -1,5 +1,5 @@
 import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
-import { Directions } from "../../utils/direction";
+import { Direction } from "../../utils/direction";
 import { fillOutStandardOptions } from "../../utils/material";
 
 export interface PokemonSpriteAnimationData {
@@ -49,7 +49,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
     public texture: DynamicTexture;
 
     public animation: string;
-    public direction: Directions;
+    public direction: Direction;
 
 
     /** The currently displayed frame */
@@ -66,7 +66,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.texture = this.createTexture(scene);
         fillOutStandardOptions(this, this.texture);
         this.animation = "Idle";
-        this.direction = Directions.SOUTH;
+        this.direction = Direction.SOUTH;
     }
 
     public _shouldTurnAlphaTestOn(_mesh: AbstractMesh): boolean {
@@ -135,7 +135,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         if (!result) this.animCallback = null;
     }
 
-    public init(animation: string, direction: Directions) {
+    public init(animation: string, direction: Direction) {
         this.diffuseTexture = this.texture;
         this.texture.hasAlpha = true;
         this.texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
@@ -163,7 +163,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
             this.draw();
     }
 
-    public setDirection(dir: Directions, draw: boolean = true) {
+    public setDirection(dir: Direction, draw: boolean = true) {
         this.direction = dir;
         if (draw)
             this.draw();

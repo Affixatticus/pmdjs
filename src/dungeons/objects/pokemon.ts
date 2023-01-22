@@ -1,14 +1,14 @@
 import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
 import { PokemonFormIdentifier } from "../../data/pokemon";
-import { Tiles } from "../../data/tiles";
+import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { Directions } from "../../utils/direction";
+import { Direction } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
-import { RenderingGroupIds } from "../floor";
+import { RenderingGroupId } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonPokemonMaterial } from "./sprite";
 
-export const enum PokemonTypes {
+export const enum DungeonPokemonType {
     LEADER,
     PARTNER,
     ENEMY,
@@ -18,27 +18,27 @@ export const enum PokemonTypes {
 export class DungeonPokemon {
     private _position: Vec2;
     private _spritePosition: Vec2;
-    private _direction: Directions;
-    public type: PokemonTypes;
+    private _direction: Direction;
+    public type: DungeonPokemonType;
     public id: PokemonFormIdentifier;
     public ai!: DungeonPokemonAI;
 
     /** Turn calculation components */
     public nextTurnPosition!: Vec2;
-    public nextTurnDirection!: Directions;
+    public nextTurnDirection!: Direction;
 
     private opaqMesh!: Mesh;
     private tranMesh!: Mesh;
     public material!: DungeonPokemonMaterial;
 
 
-    constructor(pos: Vec2, type: PokemonTypes, id: PokemonFormIdentifier) {
+    constructor(pos: Vec2, type: DungeonPokemonType, id: PokemonFormIdentifier) {
         this.type = type;
         this.id = id;
         /** Create the AI */
         this._position = pos;
         this._spritePosition = pos;
-        this._direction = Directions.SOUTH;
+        this._direction = Direction.SOUTH;
 
         this.nextTurnPosition = pos.clone();
         this.nextTurnDirection = this._direction;
@@ -60,7 +60,7 @@ export class DungeonPokemon {
         opaqMesh.position = this._position.gameFormat.add(V3(0.5, 0, -0.5));
 
         opaqMesh.scalingDeterminant = 8;
-        opaqMesh.renderingGroupId = RenderingGroupIds.WALL;
+        opaqMesh.renderingGroupId = RenderingGroupId.WALL;
         opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
 
         const material = new DungeonPokemonMaterial(data, scene);
@@ -70,7 +70,7 @@ export class DungeonPokemon {
         opaqMesh.material = this.material;
 
         const tranMesh = opaqMesh.clone("pokemon-tran");
-        tranMesh.renderingGroupId = RenderingGroupIds.ALWAYS_VISIBLE;
+        tranMesh.renderingGroupId = RenderingGroupId.ALWAYS_VISIBLE;
         tranMesh.visibility = 0.5;
         this.tranMesh = tranMesh;
     }
@@ -110,14 +110,14 @@ export class DungeonPokemon {
         return this._direction;
     }
 
-    public set direction(dir: Directions) {
+    public set direction(dir: Direction) {
         this._direction = dir;
         this.nextTurnDirection = dir;
         this.material?.setDirection(dir);
     }
 
     /** Makes a single turn that gets the direction closer to the target */
-    public turnTowards(dir: Directions) {
+    public turnTowards(dir: Direction) {
         this.direction = this.direction.getNextClosest(dir);
     }
 
@@ -134,7 +134,7 @@ export class DungeonPokemon {
 
     /** TODO: Implement this to work with types 
      * Returns true if this pokemon can pass over the specified tile */
-    public specialWalkable(_tile: Tiles): boolean {
+    public specialWalkable(_tile: Tile): boolean {
         return false;
     }
 }
@@ -147,11 +147,11 @@ export class DungeonPokemonList {
     }
 
     public getLeader(): DungeonPokemon {
-        return this.objects.find(obj => obj.type === PokemonTypes.LEADER) as DungeonPokemon;
+        return this.objects.find(obj => obj.type === DungeonPokemonType.LEADER) as DungeonPokemon;
     }
 
     public getPartners() {
-        return this.objects.filter(obj => obj.type === PokemonTypes.PARTNER);
+        return this.objects.filter(obj => obj.type === DungeonPokemonType.PARTNER);
     }
 
     public getAll() {

@@ -1,4 +1,4 @@
-export enum PokemonTypes {
+export enum PokemonType {
     NULL, ROCK, FLYING, STEEL,
     NORMAL, PSYCHIC, FIGHTING, DRAGON,
     FIRE, ICE, POISON, DARK,

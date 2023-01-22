@@ -1,10 +1,10 @@
 import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MeshBuilder, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
-import { DungeonFloorInfo, Dungeons, DungeonsInfo, LightLevels } from "../data/dungeons";
+import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
-import { Tiles } from "../data/tiles";
+import { Tile } from "../data/tiles";
 import { Button, Controls, Stick } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
-import { DungeonFloor, RenderingGroupIds } from "./floor";
+import { DungeonFloor, RenderingGroupId } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
 import { FloorGuide } from "./map/floor_guide";
@@ -68,14 +68,14 @@ export class DungeonState {
             const area = new ByteGrid(1, 1);
 
             // If the tile is Unbreakable, return
-            if (this.floor.grid.get(...point.spread()) === Tiles.UNBREAKABLE_WALL) return;
+            if (this.floor.grid.get(...point.spread()) === Tile.UNBREAKABLE_WALL) return;
 
             if (event.event.button == 0) {
-                area.fill(Tiles.FLOOR);
+                area.fill(Tile.FLOOR);
             } else if (event.event.button == 1) {
-                area.fill(Tiles.WATER);
+                area.fill(Tile.WATER);
             } else if (event.event.button == 2) {
-                area.fill(Tiles.WALL);
+                area.fill(Tile.WALL);
             }
 
             this.floor.map.changeGridSection(point, area);
@@ -85,7 +85,7 @@ export class DungeonState {
     // Loading methods
 
     /** Loads in this dungeons' graphics, found enemies, possible items... */
-    private getFloorInfo(id: Dungeons = this.data.id, floor: number = this.data.floor): DungeonFloorInfo {
+    private getFloorInfo(id: Dungeon = this.data.id, floor: number = this.data.floor): DungeonFloorInfo {
         const dunData = DungeonsInfo[id];
 
         // Get all the dungeon's floor levels
@@ -131,27 +131,27 @@ export class DungeonState {
         this.directionalLight.specular = new Color3(0, 0, 0);
 
         switch (this.info.lightLevel) {
-            case LightLevels.DARKEST: {
+            case LightLevel.DARKEST: {
                 this.directionalLight.intensity = 0;
                 this.globalLight.intensity = 0;
                 this.lightOverlay.intensity = 1;
                 this.lightOverlay.isEnabled = true;
                 break;
             }
-            case LightLevels.DARK: {
+            case LightLevel.DARK: {
                 this.directionalLight.intensity = 0;
                 this.globalLight.intensity = 0.3;
                 this.lightOverlay.isEnabled = true;
                 this.lightOverlay.intensity = 1;
                 break;
             }
-            case LightLevels.NORMAL: {
+            case LightLevel.NORMAL: {
                 this.directionalLight.intensity = 0.4;
                 this.globalLight.intensity = 0.5;
                 this.lightOverlay.isEnabled = false;
                 break;
             }
-            case LightLevels.BRIGHT: {
+            case LightLevel.BRIGHT: {
                 this.directionalLight.intensity = 1;
                 this.globalLight.intensity = 1;
                 this.lightOverlay.isEnabled = false;

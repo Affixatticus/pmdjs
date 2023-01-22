@@ -1,11 +1,11 @@
 import { Mesh, StandardMaterial, Scene, MeshBuilder, DynamicTexture, Constants } from "@babylonjs/core";
-import { Tiles } from "../../data/tiles";
+import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { fillOutStandardOptions } from "../../utils/material";
 import { V2, Vec2 } from "../../utils/vectors";
-import { RenderingGroupIds } from "../floor";
+import { RenderingGroupId } from "../floor";
 import { OffsetGrid, DungeonGrid } from "./grid";
-import { Tilings, DungeonTiling, TilingTextureMode } from "./tiling";
+import { Tiling, DungeonTiling, TilingTextureMode } from "./tiling";
 
 export class FloorMesh {
     private mesh!: Mesh;
@@ -44,7 +44,7 @@ export class FloorMesh {
         mesh.position.set(...V2(this.width / 2, this.height / 2).toVec3().gameFormat.spread());
 
         // Resolve z-fighting
-        mesh.renderingGroupId = RenderingGroupIds.FLOOR;
+        mesh.renderingGroupId = RenderingGroupId.FLOOR;
 
         // Loads the material
         this.material = this.createMaterial(scene);
@@ -69,7 +69,7 @@ export class FloorMesh {
     }
 
     // Updating
-    private chooseVariant(tilings: Tilings, pos: Vec2): number {
+    private chooseVariant(tilings: Tiling, pos: Vec2): number {
         const variants = this.variants[tilings];
         // return 0;
         if (!variants) return 0;
@@ -93,15 +93,15 @@ export class FloorMesh {
                 continue;
             }
 
-            if (tiling === Tilings.BLANK) {
+            if (tiling === Tiling.BLANK) {
                 const tile = grid.get(...pos.spread());
                 // If the tile should be clear, use the CENTER_FULL (transparent)
-                if (tile !== Tiles.WATER && tile !== Tiles.CLEAR_TILE)
-                    variant = Tilings.CENTER_FULL;
+                if (tile !== Tile.WATER && tile !== Tile.CLEAR_TILE)
+                    variant = Tiling.CENTER_FULL;
             } else
                 variant = this.chooseVariant(tiling, pos);
 
-            const tilingCrop = DungeonTiling.getCrop(tiling, Tiles.FLOOR, variant, TilingTextureMode.TEXTURE);
+            const tilingCrop = DungeonTiling.getCrop(tiling, Tile.FLOOR, variant, TilingTextureMode.TEXTURE);
 
             this.ctx.drawImage(this.textures, ...tilingCrop, pos.x * 24, pos.y * 24, 24, 24);
         }

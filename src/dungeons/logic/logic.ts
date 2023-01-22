@@ -1,14 +1,14 @@
-import { Directions } from "../../utils/direction";
+import { Direction } from "../../utils/direction";
 import { DungeonState } from "../dungeon";
 import { WalkAction } from "./actions/walk";
 import { NilAction } from "./actions/nil";
 import { Turn } from "./turn";
-import { PokemonTypes } from "../objects/pokemon";
+import { DungeonPokemonType } from "../objects/pokemon";
 import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";
 import { Player } from "./player";
-import { LightLevels } from "../../data/dungeons";
+import { LightLevel } from "../../data/dungeons";
 export class DungeonLogic {
     public state: DungeonState;
 
@@ -17,7 +17,7 @@ export class DungeonLogic {
     public turnsHistory: Turn[];
     public player: Player;
 
-    private walkDirection: Directions | null;
+    private walkDirection: Direction | null;
 
     /** Initalizes the game logic */
     constructor(state: DungeonState) {
@@ -34,7 +34,7 @@ export class DungeonLogic {
         for (const pokemon of this.state.floor.pokemon.getAll()) {
             // Assign the ai to the pokemon
             switch (pokemon.type) {
-                case PokemonTypes.PARTNER:
+                case DungeonPokemonType.PARTNER:
                     pokemon.ai = new DungeonPokemonPartnerAI(pokemon, this.state.floor);
                     break;
                 default:
@@ -61,7 +61,7 @@ export class DungeonLogic {
         // Create the actions
         if (!this.turn) {
             this.turn = new Turn();
-            if (this.walkDirection === Directions.NONE)
+            if (this.walkDirection === Direction.NONE)
                 this.turn.calculate(new NilAction(leader), this.state);
             else {
                 // Add the action to the turn

@@ -1,7 +1,7 @@
 import { Scene } from "@babylonjs/core";
 import { Vec2 } from "../../utils/vectors";
 
-export enum ObjectTypes {
+export enum ObjectType {
     ITEM,
     TRAP,
     STAIRS,
@@ -16,9 +16,9 @@ export interface IDungeonObject {
 
 export abstract class DungeonObject implements IDungeonObject {
     public position: Vec2;
-    public type: ObjectTypes;
+    public type: ObjectType;
 
-    constructor(pos: Vec2, type: ObjectTypes) {
+    constructor(pos: Vec2, type: ObjectType) {
         this.position = pos;
         this.type = type;
     }

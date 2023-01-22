@@ -1,16 +1,16 @@
 import { StandardMaterial, Texture, Scene, Constants, Mesh, GroundMesh, MeshBuilder, Matrix, Color3 } from "@babylonjs/core";
-import { Tiles } from "../../data/tiles";
+import { Tile } from "../../data/tiles";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { fillOutStandardOptions } from "../../utils/material";
 import { Vec2, V3 } from "../../utils/vectors";
-import { RenderingGroupIds } from "../floor";
+import { RenderingGroupId } from "../floor";
 import { ByteGrid } from "./grid";
-import { Tilings, DungeonTiling, TilingTextureMode } from "./tiling";
+import { Tiling, DungeonTiling, TilingTextureMode } from "./tiling";
 
 const TILEMESH_SUBDIVISIONS = 6;
 
 export type MeshGroup = TileMesh | Map<number, TileMesh> | null;
-export type MeshInstance = [instance: number, tiling: Tilings, variant: number];
+export type MeshInstance = [instance: number, tiling: Tiling, variant: number];
 
 // Tilemesh materials
 export class WaterTileMaterial extends StandardMaterial {
@@ -67,18 +67,18 @@ export class TileMaterial extends StandardMaterial {
 
 // Tile mesh containers
 export class TileMeshContainer {
-    public list: Partial<Record<Tilings, MeshGroup>>;
+    public list: Partial<Record<Tiling, MeshGroup>>;
     /** List of the positioned instances indexed by position */
     public instances!: Record<string, MeshInstance>;
 
     constructor() {
-        this.list = { [Tilings.BLANK]: null };
+        this.list = { [Tiling.BLANK]: null };
         this.instances = {};
     }
 
     // Tile Meshes
     /** Adds a mesh to the container */
-    public add(tiling: Tilings, mesh: TileMesh, variant: number = 0) {
+    public add(tiling: Tiling, mesh: TileMesh, variant: number = 0) {
         if (this.list[tiling] instanceof TileMesh) {
             // If there already is a reference, add the new mesh to a new array
             const oldMesh = this.list[tiling] as TileMesh;
@@ -97,7 +97,7 @@ export class TileMeshContainer {
     }
 
     /** Gets the specified variant of a tile if it exists */
-    public get(tiling: Tilings, variant: number = 0): TileMesh | null {
+    public get(tiling: Tiling, variant: number = 0): TileMesh | null {
         if (this.list[tiling] instanceof TileMesh) {
             return this.list[tiling] as TileMesh;
         } else if (this.list[tiling] instanceof Map) {
@@ -105,12 +105,12 @@ export class TileMeshContainer {
         } else return null;
     }
 
-    public has(tiling: Tilings) {
+    public has(tiling: Tiling) {
         return this.list[tiling] !== undefined;
     }
 
     /** Gets a tiling variant for placing */
-    public getVariantForPlacing(tiling: Tilings, pos: Vec2): TileMesh | null {
+    public getVariantForPlacing(tiling: Tiling, pos: Vec2): TileMesh | null {
         const meshGroup = this.list[tiling] as MeshGroup;
         if (meshGroup === null) return null;
         if (meshGroup instanceof TileMesh) return meshGroup;
@@ -130,8 +130,8 @@ export class TileMeshContainer {
     /** Returns all the meshgroups */
     public *[Symbol.iterator]() {
         for (const key of Object.keys(this.list)) {
-            const tiling = parseInt(key) as Tilings;
-            yield [tiling, this.list[tiling]] as [Tilings, MeshGroup];
+            const tiling = parseInt(key) as Tiling;
+            yield [tiling, this.list[tiling]] as [Tiling, MeshGroup];
         }
     }
 
@@ -152,25 +152,25 @@ export class TileMeshContainer {
         for (const mesh of this.getMeshes()) { mesh.dispose() }
     }
 
-    public createWallTileMesh(tiling: Tilings, texture: CanvasImageSource, heightmap: CanvasImageSource, scene: Scene,
+    public createWallTileMesh(tiling: Tiling, texture: CanvasImageSource, heightmap: CanvasImageSource, scene: Scene,
         options: {
             variant: number, generateMaterial?: boolean, height?: number
         } = { variant: 0, generateMaterial: true, height: 1 }) {
-        if (tiling === Tilings.BLANK) return;
+        if (tiling === Tiling.BLANK) return;
         this.add(tiling, new WallTileMesh(tiling, texture, heightmap, scene, options), options.variant);
     }
 
-    public createWaterTileMesh(tiling: Tilings, textures: CanvasImageSource[], heightmap: CanvasImageSource, scene: Scene, options: {
+    public createWaterTileMesh(tiling: Tiling, textures: CanvasImageSource[], heightmap: CanvasImageSource, scene: Scene, options: {
         waterHeight: number, waterSpeed: number, waterLevel: number
     } = { waterHeight: 0.5, waterSpeed: 0.1, waterLevel: -0.5 }) {
-        if (tiling === Tilings.BLANK) return;
+        if (tiling === Tiling.BLANK) return;
         this.add(tiling, new WaterTileMesh(tiling, textures, heightmap, scene, options), 0);
     }
 
     // Instances
     /** Creates an instance of the given tiling, and places it at the given coordinates */
-    public instance(pos: Vec2, tiling: Tilings, loaded: ByteGrid) {
-        if (tiling === Tilings.BLANK) return;
+    public instance(pos: Vec2, tiling: Tiling, loaded: ByteGrid) {
+        if (tiling === Tiling.BLANK) return;
 
         if (loaded.get(...pos.spread()) === 0) {
             const tileMesh = this.getVariantForPlacing(tiling, pos);
@@ -184,7 +184,7 @@ export class TileMeshContainer {
         }
     }
 
-    public getInstances(tiling: Tilings, variant: number = 0): MeshInstance[] {
+    public getInstances(tiling: Tiling, variant: number = 0): MeshInstance[] {
         return Object.values(this.instances).filter(([_, t, v]) => t === tiling && v === variant);
     }
 
@@ -209,7 +209,7 @@ export class TileMeshContainer {
 export abstract class TileMesh {
     public abstract mesh: Mesh;
     public abstract material: TileMaterial;
-    public abstract tiling: Tilings;
+    public abstract tiling: Tiling;
     public abstract variant: number;
 
     public abstract instance(pos: Vec2): number;
@@ -220,10 +220,10 @@ export abstract class TileMesh {
 export class WallTileMesh extends TileMesh {
     public mesh: GroundMesh;
     public material!: TileMaterial;
-    public tiling: Tilings;
+    public tiling: Tiling;
     public variant: number;
 
-    constructor(tiling: Tilings, texture: CanvasImageSource, heightmap: CanvasImageSource, scene: Scene,
+    constructor(tiling: Tiling, texture: CanvasImageSource, heightmap: CanvasImageSource, scene: Scene,
         options: {
             variant: number, height?: number
         } = { variant: 0, height: 1 }) {
@@ -244,7 +244,7 @@ export class WallTileMesh extends TileMesh {
             maxHeight: options.height ?? 1,
         }, scene);
         this.mesh.isVisible = true;
-        this.mesh.renderingGroupId = RenderingGroupIds.WALL;
+        this.mesh.renderingGroupId = RenderingGroupId.WALL;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
         // Create the material
@@ -254,10 +254,10 @@ export class WallTileMesh extends TileMesh {
     }
 
     public getTextureCrop() {
-        return DungeonTiling.getCrop(this.tiling, Tiles.WALL, this.variant, TilingTextureMode.TEXTURE);
+        return DungeonTiling.getCrop(this.tiling, Tile.WALL, this.variant, TilingTextureMode.TEXTURE);
     }
     public getHeightmapCrop() {
-        return DungeonTiling.getCrop(this.tiling, Tiles.WALL, 0, TilingTextureMode.HEIGHTMAP);
+        return DungeonTiling.getCrop(this.tiling, Tile.WALL, 0, TilingTextureMode.HEIGHTMAP);
     }
 
     public getId() {
@@ -277,14 +277,14 @@ export class WallTileMesh extends TileMesh {
 export class WaterTileMesh extends TileMesh {
     public mesh: GroundMesh;
     public material: WaterTileMaterial;
-    public tiling: Tilings;
+    public tiling: Tiling;
     public variant: number;
 
     public waterHeight: number;
     public waterLevel: number;
     public waterSpeed: number;
 
-    constructor(tiling: Tilings, textures: CanvasImageSource[], heightmap: CanvasImageSource, scene: Scene, options: {
+    constructor(tiling: Tiling, textures: CanvasImageSource[], heightmap: CanvasImageSource, scene: Scene, options: {
         waterHeight: number, waterSpeed: number, waterLevel: number
     } = { waterHeight: 0.5, waterSpeed: 0.1, waterLevel: 0 }) {
         super();
@@ -310,7 +310,7 @@ export class WaterTileMesh extends TileMesh {
         this.mesh.isVisible = true;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
-        this.mesh.renderingGroupId = RenderingGroupIds.WATER;
+        this.mesh.renderingGroupId = RenderingGroupId.WATER;
         this.material = new WaterTileMaterial("material_" + this.getId(), textures, this.waterSpeed, this.getTextureCrop(), scene);
         this.mesh.material = this.material;
     }
@@ -329,10 +329,10 @@ export class WaterTileMesh extends TileMesh {
     }
 
     public getTextureCrop() {
-        return DungeonTiling.getCrop(this.tiling, Tiles.WATER, this.variant, TilingTextureMode.TEXTURE);
+        return DungeonTiling.getCrop(this.tiling, Tile.WATER, this.variant, TilingTextureMode.TEXTURE);
     }
 
     public getHeightmapCrop() {
-        return DungeonTiling.getCrop(this.tiling, Tiles.WATER, 0, TilingTextureMode.HEIGHTMAP);
+        return DungeonTiling.getCrop(this.tiling, Tile.WATER, 0, TilingTextureMode.HEIGHTMAP);
     }
 }

@@ -1,10 +1,10 @@
 import { Controls } from "../../utils/controls";
-import { Directions } from "../../utils/direction";
+import { Direction } from "../../utils/direction";
 import { DungeonPokemon } from "../objects/pokemon";
 import { PushAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 
-enum PlayerStates {
+enum PlayerState {
     /** In this state, the player can choose whichever action available */
     IDLE,
     /** This is a transistioning state while the player changes direction */
@@ -17,9 +17,9 @@ enum PlayerStates {
 
 
 export class Player {
-    private playerState: PlayerStates = PlayerStates.IDLE;
+    private playerState: PlayerState = PlayerState.IDLE;
 
-    private lastDirection = Directions.NONE;
+    private lastDirection = Direction.NONE;
     private directionTimeStamp = 0;
     private turningDelay = 0;
     private walkingStartedTurn = 0;
@@ -35,7 +35,7 @@ export class Player {
     }
 
 
-    private setState(state: PlayerStates) {
+    private setState(state: PlayerState) {
         this.playerState = state;
         this.walkingStartedTurn = 0;
         this.turningDelay = 0;
@@ -43,29 +43,29 @@ export class Player {
     }
 
     private setIdle() {
-        this.setState(PlayerStates.IDLE);
+        this.setState(PlayerState.IDLE);
         return null;
     }
 
-    private setTurning(direction: Directions) {
-        this.setState(PlayerStates.TURNING);
+    private setTurning(direction: Direction) {
+        this.setState(PlayerState.TURNING);
         this.lastDirection = direction;
         return null;
     }
 
-    private setWalking(direction: Directions) {
-        this.setState(PlayerStates.WALKING);
+    private setWalking(direction: Direction) {
+        this.setState(PlayerState.WALKING);
         this.lastDirection = direction;
         return null;
     }
 
     // TODO: Implement this
-    private turnTowardsHotspot(): Directions {
-        return Directions.NORTH;
+    private turnTowardsHotspot(): Direction {
+        return Direction.NORTH;
     }
 
     /** Returns the DungeonPokemon in the way that is a partner */
-    private partnerInTheWay(targetDirection: Directions, subject: DungeonPokemon = this.logic.state.floor.pokemon.getLeader()): DungeonPokemon | null {
+    private partnerInTheWay(targetDirection: Direction, subject: DungeonPokemon = this.logic.state.floor.pokemon.getLeader()): DungeonPokemon | null {
         const partners = this.logic.state.floor.pokemon.getPartners();
         const subjectPosition = subject.position.add(targetDirection.toVector());
 
@@ -78,7 +78,7 @@ export class Player {
         return null;
     }
 
-    private pushPartnerBackwards(partner: DungeonPokemon, lastDirection: Directions): Directions | null {
+    private pushPartnerBackwards(partner: DungeonPokemon, lastDirection: Direction): Direction | null {
         // Check if the partner can move in the new position
         if (this.logic.state.floor.canMoveTowards(partner, lastDirection)) {
             // Add the new position to the action list
@@ -104,17 +104,17 @@ export class Player {
     /** Takes in the chosen movement of the player */
     public doInput() {
         const stick = Controls.leftStick;
-        const inputDirection = Directions.fromVector(stick).flipY();
+        const inputDirection = Direction.fromVector(stick).flipY();
         const player = this.logic.state.floor.pokemon.getLeader();
 
 
         switch (this.playerState) {
-            case PlayerStates.IDLE: {
+            case PlayerState.IDLE: {
                 // If you press the Y button, you can turn freely
                 if (!Controls.Y) {
                     if (this.turnStateTicks > 2) {
                         this.lastDirection = this.turnTowardsHotspot();
-                        this.setState(PlayerStates.TURNING);
+                        this.setState(PlayerState.TURNING);
                     }
                     this.turnStateTicks = 0;
                 }
@@ -122,12 +122,12 @@ export class Player {
                     this.turnStateTicks++;
                     if (this.turnStateTicks === 20) {
                         this.turnStateTicks = 0;
-                        this.setState(PlayerStates.TURN);
+                        this.setState(PlayerState.TURN);
                     }
                 }
 
                 // In whichever case, ignore null inputs
-                if (inputDirection === Directions.NONE) return null;
+                if (inputDirection === Direction.NONE) return null;
 
                 if (inputDirection !== this.lastDirection) {
                     this.lastDirection = inputDirection;
@@ -141,7 +141,7 @@ export class Player {
                 }
                 break;
             }
-            case PlayerStates.TURNING: {
+            case PlayerState.TURNING: {
                 if (this.turningDelay++ >= 4) {
                     if (player.direction !== this.lastDirection) {
                         player.turnTowards(this.lastDirection);
@@ -150,7 +150,7 @@ export class Player {
                         this.turningDelay = 0;
                     }
                     else if (this.turnStateTicks > 0) {
-                        this.setState(PlayerStates.TURN);
+                        this.setState(PlayerState.TURN);
                     }
                     else {
                         return this.setIdle();
@@ -158,11 +158,11 @@ export class Player {
                 }
                 break;
             }
-            case PlayerStates.WALKING: {
+            case PlayerState.WALKING: {
                 // After the first turn, you are allowed to change direction
                 if (this.walkingStartedTurn !== this.logic.currentTurn) {
                     // If you want to, you can stop walking
-                    if (this.lastDirection === Directions.NONE) {
+                    if (this.lastDirection === Direction.NONE) {
                         this.setIdle();
                         return null;
                     }
@@ -187,7 +187,7 @@ export class Player {
                         return this.lastDirection;
                     } else if (Controls.B && partner) {
                         return this.lastDirection;
-                    } else if (inputDirection !== Directions.NONE && partner) {
+                    } else if (inputDirection !== Direction.NONE && partner) {
                         // Push the partners backwards
                         return this.pushPartnerBackwards(partner, this.lastDirection);
                     } else if (!canMove) {
@@ -196,7 +196,7 @@ export class Player {
                     return this.setIdle();
                 }
             }
-            case PlayerStates.TURN: {
+            case PlayerState.TURN: {
                 if (Controls.Y && this.turnStateTicks === 0) {
                     this.logic.state.floorGuide.show();
                 }
@@ -206,7 +206,7 @@ export class Player {
                     this.logic.state.floorGuide.hide();
                     return this.setIdle();
                 }
-                if (inputDirection === Directions.NONE) return null;
+                if (inputDirection === Direction.NONE) return null;
 
                 if (inputDirection !== this.lastDirection) {
                     this.lastDirection = inputDirection;

@@ -1,5 +1,5 @@
-import { Tiles } from "../../data/tiles";
-import { Directions } from "../../utils/direction";
+import { Tile } from "../../data/tiles";
+import { Direction } from "../../utils/direction";
 import Random from "../../utils/random";
 import { Rect } from "../../utils/rect";
 import { V2, Vec2 } from "../../utils/vectors";
@@ -112,12 +112,12 @@ export class ByteGrid {
 
         for (let y = 2; y < this._height - 1; y++)
             for (let x = 2; x < this._width - 1; x++) {
-                if (this.get(x, y) !== Tiles.FLOOR)
+                if (this.get(x, y) !== Tile.FLOOR)
                     continue;
 
                 const neighbors = this.getNeighbors(x, y);
 
-                if (neighbors.every(n => n === Tiles.FLOOR))
+                if (neighbors.every(n => n === Tile.FLOOR))
                     openPositions.push(V2(x, y));
             }
 
@@ -130,7 +130,7 @@ export class ByteGrid {
 
         for (let y = 0; y < this._height; y++)
             for (let x = 0; x < this._width; x++) {
-                if (this.get(x, y) === Tiles.FLOOR)
+                if (this.get(x, y) === Tile.FLOOR)
                     freePositions.push(V2(x, y));
             }
 
@@ -270,8 +270,8 @@ export class OffsetGrid extends ByteGrid {
 
 export class DungeonGrid extends ByteGrid {
     static listOfWalkableTiles = [
-        Tiles.FLOOR, Tiles.TILE, Tiles.ITEM, Tiles.CLEAR_TILE,
-        Tiles.KECLEON_CARPET, Tiles.KECLEON_ITEM, Tiles.KECLEON_MARKER];
+        Tile.FLOOR, Tile.TILE, Tile.ITEM, Tile.CLEAR_TILE,
+        Tile.KECLEON_CARPET, Tile.KECLEON_ITEM, Tile.KECLEON_MARKER];
 
     static fromByteGrid(byteGrid: ByteGrid): DungeonGrid {
         return new DungeonGrid(byteGrid.width, byteGrid.height, byteGrid.data);
@@ -347,7 +347,7 @@ export class DungeonGrid extends ByteGrid {
     public getCorridorViewArea(position: Vec2) {
         const savedPositions: Vec2[] = [position];
 
-        for (const dir of Directions.CARDINAL) {
+        for (const dir of Direction.CARDINAL) {
             const dirVec = dir.toVector();
             const nextPos = position.add(dirVec);
 
@@ -364,7 +364,7 @@ export class DungeonGrid extends ByteGrid {
                 continue;
             }
             // Try the counter-clockwise direction
-            const ccwDir = Directions.ALL[Directions.rollIndex(dir.index - 2)];
+            const ccwDir = Direction.ALL[Direction.rollIndex(dir.index - 2)];
             const ccwDirVec = ccwDir.toVector();
             const nextCCWPos = nextPos.add(ccwDirVec);
             // Check if the next position is walkable
@@ -373,7 +373,7 @@ export class DungeonGrid extends ByteGrid {
                 continue;
             };
             // Try the clockwise direction
-            const cwDir = Directions.ALL[Directions.rollIndex(dir.index + 2)];
+            const cwDir = Direction.ALL[Direction.rollIndex(dir.index + 2)];
             const cwDirVec = cwDir.toVector();
             const nextCWPos = nextPos.add(cwDirVec);
             // Check if the next position is walkable
@@ -437,7 +437,7 @@ export class DungeonGrid extends ByteGrid {
             return this.getRoomViewArea(position).inflate(1);
     }
 
-    public *[Symbol.iterator](): IterableIterator<[Vec2, Tiles]> {
+    public *[Symbol.iterator](): IterableIterator<[Vec2, Tile]> {
         for (const [pos, _value] of super[Symbol.iterator]())
             yield [pos, this.get(pos.x, pos.y)];
     }

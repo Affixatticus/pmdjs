@@ -1,17 +1,17 @@
 import { Mesh, MeshBuilder, Scene } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
-import { DungeonObject, ObjectTypes } from "./object";
+import { DungeonObject, ObjectType } from "./object";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { getTileCrop, TileObjects } from "../../data/tiles";
+import { getTileCrop, TileObject } from "../../data/tiles";
 import { TileMaterial } from "./tile";
-import { RenderingGroupIds } from "../floor";
+import { RenderingGroupId } from "../floor";
 
 export class DungeonCarpet extends DungeonObject {
     private mesh!: Mesh;
-    private id: TileObjects;
+    private id: TileObject;
 
-    constructor(pos: Vec2, id: TileObjects) {
-        super(pos, ObjectTypes.ITEM);
+    constructor(pos: Vec2, id: TileObject) {
+        super(pos, ObjectType.ITEM);
         this.id = id;
     }
 
@@ -28,7 +28,7 @@ export class DungeonCarpet extends DungeonObject {
         }, scene);
 
         mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupIds.WATER;
+        mesh.renderingGroupId = RenderingGroupId.WATER;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("stairs", source, scene, ...getTileCrop(this.id));

@@ -1,7 +1,7 @@
 import Random from "./random";
 import { Vec2 } from "./vectors";
 
-export enum DirectionIndexes {
+export enum DirectionIndex {
     SOUTH,
     SOUTH_EAST,
     EAST,
@@ -12,43 +12,43 @@ export enum DirectionIndexes {
     SOUTH_WEST
 };
 
-export class Directions {
-    static readonly SOUTH: Directions = new Directions(0, 1, DirectionIndexes.SOUTH);
-    static readonly SOUTH_EAST: Directions = new Directions(1, 1, DirectionIndexes.SOUTH_EAST);
-    static readonly EAST: Directions = new Directions(1, 0, DirectionIndexes.EAST);
-    static readonly NORTH_EAST: Directions = new Directions(1, -1, DirectionIndexes.NORTH_EAST);
-    static readonly NORTH: Directions = new Directions(0, -1, DirectionIndexes.NORTH);
-    static readonly NORTH_WEST: Directions = new Directions(-1, -1, DirectionIndexes.NORTH_WEST);
-    static readonly WEST: Directions = new Directions(-1, 0, DirectionIndexes.WEST);
-    static readonly SOUTH_WEST: Directions = new Directions(-1, 1, DirectionIndexes.SOUTH_WEST);
+export class Direction {
+    static readonly SOUTH: Direction = new Direction(0, 1, DirectionIndex.SOUTH);
+    static readonly SOUTH_EAST: Direction = new Direction(1, 1, DirectionIndex.SOUTH_EAST);
+    static readonly EAST: Direction = new Direction(1, 0, DirectionIndex.EAST);
+    static readonly NORTH_EAST: Direction = new Direction(1, -1, DirectionIndex.NORTH_EAST);
+    static readonly NORTH: Direction = new Direction(0, -1, DirectionIndex.NORTH);
+    static readonly NORTH_WEST: Direction = new Direction(-1, -1, DirectionIndex.NORTH_WEST);
+    static readonly WEST: Direction = new Direction(-1, 0, DirectionIndex.WEST);
+    static readonly SOUTH_WEST: Direction = new Direction(-1, 1, DirectionIndex.SOUTH_WEST);
 
-    static readonly NONE: Directions = new Directions(0, 0, -1);
+    static readonly NONE: Direction = new Direction(0, 0, -1);
 
-    static readonly ALL: Directions[] = [
-        Directions.SOUTH,
-        Directions.SOUTH_EAST,
-        Directions.EAST,
-        Directions.NORTH_EAST,
-        Directions.NORTH,
-        Directions.NORTH_WEST,
-        Directions.WEST,
-        Directions.SOUTH_WEST
+    static readonly ALL: Direction[] = [
+        Direction.SOUTH,
+        Direction.SOUTH_EAST,
+        Direction.EAST,
+        Direction.NORTH_EAST,
+        Direction.NORTH,
+        Direction.NORTH_WEST,
+        Direction.WEST,
+        Direction.SOUTH_WEST
     ];
 
-    static readonly CARDINAL: Directions[] = [
-        Directions.SOUTH,
-        Directions.EAST,
-        Directions.NORTH,
-        Directions.WEST
+    static readonly CARDINAL: Direction[] = [
+        Direction.SOUTH,
+        Direction.EAST,
+        Direction.NORTH,
+        Direction.WEST
     ];
 
     static get(index: number) {
-        if (index === -1) return Directions.NONE;
-        return Directions.ALL[index];
+        if (index === -1) return Direction.NONE;
+        return Direction.ALL[index];
     }
 
     static random() {
-        return Directions.ALL[Math.floor(Math.random() * Directions.ALL.length)];
+        return Direction.ALL[Math.floor(Math.random() * Direction.ALL.length)];
     }
 
     static rollIndex(index: number) {
@@ -56,12 +56,12 @@ export class Directions {
     }
 
     static fromVector(vector: Vec2) {
-        for (const direction of Directions.ALL) {
+        for (const direction of Direction.ALL) {
             if (direction.horizontal === vector.x && direction.vertical === vector.y) {
                 return direction;
             }
         }
-        return Directions.NONE;
+        return Direction.NONE;
     }
 
     public toVector(): Vec2 {
@@ -83,36 +83,36 @@ export class Directions {
         this.horizontal = horizontal;
         this.vertical = vertical;
         this.index = index;
-        this.name = DirectionIndexes[index];
+        this.name = DirectionIndex[index];
         this.isNone = index === -1;
         this.diagonal = this.horizontal !== 0 && this.vertical !== 0;
     }
 
-    public isOpposite(other: Directions) {
+    public isOpposite(other: Direction) {
         return this.horizontal === -other.horizontal && this.vertical === -other.vertical;
     }
 
-    public getOpposite(): Directions {
-        return Directions.get(Directions.rollIndex(this.index + 4));
+    public getOpposite(): Direction {
+        return Direction.get(Direction.rollIndex(this.index + 4));
     }
 
-    public static flipMap: Record<number, Directions> = {
-        [DirectionIndexes.SOUTH]: Directions.NORTH,
-        [DirectionIndexes.SOUTH_EAST]: Directions.NORTH_EAST,
-        [DirectionIndexes.EAST]: Directions.EAST,
-        [DirectionIndexes.NORTH_EAST]: Directions.SOUTH_EAST,
-        [DirectionIndexes.NORTH]: Directions.SOUTH,
-        [DirectionIndexes.NORTH_WEST]: Directions.SOUTH_WEST,
-        [DirectionIndexes.WEST]: Directions.WEST,
-        [DirectionIndexes.SOUTH_WEST]: Directions.NORTH_WEST,
-        [-1]: Directions.NONE,
+    public static flipMap: Record<number, Direction> = {
+        [DirectionIndex.SOUTH]: Direction.NORTH,
+        [DirectionIndex.SOUTH_EAST]: Direction.NORTH_EAST,
+        [DirectionIndex.EAST]: Direction.EAST,
+        [DirectionIndex.NORTH_EAST]: Direction.SOUTH_EAST,
+        [DirectionIndex.NORTH]: Direction.SOUTH,
+        [DirectionIndex.NORTH_WEST]: Direction.SOUTH_WEST,
+        [DirectionIndex.WEST]: Direction.WEST,
+        [DirectionIndex.SOUTH_WEST]: Direction.NORTH_WEST,
+        [-1]: Direction.NONE,
     };
 
-    public flipY(): Directions {
-        return Directions.flipMap[this.index] ?? null;
+    public flipY(): Direction {
+        return Direction.flipMap[this.index] ?? null;
     }
 
-    public getNextClosest(other: Directions) {
+    public getNextClosest(other: Direction) {
         if (!other) return this;
 
         const start = this.index;
@@ -120,7 +120,7 @@ export class Directions {
 
         if (start === end) return this;
 
-        const mod8 = Directions.rollIndex(start - end);
+        const mod8 = Direction.rollIndex(start - end);
         let result: number;
 
         if (mod8 === 4)
@@ -132,12 +132,12 @@ export class Directions {
         else
             throw Error("You shouldn't be here")
 
-        return Directions.get(Directions.rollIndex(result));
+        return Direction.get(Direction.rollIndex(result));
     }
 
-    public getRotationsTo(other: Directions): Directions[] {
-        const rotations: Directions[] = [];
-        let current = this as Directions;
+    public getRotationsTo(other: Direction): Direction[] {
+        const rotations: Direction[] = [];
+        let current = this as Direction;
 
         if (current === other) return rotations;
 

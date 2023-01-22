@@ -1,6 +1,6 @@
 import { DungeonFloorInfo } from "../../data/dungeons";
 import { ItemChance } from "../../data/items";
-import { TileObjects, Tiles, TrapChance } from "../../data/tiles";
+import { TileObject, Tile, TrapChance } from "../../data/tiles";
 import Random from "../../utils/random";
 import { Vec2 } from "../../utils/vectors";
 import { DungeonGrid } from "../map/grid";
@@ -86,21 +86,21 @@ export class DungeonObjectGenerator {
         const list: DungeonObject[] = [];
         // Loop through the grid
         for (const [pos, tile] of this.grid) {
-            if (tile === Tiles.UNOBSTRUCTABLE)
+            if (tile === Tile.UNOBSTRUCTABLE)
                 this.clearTile(pos);
-            else if (tile === Tiles.MARKER_STAIRS)
+            else if (tile === Tile.MARKER_STAIRS)
                 list.push(this.createStairs(pos));
-            else if (tile === Tiles.MARKER_ITEM)
+            else if (tile === Tile.MARKER_ITEM)
                 list.push(this.createItem(pos));
-            else if (tile === Tiles.MARKER_TRAP)
+            else if (tile === Tile.MARKER_TRAP)
                 list.push(this.createTrap(pos));
-            else if (tile === Tiles.KECLEON_CARPET)
+            else if (tile === Tile.KECLEON_CARPET)
                 list.push(this.createKecleonCarpet(pos));
-            else if (tile === Tiles.KECLEON_ITEM)
+            else if (tile === Tile.KECLEON_ITEM)
                 list.push(...this.createKecleonItem(pos));
-            else if (tile === Tiles.KECLEON_MARKER) {
+            else if (tile === Tile.KECLEON_MARKER) {
                 list.push(this.createKecleonCarpet(pos));
-                this.clearTile(pos, Tiles.KECLEON_MARKER);
+                this.clearTile(pos, Tile.KECLEON_MARKER);
             }
         }
 
@@ -108,32 +108,32 @@ export class DungeonObjectGenerator {
     }
 
     /** Clears the tile */
-    private clearTile(pos: Vec2, tile: Tiles = Tiles.FLOOR) {
+    private clearTile(pos: Vec2, tile: Tile = Tile.FLOOR) {
         this.grid.set(pos.x, pos.y, tile);
     }
 
     // ANCHOR Create x functions
     private createStairs(pos: Vec2) {
-        const object = new DungeonTile(pos, TileObjects.STAIRS_DOWN, false, true);
-        this.clearTile(pos, Tiles.CLEAR_TILE);
+        const object = new DungeonTile(pos, TileObject.STAIRS_DOWN, false, true);
+        this.clearTile(pos, Tile.CLEAR_TILE);
         return object;
     }
     private createItem(pos: Vec2) {
         const item = this.getRandomItem();
         const object = new DungeonItem(pos, item);
-        this.clearTile(pos, Tiles.ITEM);
+        this.clearTile(pos, Tile.ITEM);
         return object;
     }
     private createTrap(pos: Vec2) {
         const trap = this.getRandomTrap();
         // TODO                                // true
         const object = new DungeonTile(pos, trap, false, false);
-        this.clearTile(pos, Tiles.CLEAR_TILE);
+        this.clearTile(pos, Tile.CLEAR_TILE);
         return object;
     }
     private createKecleonCarpet(pos: Vec2) {
-        const object = new DungeonCarpet(pos, TileObjects.KECLEON_CARPET);
-        this.clearTile(pos, Tiles.CLEAR_TILE);
+        const object = new DungeonCarpet(pos, TileObject.KECLEON_CARPET);
+        this.clearTile(pos, Tile.CLEAR_TILE);
         return object;
     }
     private createKecleonItem(pos: Vec2) {

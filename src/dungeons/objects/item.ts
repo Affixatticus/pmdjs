@@ -1,7 +1,7 @@
 import { Color3, Constants, Mesh, MeshBuilder, Scene, SpotLight, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
-import { RenderingGroupIds } from "../floor";
-import { DungeonObject, ObjectTypes } from "./object";
+import { RenderingGroupId } from "../floor";
+import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { getItemCrop } from "../../data/items";
@@ -36,7 +36,7 @@ export class DungeonItem extends DungeonObject {
     private mesh!: Mesh;
 
     constructor(pos: Vec2, id: number) {
-        super(pos, ObjectTypes.ITEM);
+        super(pos, ObjectType.ITEM);
         this.id = id;
     }
 
@@ -50,7 +50,7 @@ export class DungeonItem extends DungeonObject {
 
         plane.position = V3(this.position.x + .5, 0.001, this.position.y + .5).gameFormat;
         plane.rotate(Vector3.Right(), Math.PI / 2);
-        plane.renderingGroupId = RenderingGroupIds.FLOOR;
+        plane.renderingGroupId = RenderingGroupId.FLOOR;
 
         // Load the texture
         const source = await AssetsLoader.loadItemsSheet();

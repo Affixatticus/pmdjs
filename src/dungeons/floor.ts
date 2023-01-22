@@ -7,13 +7,13 @@ import { DungeonObjectGenerator } from "./objects/object_generator";
 import { DungeonGrid } from "./map/grid";
 import { DungeonMap } from "./map/map";
 import { DungeonObjectContainer } from "./objects/object";
-import { DungeonPokemon, DungeonPokemonList, PokemonTypes } from "./objects/pokemon";
+import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./objects/pokemon";
 import { DungeonStartup } from "./logic/startup";
-import { Tiles } from "../data/tiles";
+import { Tile } from "../data/tiles";
 import { AssetsLoader } from "../utils/assets_loader";
-import { Directions } from "../utils/direction";
+import { Direction } from "../utils/direction";
 
-export enum RenderingGroupIds {
+export enum RenderingGroupId {
     WATER,
     FLOOR,
     WALL,
@@ -69,14 +69,14 @@ export class DungeonFloor {
         this.pokemon = new DungeonPokemonList();
         // Place the leader
         const leader = new DungeonPokemon(
-            DungeonStartup.placeLeader(this), PokemonTypes.LEADER, party[0].id
+            DungeonStartup.placeLeader(this), DungeonPokemonType.LEADER, party[0].id
         );
         this.pokemon.add(leader);
         // Place the partners
         party.forEach((p, i) => {
             if (i === 0) return;
             const partner = new DungeonPokemon(
-                DungeonStartup.placePartner(this), PokemonTypes.PARTNER, p.id);
+                DungeonStartup.placePartner(this), DungeonPokemonType.PARTNER, p.id);
             this.pokemon.add(partner);
         });
     }
@@ -135,9 +135,9 @@ export class DungeonFloor {
     /** If a tile cannot possibly be occupied by this pokemon */
     public isObstacle(x: number, y: number, pokemon: DungeonPokemon): boolean {
         const OBSTACLES = [
-            Tiles.WALL,
-            Tiles.UNBREAKABLE_WALL,
-            Tiles.WATER,
+            Tile.WALL,
+            Tile.UNBREAKABLE_WALL,
+            Tile.WATER,
         ];
 
         return OBSTACLES.includes(this.grid.get(x, y));
@@ -146,14 +146,14 @@ export class DungeonFloor {
     /** If this tile cannot be traversed by this pokemon while walking diagonally */
     public isUntraversable(x: number, y: number, pokemon: DungeonPokemon): boolean {
         const UNPASSABLE = [
-            Tiles.WALL,
-            Tiles.UNBREAKABLE_WALL,
+            Tile.WALL,
+            Tile.UNBREAKABLE_WALL,
         ];
 
         return UNPASSABLE.includes(this.grid.get(x, y));
     }
 
-    public canMoveTowards(pokemon: DungeonPokemon, dir: Directions): boolean {
+    public canMoveTowards(pokemon: DungeonPokemon, dir: Direction): boolean {
         const position = pokemon.position;
         const nextPosition = position.add(dir.toVector());
 

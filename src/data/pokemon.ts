@@ -1,11 +1,11 @@
-import { PokemonTypes } from "./pokemon_types";
+import { PokemonType } from "./pokemon_types";
 
-export enum PokemonGenders {
+export enum Gender {
     MALE = 0,
     FEMALE = 2,
 };
 
-export enum PokemonForms {
+export enum Form {
     BASE_FORM = 0
 };
 
@@ -24,9 +24,9 @@ export enum Pokedex {
 
 export type PokemonFormIdentifier = [
     dexNumber: Pokedex,
-    form: PokemonForms,
+    form: Form,
     isShiny: boolean,
-    gender: PokemonGenders,
+    gender: Gender,
 ];
 
 export type PokemonId = Pokedex;
@@ -58,7 +58,7 @@ export interface PokemonData {
 
 export interface PokemonInfo {
     baseStats: PokemonStats;
-    types: PokemonTypes;
+    types: PokemonType;
 };
 
 export interface PokemonChance {
