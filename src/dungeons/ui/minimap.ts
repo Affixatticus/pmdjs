@@ -5,9 +5,7 @@ import { DungeonFloor } from "../floor";
 import { ByteGrid } from "../map/grid";
 import { DungeonCarpet } from "../objects/carpet";
 import { DungeonItem } from "../objects/item";
-import { DungeonPokemonType } from "../objects/pokemon";
 import { DungeonTile } from "../objects/tile";
-
 
 export enum MinimapStyle {
     DEFAULT,
@@ -25,12 +23,28 @@ const MM_COLORS = {
     ITEM: "#00f",
     TRAP: "#800",
     STAIRS: "#fff",
-    TILE: "#fff2",
+    TILE: "#fff4",
     BORDER_DARK: "#111",
     BORDER_LIGHT: "#eee",
     CARPET: "#f804",
-    WATER: "#08f8",
+    WATER: "#08f6",
+
+    BASE: {
+        BORDER_DARK: "#444",
+        BORDER_LIGHT: "#bbb",
+        TILE: "#0000",
+        WATER: "#08F3",
+    }
 };
+
+enum ViewGridTile {
+    UNEXPLORED = 0,
+    EXPLORED = 1,
+    UNEXPLORED_UP,
+    UNEXPLORED_DOWN,
+    UNEXPLORED_LEFT,
+    UNEXPLORED_RIGHT,
+}
 
 export class Minimap {
     /** An ever-changing image with all non-static objects on it */
@@ -39,6 +53,9 @@ export class Minimap {
     /** The image onto which non-static minimap objects are drawn */
     private background: HTMLCanvasElement;
     private bgCtx: CanvasRenderingContext2D;
+    /** The base grayed map if Style is DEFAULT */
+    private baseground: HTMLCanvasElement;
+    private baseCtx: CanvasRenderingContext2D;
 
     private explorationMap!: ByteGrid;
 
@@ -51,24 +68,29 @@ export class Minimap {
         this.fgCtx = this.foreground.getContext("2d")!;
         this.background = document.createElement("canvas");
         this.bgCtx = this.background.getContext("2d")!;
+        this.baseground = document.createElement("canvas");
+        this.baseCtx = this.baseground.getContext("2d")!;
         this.style = style;
     }
 
     /** Function that is called once the map is generated */
     public init(floor: DungeonFloor) {
-        this.foreground.width = this.background.width = floor.grid.width * MM_TILE_SIZE;
-        this.foreground.height = this.background.height = floor.grid.height * MM_TILE_SIZE;
+        this.foreground.width = this.background.width = this.baseground.width =
+            floor.grid.width * MM_TILE_SIZE;
+        this.foreground.height = this.background.height = this.baseground.height =
+            floor.grid.height * MM_TILE_SIZE;
         this.explorationMap = new ByteGrid(floor.grid.width, floor.grid.height);
         this.explorationMap.fill(0);
     }
 
-
     public isWall(tile: Tile) {
-        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL// || tile === Tile.WATER;
+        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL;
     }
 
     /** Updates the map */
     public update(playerPos: Vec2, floor: DungeonFloor) {
+        // Draw the base
+        this.updateBaseground(floor);
         // Draw the background
         this.updateBackground(playerPos, floor);
         // Update the foreground
@@ -91,14 +113,34 @@ export class Minimap {
     }
 
     public getViewGrid(playerPos: Vec2, floor: DungeonFloor) {
-        let viewGrid;
-        if (this.style === MinimapStyle.DEFAULT) {
-            viewGrid = floor.grid.copy();
-        } else {
-            // Get the offset grid
-            viewGrid = floor.grid.getViewArea(playerPos).inflateFromGrid(1, floor.grid);
-        }
+        const viewGrid = floor.grid.getViewArea(playerPos).inflateFromGrid(1, floor.grid);
+        const tileGrid = viewGrid.copy();
         viewGrid.data = viewGrid.data.map((tile) => this.isWall(tile) ? 0 : 1);
+
+        for (const [pos, tile] of viewGrid) {
+            if (tile === 0) continue;
+            if (tileGrid.get(...pos.xy) === Tile.WATER) continue;
+            const up = pos.add(V2(0, -1));
+            const down = pos.add(V2(0, 1));
+            const left = pos.add(V2(-1, 0));
+            const right = pos.add(V2(1, 0));
+
+            if (this.explorationMap.get(...pos.xy) === 1) continue;
+
+            if (viewGrid.get(...up.xy) === -1) {
+                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_UP);
+            }
+            if (viewGrid.get(...down.xy) === -1) {
+                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_DOWN);
+            }
+            if (viewGrid.get(...left.xy) === -1) {
+                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_LEFT);
+            }
+            if (viewGrid.get(...right.xy) === -1) {
+                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_RIGHT);
+            }
+        }
+
         return viewGrid;
     }
 
@@ -110,11 +152,28 @@ export class Minimap {
         this.explorationMap.paste(viewGrid);
 
         // Draw the offsetMask
-        this.bgCtx.fillStyle = "black";
-        this.bgCtx.fillRect(0, 0, this.background.width, this.background.height);
         this.bgCtx.clearRect(0, 0, this.background.width, this.background.height);
+
         this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE + MM_BORDER_SIZE, MM_COLORS.BORDER_DARK);
         this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE + MM_BORDER_SIZE - 2, MM_COLORS.BORDER_LIGHT);
+
+        for (const [pos, tile] of this.explorationMap) {
+            switch (tile) {
+                case ViewGridTile.UNEXPLORED_UP:
+                    this.drawTile(this.bgCtx, pos.add(V2(0, -1)), MM_TILE_SIZE + 4, "transparent");
+                    break;
+                case ViewGridTile.UNEXPLORED_DOWN:
+                    this.drawTile(this.bgCtx, pos.add(V2(0, 1)), MM_TILE_SIZE + 4, "transparent");
+                    break;
+                case ViewGridTile.UNEXPLORED_LEFT:
+                    this.drawTile(this.bgCtx, pos.add(V2(-1, 0)), MM_TILE_SIZE + 4, "transparent");
+                    break;
+                case ViewGridTile.UNEXPLORED_RIGHT:
+                    this.drawTile(this.bgCtx, pos.add(V2(1, 0)), MM_TILE_SIZE + 4, "transparent");
+                    break;
+            }
+        }
+
         this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE, "transparent");
         this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE, MM_COLORS.TILE);
 
@@ -127,7 +186,10 @@ export class Minimap {
     private drawTile(ctx: CanvasRenderingContext2D, pos: Vec2, size: number, color: string) {
         const offset = (size - MM_TILE_SIZE) / 2;
         ctx.fillStyle = color;
-        ctx.fillRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
+        if (color === "transparent")
+            ctx.clearRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
+        else
+            ctx.fillRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
     }
 
     private drawStairs(ctx: CanvasRenderingContext2D, pos: Vec2) {
@@ -217,7 +279,24 @@ export class Minimap {
 
     }
 
+    private updateBaseground(floor: DungeonFloor) {
+        // Get the offset grid
+        this.baseCtx.clearRect(0, 0, this.background.width, this.background.height);
+        if (this.style === MinimapStyle.OBSCURED) return;
+        console.log("Updating the base");
 
+        const viewGrid = floor.grid.copy();
+        viewGrid.data = viewGrid.data.map((v) => this.isWall(v) ? 0 : 1);
+        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE + MM_BORDER_SIZE, MM_COLORS.BASE.BORDER_DARK);
+        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE + MM_BORDER_SIZE - 2, MM_COLORS.BASE.BORDER_LIGHT);
+        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE, "transparent");
+        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE, MM_COLORS.BASE.TILE);
+        // Get the water tiles in the area
+        const waterTiles = floor.grid.copy();
+        waterTiles.data = waterTiles.data.map((tile) => tile === Tile.WATER ? 1 : 0);
+        this.drawGrid(this.baseCtx, waterTiles, MM_TILE_SIZE, MM_COLORS.BASE.WATER);
+        console.log("Done updating the base");
+    }
     /** Creates the canvas element and appends it to the ui */
     public getElement() {
         const div = document.createElement("div");
@@ -227,13 +306,18 @@ export class Minimap {
         div.style.left = "0px";
         this.background.style.position = "absolute";
         this.foreground.style.position = "absolute";
+        this.baseground.style.position = "absolute";
         this.background.style.top = "0px";
         this.foreground.style.top = "0px";
+        this.baseground.style.top = "0px";
         this.background.style.left = "0px";
-        this.foreground.style.left = "0px";
+        this.foreground.style.left = "0px"
+        this.baseground.style.left = "0px";
         this.foreground.style.zIndex = "2";
         this.background.style.zIndex = "1";
+        this.baseground.style.zIndex = "0";
         div.style.pointerEvents = "none";
+        div.appendChild(this.baseground);
         div.appendChild(this.background);
         div.appendChild(this.foreground);
         return div;
