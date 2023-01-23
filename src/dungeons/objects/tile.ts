@@ -20,14 +20,14 @@ export class TileMaterial extends StandardMaterial {
 export class DungeonTile extends DungeonObject {
     private mesh!: Mesh;
     private id: TileObject;
-    private isHidden: boolean;
-    private isStairs: boolean;
+    public isHidden: boolean;
+    public isStairs: boolean;
 
     constructor(pos: Vec2, id: TileObject, isHidden?: boolean, isStairs?: boolean) {
-        super(pos, ObjectType.ITEM);
+        super(pos, isStairs ? ObjectType.STAIRS : ObjectType.TRAP);
         this.id = id;
         this.isStairs = isStairs ?? false;
-        this.isHidden = isHidden ? this.isStairs : false;
+        this.isHidden = isHidden ?? true;
     }
 
     // ANCHOR Utility

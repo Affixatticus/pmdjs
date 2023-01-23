@@ -12,6 +12,7 @@ import { DungeonStartup } from "./logic/startup";
 import { Tile } from "../data/tiles";
 import { AssetsLoader } from "../utils/assets_loader";
 import { Direction } from "../utils/direction";
+import { DungeonTile } from "./objects/tile";
 
 export enum RenderingGroupId {
     WATER,
@@ -128,6 +129,18 @@ export class DungeonFloor {
     }
 
     // Utility
+    public findStairs(position: Vec2) {
+        const stairs = this.objects.getStairs() as DungeonTile;
+        if (!stairs?.isHidden) return true;
+        // Find the stairs
+        const viewArea = this.grid.getViewArea(position);
+        if (viewArea.get(...stairs.position.xy) !== Tile.OUT_OF_BOUNDS) {
+            stairs.isHidden = false;
+            return true;
+        }
+        return false;
+    }
+
     public getSpawnPosition(): Vec2 {
         return this.grid.getOpenPosition() ?? this.grid.getFreePosition() ?? this.grid.getRandomPosition();
     }

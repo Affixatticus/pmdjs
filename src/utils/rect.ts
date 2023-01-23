@@ -143,6 +143,23 @@ export class Rect {
         );
     }
 
+    // ANCHOR Points
+    public get topLeft(): Vec2 {
+        return V2(this.left, this.top);
+    }
+
+    public get topRight(): Vec2 {
+        return V2(this.right, this.top);
+    }
+
+    public get bottomLeft(): Vec2 {
+        return V2(this.left, this.bottom);
+    }
+
+    public get bottomRight(): Vec2 {
+        return V2(this.right, this.bottom);
+    }
+
     /** Returns the middle of the rect with a bias towars top-left */
     get middle(): Vec2 {
         return V2(

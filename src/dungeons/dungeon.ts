@@ -1,15 +1,17 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MeshBuilder, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
-import { Button, Controls, Stick } from "../utils/controls";
+import { Controls } from "../utils/controls";
 import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
-import { DungeonFloor, RenderingGroupId } from "./floor";
+import { DungeonFloor } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
 import { FloorGuide } from "./map/floor_guide";
 import { ByteGrid } from "./map/grid";
 import { LightOverlay } from "./map/light_overlay";
+import { Minimap } from "./ui/minimap";
+import { DungeonUI } from "./ui/ui";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
 const CAMERA_OFFSET = V3(0.5, 10, 2);
@@ -31,6 +33,7 @@ export class DungeonState {
     // Scene
     public scene: Scene;
     public camera: TargetCamera;
+    public ui: DungeonUI;
     // -> Floor
     public floor!: DungeonFloor;
     public floorGuide!: FloorGuide;
@@ -55,6 +58,9 @@ export class DungeonState {
         this.data = data;
         this.info = this.getFloorInfo();
         this.logic = new DungeonLogic(this);
+        this.ui = new DungeonUI({
+            minimapStyle: Minimap.getStyleFromLightLevel(this.info.lightLevel)
+        });
 
         // Loading
         this.isLoaded = false;
@@ -202,7 +208,12 @@ export class DungeonState {
             // Initialize the floor guide
             await this.floorGuide.init(),
         ]);
-
+        // Init the minimap
+        this.ui.minimap.init(this.floor);
+        // Look for the stairs
+        this.floor.findStairs(spawn);
+        // Update the minimap
+        this.ui.minimap.update(spawn, this.floor);
         // Move the camera to the spawn position
         this.moveCamera(spawn.toVec3());
         // TODO Understand why the light is less stuttery when you run this 2-3 times

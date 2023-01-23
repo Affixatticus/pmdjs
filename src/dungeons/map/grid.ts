@@ -52,6 +52,9 @@ export class ByteGrid {
     public get data() {
         return this._data;
     }
+    public set data(data: Uint8Array) {
+        this._data = data;
+    }
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, number]> {
         for (let y = 0; y < this._height; y++)
@@ -68,9 +71,13 @@ export class ByteGrid {
         return values;
     }
 
+    public copy() {
+        return new ByteGrid(this.width, this.height, this._data.map(e => e));
+    }
+
     // Checks if the given position is inside the grid
     public isInside(x: number, y: number) {
-        return x >= 0 && x < this._width && y >= 0 && y < this._height;
+        return x >= 0 && x < this.width && y >= 0 && y < this.height;
     }
     /** Loops through the items of a subgrid; the subgrid is defined by the given position and size.
      * clamps the size to be within the grid size. */
@@ -159,6 +166,17 @@ export class ByteGrid {
         return grid;
     }
 
+    public toOffsetGrid(start: Vec2, size: Vec2) {
+        const grid = new OffsetGrid(...size.xy, start);
+
+        for (const [pos] of grid) {
+            const [x, y] = pos.xy;
+            grid.set(x, y, this.get(x, y));
+        }
+
+        return grid;
+    }
+
     /** Returns a list of all possible positions */
     public getPositions(): Vec2[] {
         const positions: Vec2[] = [];
@@ -193,14 +211,38 @@ export class ByteGrid {
         }
         return this;
     }
+
+    public paste(mask: ByteGrid) {
+        for (const [pos, tile] of mask) {
+            this.set(...pos.xy, tile);
+        }
+    }
+
+    public applyMask(mask: ByteGrid) {
+        for (const [pos, tile] of mask) {
+            if (tile === 0) this.set(...pos.xy, tile);
+        }
+        return this;
+    }
+
+    public print() {
+        let str = '';
+        for (let y = 0; y < this._height; y++) {
+            for (let x = 0; x < this._width; x++) {
+                str += this.get(x, y);
+            }
+            str += '\n';
+        }
+        console.log(str);
+    }
 }
 
 /** A reduced size grid that has an iterator with the correct x and y */
 export class OffsetGrid extends ByteGrid {
     private _start: Vec2;
 
-    constructor(width: number, height: number, start: Vec2) {
-        super(width, height);
+    constructor(width: number, height: number, start: Vec2, data?: Uint8Array) {
+        super(width, height, data);
         this._start = start;
     }
 
@@ -261,10 +303,44 @@ export class OffsetGrid extends ByteGrid {
         return newGrid;
     }
 
+    public inflateFromGrid(amount: number, grid: ByteGrid) {
+        const newGrid = new OffsetGrid(this.width + amount * 2, this.height + amount * 2, this.start.move(-amount));
+        // Loop through all the tiles in the grid
+        for (const [pos, tile] of newGrid) {
+            if (tile === Tile.OUT_OF_BOUNDS) continue;
+            newGrid.set(...pos.xy, grid.get(...pos.xy));
+        }
+        return newGrid;
+    }
+
+    /** Removes the last rows and columns of all 0s from the original grid */
+    public trim() {
+        const removeTop = this.data.every((value, index) => index < this.width && value === 0);
+        const removeBottom = this.data.every((value, index) => index >= this.data.length - this.width && value === 0);
+        const removeLeft = this.data.every((value, index) => index % this.width === 0 && value === 0);
+        const removeRight = this.data.every((value, index) => (index + 1) % this.width === 0 && value === 0);
+
+        const newStart = this.start.add(V2(removeLeft ? 1 : 0, removeTop ? 1 : 0));
+        const newWidth = this.width - (removeLeft ? 1 : 0) - (removeRight ? 1 : 0);
+        const newHeight = this.height - (removeTop ? 1 : 0) - (removeBottom ? 1 : 0);
+
+        const newGrid = new OffsetGrid(newWidth, newHeight, newStart);
+        for (const [pos, value] of this)
+            newGrid.set(...pos.xy, value);
+
+        return newGrid;
+    }
+
     public *[Symbol.iterator](): IterableIterator<[Vec2, number]> {
         for (let y = 0; y < this.height; y++)
             for (let x = 0; x < this.width; x++)
                 yield [V2(x + this.start.x, y + this.start.y), this.get(x + this.start.x, y + this.start.y)];
+    }
+
+    public copy() {
+        const newOffsetGrid = new OffsetGrid(this.width, this.height, this.start);
+        newOffsetGrid.data = new Uint8Array(this.data.subarray(0, this.data.length - 1));
+        return newOffsetGrid;
     }
 }
 

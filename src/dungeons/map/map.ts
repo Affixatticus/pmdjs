@@ -8,7 +8,8 @@ import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { FloorMesh } from "./floormesh";
 import { Tiling } from "./tiling";
 
-const TILE_VIEWPORT = V2(24, 24);
+export const TILE_VIEWPORT = V2(22, 14);
+export const TILE_VIEWPORT_HALF = V2(11, 7);
 
 export class DungeonMap {
     // Input
@@ -28,16 +29,16 @@ export class DungeonMap {
     // Consts
     private static DEFAULT_BACKGROUND: [number, number, number] = [0, 0, 0];
 
-    constructor(scene: Scene, path: string, map: DungeonGrid) {
+    constructor(scene: Scene, path: string, grid: DungeonGrid) {
         this.scene = scene;
         this.path = path;
-        this.grid = map;
+        this.grid = grid;
         this.wallMeshes = new TileMeshContainer();
         this.waterMeshes = new TileMeshContainer();
         this.floor = new FloorMesh(this.grid.width, this.grid.height);
 
         // Create a matrix to keep track of the loaded tiles
-        this.loaded = new ByteGrid(map.width, map.height);
+        this.loaded = new ByteGrid(grid.width, grid.height);
     }
 
     // ANCHOR Loading

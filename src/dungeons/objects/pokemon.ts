@@ -154,6 +154,10 @@ export class DungeonPokemonList {
         return this.objects.filter(obj => obj.type === DungeonPokemonType.PARTNER);
     }
 
+    public getEnemies() {
+        return this.objects.filter(obj => obj.type === DungeonPokemonType.ENEMY);
+    }
+
     public getAll() {
         return this.objects;
     }

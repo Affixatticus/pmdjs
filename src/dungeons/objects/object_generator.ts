@@ -114,7 +114,7 @@ export class DungeonObjectGenerator {
 
     // ANCHOR Create x functions
     private createStairs(pos: Vec2) {
-        const object = new DungeonTile(pos, TileObject.STAIRS_DOWN, false, true);
+        const object = new DungeonTile(pos, TileObject.STAIRS_DOWN, true, true);
         this.clearTile(pos, Tile.CLEAR_TILE);
         return object;
     }
@@ -127,8 +127,8 @@ export class DungeonObjectGenerator {
     private createTrap(pos: Vec2) {
         const trap = this.getRandomTrap();
         // TODO                                // true
-        const object = new DungeonTile(pos, trap, false, false);
-        this.clearTile(pos, Tile.CLEAR_TILE);
+        const object = new DungeonTile(pos, trap, true, false);
+        this.clearTile(pos, Tile.TILE);
         return object;
     }
     private createKecleonCarpet(pos: Vec2) {

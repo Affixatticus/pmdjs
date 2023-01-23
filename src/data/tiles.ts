@@ -28,7 +28,7 @@ export enum Tile {
 export const WALL_IGNORE_TILES = [Tile.UNBREAKABLE_WALL, Tile.OUT_OF_BOUNDS];
 export const WALL_INCLUDE_TILES = [Tile.UNBREAKABLE_WALL];
 export const FLOOR_IGNORE_TILES = [Tile.WATER, Tile.ITEM, Tile.TILE, Tile.CLEAR_TILE, Tile.UNOBSTRUCTABLE];
-export const FLOOR_INCLUDE_TILES = [Tile.ITEM, Tile.UNOBSTRUCTABLE];
+export const FLOOR_INCLUDE_TILES = [Tile.ITEM, Tile.TILE, Tile.UNOBSTRUCTABLE];
 
 export const TILE_WIDTH = 48;
 

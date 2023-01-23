@@ -92,7 +92,7 @@ export class Stick {
         this.buttonGroup = buttonGroup;
     }
 
-    public Keyboard_updateButton(isDown: boolean, keyCode: string) {
+    public Keyboard_updateButtons(isDown: boolean, keyCode: string) {
         // Check if the button is in the group
         const button = this.buttonGroup.find((b) => b.keyCode === keyCode);
 
@@ -141,8 +141,8 @@ export class Controls {
             button.Keyboard_update(true);
         }
         // Find the corresponding stick
-        Stick.LEFT.Keyboard_updateButton(true, e.code);
-        Stick.RIGHT.Keyboard_updateButton(true, e.code);
+        Stick.LEFT.Keyboard_updateButtons(true, e.code);
+        Stick.RIGHT.Keyboard_updateButtons(true, e.code);
     }
     private onMouseUp(e: KeyboardEvent) {
         // Find the corresponding button
@@ -151,8 +151,8 @@ export class Controls {
             button.Keyboard_update(false);
         }
         // Find the corresponding stick
-        Stick.LEFT.Keyboard_updateButton(false, e.code);
-        Stick.RIGHT.Keyboard_updateButton(false, e.code);
+        Stick.LEFT.Keyboard_updateButtons(false, e.code);
+        Stick.RIGHT.Keyboard_updateButtons(false, e.code);
     }
 
     constructor() {

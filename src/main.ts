@@ -16,7 +16,7 @@ interface Data {
 const INITIAL_GAME_DATA: Data = {
     dungeon: {
         id: 0,
-        floor: 4,
+        floor: 6,
         party: [
             {
                 id: [6, 0, false, 0],

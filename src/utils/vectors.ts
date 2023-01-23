@@ -62,6 +62,14 @@ export class Vec2 extends Vector2 {
     public dist(other: Vec2) {
         return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
     }
+
+    public min(other: Vec2) {
+        return V2(Math.min(this.x, other.x), Math.min(this.y, other.y));
+    }
+
+    public max(other: Vec2) {
+        return V2(Math.max(this.x, other.x), Math.max(this.y, other.y));
+    }
 }
 
 export class Vec3 extends Vector3 {

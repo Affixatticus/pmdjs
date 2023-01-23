@@ -8,7 +8,8 @@ import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";
 import { Player } from "./player";
-import { LightLevel } from "../../data/dungeons";
+import { Tile, TileObject } from "../../data/tiles";
+import { DungeonTile } from "../objects/tile";
 export class DungeonLogic {
     public state: DungeonState;
 
@@ -85,6 +86,9 @@ export class DungeonLogic {
             for (const pokemon of this.state.floor.pokemon.getAll()) {
                 pokemon.ai.overwrittenAction = null;
             }
+            // See if the stairs were found
+            this.state.floor.findStairs(leader.position);
+            this.state.ui.minimap.update(leader.position, this.state.floor);
         }
     }
 }
