@@ -41,10 +41,12 @@ export class DungeonObjectContainer {
         yield* this.objects;
     }
 
-    public render(scene: Scene) {
+    public async render(scene: Scene) {
+        const renderers = [];
         for (const obj of this.objects) {
-            obj.render(scene);
+            renderers.push(obj.render(scene));
         }
+        await Promise.all(renderers);
     }
 
     public get(pos: Vec2) {
@@ -65,5 +67,11 @@ export class DungeonObjectContainer {
 
     public has(pos: Vec2) {
         return this.objects.some(obj => obj.position.equals(pos));
+    }
+
+    public dispose() {
+        for (const obj of this.objects) {
+            obj.dispose();
+        }
     }
 }

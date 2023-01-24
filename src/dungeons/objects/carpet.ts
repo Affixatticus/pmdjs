@@ -8,6 +8,7 @@ import { RenderingGroupId } from "../floor";
 
 export class DungeonCarpet extends DungeonObject {
     private mesh!: Mesh;
+    private material!: TileMaterial;
     private id: TileObject;
 
     constructor(pos: Vec2, id: TileObject) {
@@ -33,6 +34,9 @@ export class DungeonCarpet extends DungeonObject {
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("stairs", source, scene, ...getTileCrop(this.id));
         mesh.material = material;
+
+        this.mesh = mesh;
+        this.material = material;
     }
 
     public dispose() {

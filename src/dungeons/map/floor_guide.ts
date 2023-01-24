@@ -9,17 +9,17 @@ import { V3, Vec2 } from "../../utils/vectors";
 
 export class FloorGuide {
     private scene: Scene;
-    private floor: DungeonFloor;
-    private pokemon: DungeonPokemon;
+    private floor!: DungeonFloor;
+    private pokemon!: DungeonPokemon;
+
+    private texture!: HTMLImageElement;
 
     private whiteGuide!: GroundMesh;
     private blackGuide!: GroundMesh;
     private whiteGuideInstances: InstancedMesh[] = [];
     private blackGuideInstances: InstancedMesh[] = [];
 
-    constructor(scene: Scene, floor: DungeonFloor, pokemon: DungeonPokemon) {
-        this.floor = floor;
-        this.pokemon = pokemon;
+    constructor(scene: Scene) {
         this.scene = scene;
     }
 
@@ -27,28 +27,34 @@ export class FloorGuide {
         return this.floor.grid;
     }
 
-    public async init() {
-        const source = await AssetsLoader.loadTileSheet();
+    public async init(floor: DungeonFloor, pokemon: DungeonPokemon) {
+        this.floor = floor;
+        this.pokemon = pokemon;
+        this.texture = await AssetsLoader.loadTileSheet();
 
         // Create the white mesh
-        this.whiteGuide = MeshBuilder.CreateGround("floor_guide", {
-            width: 1, height: 1, subdivisions: 1
-        }, this.scene);
-        const whiteMaterial = new TileMaterial("trap", source,
-            this.scene, ...getTileCrop(TileObject.WHITE_GUIDE));
-        this.whiteGuide.material = whiteMaterial;
-        this.whiteGuide.renderingGroupId = RenderingGroupId.FLOOR;
+        if (!this.whiteGuide) {
+            this.whiteGuide = MeshBuilder.CreateGround("floor_guide", {
+                width: 1, height: 1, subdivisions: 1
+            }, this.scene);
+            const whiteMaterial = new TileMaterial("trap", this.texture,
+                this.scene, ...getTileCrop(TileObject.WHITE_GUIDE));
+            this.whiteGuide.material = whiteMaterial;
+            this.whiteGuide.renderingGroupId = RenderingGroupId.FLOOR;
+        }
 
         // Create the black mesh
-        this.blackGuide = MeshBuilder.CreateGround("floor_guide", {
-            width: 1,
-            height: 1,
-            subdivisions: 1
-        }, this.scene);
-        const blackMaterial = new TileMaterial("trap", source,
-            this.scene, ...getTileCrop(TileObject.BLACK_GUIDE));
-        this.blackGuide.material = blackMaterial;
-        this.blackGuide.renderingGroupId = RenderingGroupId.FLOOR;
+        if (!this.blackGuide) {
+            this.blackGuide = MeshBuilder.CreateGround("floor_guide", {
+                width: 1,
+                height: 1,
+                subdivisions: 1
+            }, this.scene);
+            const blackMaterial = new TileMaterial("trap", this.texture,
+                this.scene, ...getTileCrop(TileObject.BLACK_GUIDE));
+            this.blackGuide.material = blackMaterial;
+            this.blackGuide.renderingGroupId = RenderingGroupId.FLOOR;
+        }
     }
 
     public instanceBlack(pos: Vec2) {
@@ -102,5 +108,10 @@ export class FloorGuide {
             instance.dispose();
         }
         this.blackGuide.instances = [];
+    }
+
+    public dispose() {
+        this.whiteGuide.dispose();
+        this.blackGuide.dispose();
     }
 }

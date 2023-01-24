@@ -88,7 +88,12 @@ export class DungeonLogic {
             }
             // See if the stairs were found
             this.state.floor.findStairs(leader.position);
-            this.state.ui.minimap.update(leader.position, this.state.floor);
+            this.state.ui.minimap.update(leader.position);
+            // See if you are on the stairs
+            if (this.state.floor.objects.getStairs().position.equals(leader.position)) {
+                this.state.goUpAFloor();
+                this.state.changeFloor();
+            }
         }
     }
 }

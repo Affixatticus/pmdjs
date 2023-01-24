@@ -3,10 +3,8 @@ import { Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 
 export class DungeonStartup {
-    private static leaderPosition: Vec2;
-    private static partnerPositions: Vec2[];
-
-    private static pickedPositions: Vec2[];
+    static leaderPosition: Vec2;
+    static partnerPositions: Vec2[];
 
     static getStartingLeaderPosition() {
         return this.leaderPosition;
@@ -19,11 +17,9 @@ export class DungeonStartup {
 
     static placePartner(floor: DungeonFloor): Vec2 {
         // Find a suitable position around the player
-        if (!this.partnerPositions) {
-            this.partnerPositions = [];
-            for (const [pos, _] of floor.grid.getNeighborsPositions(...this.leaderPosition.xy)) {
-                this.partnerPositions.push(pos);
-            }
+        this.partnerPositions = [];
+        for (const [pos, _] of floor.grid.getNeighborsPositions(...this.leaderPosition.xy)) {
+            this.partnerPositions.push(pos);
         }
 
         // Get the partner position

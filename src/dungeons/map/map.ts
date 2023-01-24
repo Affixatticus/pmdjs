@@ -25,6 +25,7 @@ export class DungeonMap {
     private wallMeshes: TileMeshContainer;
     private waterMeshes: TileMeshContainer;
     private floor: FloorMesh;
+    private underPlane!: Mesh;
 
     // Consts
     private static DEFAULT_BACKGROUND: [number, number, number] = [0, 0, 0];
@@ -127,6 +128,7 @@ export class DungeonMap {
         underPlaneMaterial.diffuseColor = background;
         underPlaneMaterial.specularColor = Color3.Black();
         underplane.material = underPlaneMaterial;
+        this.underPlane = underplane;
     }
 
     private placeWallTiles(start?: Vec2, size?: Vec2) {
@@ -247,13 +249,12 @@ export class DungeonMap {
     public dispose() {
         // Dispose of the meshes
         this.wallMeshes.dispose();
-
         // Dispose of the water meshes
-        for (const mesh of Object.values(this.waterMeshes)) {
-            if (mesh) mesh.dispose();
-        }
+        this.waterMeshes.dispose();
         // Dispose of the floor mesh
         this.floor.dispose();
+        // Dispose of the underPlane
+        this.underPlane.dispose();
         // Set the clearColor to black
         this.scene.clearColor = Color4.FromColor3(Color3.Black());
     }

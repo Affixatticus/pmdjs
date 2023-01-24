@@ -95,11 +95,11 @@ export interface DungeonTextures {
 
 export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
     [Dungeon.GRASSY_COVE]: {
-        [4]: {
+        [3]: {
             name: "Grass Cove",
             path: "western_cave",
             enemies: null,
-            lightLevel: LightLevel.BRIGHT,
+            lightLevel: LightLevel.DARK,
             items: [
                 { id: Item.ORAN_BERRY, chance: 20 },
                 { id: Item.COIN, chance: 30 },
@@ -119,7 +119,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 maxRoomSize: V2(9, 7),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
-                mapSize: V2(4, 4),
+                mapSize: V2(1, 1),
                 generateWater: false,
                 // generateWater: true,
                 layoutType: GeneratorLayouts.ALL_ROOMS,
@@ -129,10 +129,10 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 tileDensity: 4,
             }
         },
-        [6]: {
+        [5]: {
             name: "Grass Cave",
             path: "grass_cove_01",
-            lightLevel: LightLevel.NORMAL,
+            lightLevel: LightLevel.DARK,
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
@@ -153,10 +153,45 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 maxRoomSize: V2(7, 5),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
-                mapSize: V2(4, 2),
+                mapSize: V2(1, 1),
                 generateWater: true,
                 // generateWater: false,
                 terrainDensity: 10,
+                extraCorridorsChance: 12,
+                layoutType: GeneratorLayouts.ALL_ROOMS,
+                roomDensity: .8,
+                tileDensity: 10,
+                groundItemDensity: .7,
+            },
+        },
+        [20]: {
+            name: "Grassless Cave",
+            path: "deep_boulder_quarry_01",
+            lightLevel: LightLevel.DARKEST,
+            enemies: [
+                { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
+            ],
+            items: [
+                { id: Item.ORAN_BERRY, chance: 20 },
+                { id: Item.COIN, chance: 50 },
+            ],
+            traps: [
+                { id: TileObject.TRAP_01, chance: 100 },
+                { id: TileObject.FAN_TRAP, chance: 50 },
+                { id: TileObject.VOLTORB_TRAP, chance: 25 },
+            ],
+            weathers: [{
+                id: Weather.CLEAR,
+                chance: 100
+            }],
+            generation: {
+                maxRoomSize: V2(7, 7),
+                connectionRate: 100,
+                bordersSize: V2(10, 10),
+                mapSize: V2(6, 3),
+                generateWater: true,
+                // generateWater: false,
+                terrainDensity: 50,
                 extraCorridorsChance: 12,
                 layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .8,

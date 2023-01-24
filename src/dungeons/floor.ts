@@ -112,10 +112,12 @@ export class DungeonFloor {
     public build(position: Vec2) {
         // Build the first screen of the map
         this.map.build(position);
-        // Build all the objects
-        this.objects.render(this.scene);
-        // Build all the pokemon
-        this.pokemon.render(this.scene);
+        Promise.all([
+            // Build all the objects
+            this.objects.render(this.scene),
+            // Build all the pokemon
+            this.pokemon.render(this.scene),
+        ]);
     }
 
     /** Renders the first view of the map */
@@ -184,5 +186,11 @@ export class DungeonFloor {
         if (this.pokemon.getAll().some(p => p.nextTurnPosition.equals(nextPosition))) return false;
 
         return true;
+    }
+
+    public dispose() {
+        this.map.dispose();
+        this.objects.dispose();
+        this.pokemon.dispose();
     }
 }

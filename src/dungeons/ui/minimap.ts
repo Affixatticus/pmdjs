@@ -2,7 +2,7 @@ import { LightLevel } from "../../data/dungeons";
 import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import Canvas, { CropParams } from "../../utils/canvas";
-import { V2, Vec2 } from "../../utils/vectors";
+import { Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 import { ByteGrid } from "../map/grid";
 import { DungeonTiling, Tiling, TilingTextureMode } from "../map/tiling";
@@ -117,10 +117,12 @@ export class Minimap {
         if (!position) position = this.lastPosition;
         // Update the last position
         else this.lastPosition = position;
+        // Update the view
+        this.updateExplored(position);
         // Draw the tiles
-        this.drawTiles(position);
+        this.drawTiles();
         // Draw the objects
-        this.drawObjects(position);
+        this.drawObjects();
     }
 
     /** Returns true if the tile is a wall */
@@ -150,9 +152,7 @@ export class Minimap {
     }
 
     /** Draws the tiles on the minimap */
-    private drawTiles(position: Vec2) {
-        // Update the view
-        this.updateExplored(position);
+    private drawTiles() {
         // Clear the old stuff
         Canvas.clear(this.tiles);
         // Draw the tilemap
@@ -174,7 +174,7 @@ export class Minimap {
     }
 
     /** Draws the objects on the minimap */
-    private drawObjects(position: Vec2) {
+    private drawObjects() {
         // Clear the old stuff
         Canvas.clear(this.objects);
 

@@ -34,6 +34,7 @@ export class ItemMaterial extends StandardMaterial {
 export class DungeonItem extends DungeonObject {
     private id: number;
     private mesh!: Mesh;
+    private material!: ItemMaterial;
 
     constructor(pos: Vec2, id: number) {
         super(pos, ObjectType.ITEM);
@@ -57,6 +58,9 @@ export class DungeonItem extends DungeonObject {
         const material = new ItemMaterial("item", source, scene, ...getItemCrop(this.id));
 
         plane.material = material;
+
+        this.mesh = plane;
+        this.material = material;
     }
 
     public dispose() {

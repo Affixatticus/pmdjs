@@ -54,8 +54,6 @@ export const AssignmentFunctions: Record<GenerationRule, (mapSize: Vec2, roomCou
         // Shuffle the positions
         Random.shuffle(positions);
 
-        console.log(positions);
-
         for (let i = 0; i < Math.min(roomCount, positions.length); i++)
             grid.set(...positions[i].spread(), CellType.ROOM);
 

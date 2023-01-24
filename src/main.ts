@@ -16,7 +16,7 @@ interface Data {
 const INITIAL_GAME_DATA: Data = {
     dungeon: {
         id: 0,
-        floor: 6,
+        floor: 0,
         party: [
             {
                 id: [6, 0, false, 0],
@@ -140,6 +140,7 @@ class App {
             fpsCounter.innerHTML += "<br/>" + this.state.scene.getActiveMeshes().length + " active meshes";
             fpsCounter.innerHTML += "<br/>" + this.state.scene.meshes.length + " total meshes";
             fpsCounter.innerHTML += "<br/>" + this.deltaTime.toFixed(4) + "ms (Δ time)";
+            fpsCounter.innerHTML += "<br/><span style='font-size: 16pt'>Floor " + (this.state.data.floor + 1) + "</span>";
         }
     }
 

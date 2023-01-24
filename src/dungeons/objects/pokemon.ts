@@ -186,4 +186,10 @@ export class DungeonPokemonList {
         this.objects.push(obj);
         this.sort();
     }
+
+    public dispose() {
+        for (const obj of this.objects) {
+            obj.dispose();
+        }
+    }
 }

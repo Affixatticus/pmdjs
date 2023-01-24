@@ -18,10 +18,11 @@ export class TileMaterial extends StandardMaterial {
 };
 
 export class DungeonTile extends DungeonObject {
-    private mesh!: Mesh;
     private id: TileObject;
     public isHidden: boolean;
     public isStairs: boolean;
+    private mesh!: Mesh;
+    private material!: TileMaterial;
 
     constructor(pos: Vec2, id: TileObject, isHidden?: boolean, isStairs?: boolean) {
         super(pos, isStairs ? ObjectType.STAIRS : ObjectType.TRAP);
@@ -66,6 +67,9 @@ export class DungeonTile extends DungeonObject {
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("stairs", source, scene, ...getTileCrop(this.id));
         mesh.material = material;
+
+        this.mesh = mesh;
+        this.material = material;
     }
 
     private async renderTile(scene: Scene): Promise<void> {
@@ -88,6 +92,9 @@ export class DungeonTile extends DungeonObject {
         mesh.material = material;
 
         mesh.isVisible = !this.isHidden;
+
+        this.mesh = mesh;
+        this.material = material;
     }
 
     // ANCHOR Dispose

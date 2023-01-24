@@ -36,15 +36,16 @@ export class DungeonState {
     public ui: DungeonUI;
     // -> Floor
     public floor!: DungeonFloor;
-    public floorGuide!: FloorGuide;
     // |-> Lighting
     public lightOverlay!: LightOverlay;
     public directionalLight!: DirectionalLight;
     public globalLight!: HemisphericLight;
+    // |-> Unrelated Graphics
+    public floorGuide: FloorGuide;
     // State
     public isLoaded: boolean;
-    private data: DungeonStateData;
-    private info: DungeonFloorInfo;
+    public data: DungeonStateData;
+    public info: DungeonFloorInfo;
     private logic: DungeonLogic;
 
     constructor(engine: Engine, data: DungeonStateData, controls: Controls) {
@@ -57,10 +58,22 @@ export class DungeonState {
         this.scene.clearColor = new Color4(0, 0, 0, 1);
         this.data = data;
         this.info = this.getFloorInfo();
+
+        // Instantiate the logic
         this.logic = new DungeonLogic(this);
+        // Instantiate the UI
         this.ui = new DungeonUI({
             minimapStyle: Minimap.getStyleFromLightLevel(this.info.lightLevel)
         });
+        // Build the floor guide
+        this.floorGuide = new FloorGuide(this.scene);
+
+        // Add optimizations
+        const options = new SceneOptimizerOptions(144);
+        options.addOptimization(new HardwareScalingOptimization(0, 1));
+        const optimizer = new SceneOptimizer(this.scene, options);
+        optimizer.start();
+
 
         // Loading
         this.isLoaded = false;
@@ -90,9 +103,8 @@ export class DungeonState {
     }
 
     // Loading methods
-
     /** Loads in this dungeons' graphics, found enemies, possible items... */
-    private getFloorInfo(id: Dungeon = this.data.id, floor: number = this.data.floor): DungeonFloorInfo {
+    public getFloorInfo(id: Dungeon = this.data.id, floor: number = this.data.floor): DungeonFloorInfo {
         const dunData = DungeonsInfo[id];
 
         // Get all the dungeon's floor levels
@@ -108,12 +120,13 @@ export class DungeonState {
         throw Error(`Invalid dungeon floor or id`);
     }
 
+    public goUpAFloor() {
+        this.info = this.getFloorInfo(this.data.id, ++this.data.floor);
+    }
+
     private createCamera(): TargetCamera {
         const camera = new TargetCamera("camera", Vec3.Up(), this.scene);
         camera.cameraRotation = CAMERA_ROTATION;
-
-        // Draw the axis
-        new AxesViewer(this.scene, 5);
 
         // const camera = new TargetCamera("camera", CAMERA_OFFSET, this.scene);
         // camera.cameraRotation = CAMERA_ROTATION;
@@ -167,21 +180,60 @@ export class DungeonState {
         }
     }
 
-    private generateFloor() {
+    public async changeFloor() {
+        /** Dungeon Floor Loading */
+        this.isLoaded = false;
+        this.engine.displayLoadingUI();
+
+        /** Generate the floor */
+
+        // Delete the old floor
+        this.floor?.dispose();
+        // Create a new floor
         this.floor = new DungeonFloor(this.scene, this.info);
         // Generate the dungeon
         this.floor.generate();
         // Generate the pokemon
         this.floor.generatePokemon(this.data.party);
-    }
-
-    private async buildFloor(spawn: Vec2) {
         // Add the lighting
         this.setLighting();
         // Load the assets for the map
         await this.floor.init();
+        // Get the spawn position
+        const spawn = DungeonStartup.getStartingLeaderPosition();
         // Render the visible area
         this.floor.build(spawn);
+
+        /** Load some assets */
+
+        // Load the assets for the light overlay
+        await this.lightOverlay.init();
+        // Initialize the floor guide
+        await this.floorGuide.init(this.floor, this.floor.pokemon.getLeader());
+        // Init the minimap
+        await this.ui.minimap.init(this.floor);
+
+        /** Update the state */
+
+        // Look for the stairs
+        this.floor.findStairs(spawn);
+        // Update the minimap
+        this.ui.minimap.update(spawn);
+        // Initialize the logic
+        this.logic.init();
+
+        /** Update the graphics */
+
+        // Move the camera to the spawn position
+        this.moveCamera(spawn.toVec3());
+        // Update the light overlay
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+
+        /** Dungeon Floor done loading */
+        this.engine.hideLoadingUI();
+        this.isLoaded = true;
+        await this.scene.whenReadyAsync();
     }
 
     /**
@@ -189,57 +241,7 @@ export class DungeonState {
      * - sets `isLoaded` to true once everything is done loading
      */
     private async load() {
-        this.isLoaded = false;
-        this.engine.displayLoadingUI();
-
-        const start = performance.now();
-
-        /** Dungeon Floor Loading */
-        // Generate the floor
-        this.generateFloor();
-        // Get the spawn position
-        const spawn = DungeonStartup.getStartingLeaderPosition();
-        // Build the floor guide
-        this.floorGuide = new FloorGuide(this.scene, this.floor, this.floor.pokemon.getLeader());
-        await Promise.all([
-            // Draw the floor
-            this.buildFloor(spawn),
-            // Initialize the light overlay
-            this.lightOverlay.init(),
-            // Initialize the floor guide
-            await this.floorGuide.init(),
-        ]);
-        // Init the minimap
-        await this.ui.minimap.init(this.floor);
-        // Look for the stairs
-        this.floor.findStairs(spawn);
-        // Update the minimap
-        this.ui.minimap.update(spawn);
-        // Move the camera to the spawn position
-        this.moveCamera(spawn.toVec3());
-        // TODO Understand why the light is less stuttery when you run this 2-3 times
-        // Update the light overlay
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-
-        await this.scene.whenReadyAsync();
-        console.log(`Loading the scene takes ${performance.now() - start}ms`);
-
-        // Initialize the logic
-        this.logic.init();
-
-
-        // Add optimizations
-        const options = new SceneOptimizerOptions(144);
-        options.addOptimization(new HardwareScalingOptimization(0, 1));
-        const optimizer = new SceneOptimizer(this.scene, options);
-        optimizer.start();
-
-        this.engine.hideLoadingUI();
-        this.isLoaded = true;
-
-        // @ts-ignore
-        window.tick = () => this.tick;
+        await this.changeFloor();
     }
 
     /** Renders the scene if the scene is done loading */
