@@ -136,7 +136,7 @@ export class Minimap {
         // Replace all visiting with visited
         this.explored.replace(MinimapTilesVariants.VISITED, MinimapTilesVariants.VISITING);
         // Get the view area
-        const visited = this.floor.grid.getViewArea(position).replace(MinimapTilesVariants.VISITING);
+        const visited = this.floor.grid.getActionArea(position).replace(MinimapTilesVariants.VISITING);
         // Update the explored grid with new data
         this.explored.setIfNotZero(visited);
     }

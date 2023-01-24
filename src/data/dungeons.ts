@@ -132,7 +132,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
         [6]: {
             name: "Grass Cave",
             path: "grass_cove_01",
-            lightLevel: LightLevel.NORMAL,
+            lightLevel: LightLevel.DARKEST,
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
