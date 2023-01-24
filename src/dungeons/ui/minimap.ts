@@ -69,6 +69,8 @@ export class Minimap {
     /** The minimap texture image */
     private texture!: HTMLImageElement;
     private floor!: DungeonFloor;
+    /** The last position of the visited minimap */
+    private lastPosition!: Vec2;
 
     /** The maptilings for the minimap */
     private tilings!: ByteGrid;
@@ -108,7 +110,13 @@ export class Minimap {
     }
 
     /** Draws the minimap hud */
-    public update(position: Vec2) {
+    public update(position?: Vec2) {
+        // Update the tilings if needed
+        if (!position) this.updateTilings();
+        // If the position is null, then use the last position
+        if (!position) position = this.lastPosition;
+        // Update the last position
+        else this.lastPosition = position;
         // Draw the tiles
         this.drawTiles(position);
         // Draw the objects
@@ -231,6 +239,7 @@ export class Minimap {
         minimap.style.position = "absolute";
         minimap.style.top = "0";
         minimap.style.left = "0";
+        minimap.style.pointerEvents = "none";
         return minimap;
     }
 

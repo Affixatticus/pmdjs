@@ -132,7 +132,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
         [6]: {
             name: "Grass Cave",
             path: "grass_cove_01",
-            lightLevel: LightLevel.DARKEST,
+            lightLevel: LightLevel.NORMAL,
             enemies: [
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
@@ -153,7 +153,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 maxRoomSize: V2(7, 5),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
-                mapSize: V2(2, 2),
+                mapSize: V2(4, 2),
                 generateWater: true,
                 // generateWater: false,
                 terrainDensity: 10,

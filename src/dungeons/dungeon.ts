@@ -85,6 +85,7 @@ export class DungeonState {
             }
 
             this.floor.map.changeGridSection(point, area);
+            this.ui.minimap.update();
         });
     }
 
