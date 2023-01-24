@@ -1,7 +1,7 @@
-import { Minimap, MinimapStyle } from "./minimap";
+import { Minimap, MinimapMode } from "./minimap";
 
 export interface DungeonUIOptions {
-    minimapStyle: MinimapStyle;
+    minimapStyle: MinimapMode;
 };
 
 export class DungeonUI {

@@ -7,6 +7,7 @@ const ASSETS_URL = "assets/";
 const TEXTURES_URL = ASSETS_URL + "textures/";
 const DUNGEON_URL = TEXTURES_URL + "dungeon/";
 const OBJS_URL = TEXTURES_URL + "objects/";
+const UI_URL = TEXTURES_URL + "ui/";
 
 const POKEMON_URL = TEXTURES_URL + "pokemon/";
 const POKEMON_SPRITES_URL = POKEMON_URL + "sprite/";
@@ -20,6 +21,7 @@ export class AssetsLoader {
     static trapsTextures: HTMLImageElement;
     static pokemon: Map<string, PokemonSpriteData> = new Map();
     static lightMap: HTMLImageElement;
+    static minimap: HTMLImageElement;
 
     static async loadDungeonTextures(path: string): Promise<DungeonTextures> {
         // Return the textures if they are already loaded
@@ -141,6 +143,14 @@ export class AssetsLoader {
             return this.lightMap;
         }
         return this.loadImage(OBJS_URL + "lightmap.png");
+    }
+
+    static async loadMinimap(): Promise<HTMLImageElement> {
+        // Return the textures if they are already loaded
+        if (this.minimap) {
+            return this.minimap;
+        }
+        return this.loadImage(UI_URL + "minimap.png");
     }
 
     private static async loadPokemonSpriteSheets(rootFolder: string, sources: string[], type: string): Promise<Record<string, HTMLImageElement>> {

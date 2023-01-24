@@ -1,338 +1,249 @@
 import { LightLevel } from "../../data/dungeons";
 import { Tile } from "../../data/tiles";
+import { AssetsLoader } from "../../utils/assets_loader";
+import Canvas, { CropParams } from "../../utils/canvas";
 import { V2, Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 import { ByteGrid } from "../map/grid";
+import { DungeonTiling, Tiling, TilingTextureMode } from "../map/tiling";
 import { DungeonCarpet } from "../objects/carpet";
 import { DungeonItem } from "../objects/item";
 import { DungeonTile } from "../objects/tile";
 
-export enum MinimapStyle {
+/** Tile Size */
+const TSIZE = 16;
+
+export enum MinimapMode {
     DEFAULT,
     OBSCURED,
 };
 
-const MM_TILE_SIZE = 12;
-const MM_TILE_THIRD = 4;
-const MM_BORDER_SIZE = 4;
-
-const MM_COLORS = {
-    PLAYER: "#0f0",
-    PARTNER: "#ff0",
-    ENEMY: "#f00",
-    ITEM: "#00f",
-    TRAP: "#800",
-    STAIRS: "#fff",
-    TILE: "#fff4",
-    BORDER_DARK: "#111",
-    BORDER_LIGHT: "#eee",
-    CARPET: "#f804",
-    WATER: "#08f6",
-
-    BASE: {
-        BORDER_DARK: "#444",
-        BORDER_LIGHT: "#bbb",
-        TILE: "#0000",
-        WATER: "#08F3",
-    }
+enum MinimapObjectType {
+    PLAYER,
+    PARTNER,
+    ENEMY,
+    ITEM,
+    STAIRS,
+    TRAP,
+    CARPET,
+    ALLY,
 };
 
-enum ViewGridTile {
-    UNEXPLORED = 0,
-    EXPLORED = 1,
-    UNEXPLORED_UP,
-    UNEXPLORED_DOWN,
-    UNEXPLORED_LEFT,
-    UNEXPLORED_RIGHT,
-}
+const MinimapObjectCropParams: Record<MinimapObjectType, CropParams> = (function (original: Record<MinimapObjectType, number[]>) {
+    const new_ = {} as Record<MinimapObjectType, CropParams>;
+    for (let keys of Object.keys(original)) {
+        let key = parseInt(keys) as MinimapObjectType;
+        new_[key] = [
+            (original[key][0]) * TSIZE,
+            (original[key][1] + 24) * TSIZE,
+            TSIZE, TSIZE] as CropParams;
+    }
+    return new_;
+})({
+    [MinimapObjectType.PLAYER]: [0, 0],
+    [MinimapObjectType.PARTNER]: [1, 0],
+    [MinimapObjectType.ENEMY]: [2, 0],
+    [MinimapObjectType.ALLY]: [3, 0],
+    [MinimapObjectType.STAIRS]: [0, 1],
+    [MinimapObjectType.TRAP]: [1, 1],
+    [MinimapObjectType.ITEM]: [2, 1],
+    [MinimapObjectType.CARPET]: [3, 1],
+});
+
+enum MinimapTilesVariants {
+    /** Not explored */
+    NOT_VISITED = 0,
+    /** Visited because of mode */
+    CHARTED = 1,
+    /** Visited once */
+    VISITED = 2,
+    /** Currentyl there */
+    VISITING = 3,
+};
+
 
 export class Minimap {
-    /** An ever-changing image with all non-static objects on it */
-    private foreground: HTMLCanvasElement;
-    private fgCtx: CanvasRenderingContext2D;
-    /** The image onto which non-static minimap objects are drawn */
-    private background: HTMLCanvasElement;
-    private bgCtx: CanvasRenderingContext2D;
-    /** The base grayed map if Style is DEFAULT */
-    private baseground: HTMLCanvasElement;
-    private baseCtx: CanvasRenderingContext2D;
-
-    private explorationMap!: ByteGrid;
-
     /** The style of the minimap */
-    public style: MinimapStyle = MinimapStyle.DEFAULT;
+    public mode: MinimapMode = MinimapMode.DEFAULT;
+
+    /** The minimap texture image */
+    private texture!: HTMLImageElement;
+    private floor!: DungeonFloor;
+
+    /** The maptilings for the minimap */
+    private tilings!: ByteGrid;
+    /** The positions that have been visited already */
+    private explored!: ByteGrid;
+
+    /** Tiles context */
+    private tiles!: CanvasRenderingContext2D;
+    /** Objects context */
+    private objects!: CanvasRenderingContext2D;
 
     /** Creates a new minimap */
-    constructor(style: MinimapStyle) {
-        this.foreground = document.createElement("canvas");
-        this.fgCtx = this.foreground.getContext("2d")!;
-        this.background = document.createElement("canvas");
-        this.bgCtx = this.background.getContext("2d")!;
-        this.baseground = document.createElement("canvas");
-        this.baseCtx = this.baseground.getContext("2d")!;
-        this.style = style;
+    constructor(style: MinimapMode) {
+        this.mode = style;
+        this.tiles = Canvas.create(0, 0);
+        this.objects = Canvas.create(0, 0);
     }
 
-    /** Function that is called once the map is generated */
-    public init(floor: DungeonFloor) {
-        this.foreground.width = this.background.width = this.baseground.width =
-            floor.grid.width * MM_TILE_SIZE;
-        this.foreground.height = this.background.height = this.baseground.height =
-            floor.grid.height * MM_TILE_SIZE;
-        this.explorationMap = new ByteGrid(floor.grid.width, floor.grid.height);
-        this.explorationMap.fill(0);
+    /** Initializes the minimap with data from the loaded floor */
+    public async init(floor: DungeonFloor) {
+        this.floor = floor;
+        // Update the tiles size
+        this.tiles.canvas.width = this.floor.grid.width * TSIZE;
+        this.tiles.canvas.height = this.floor.grid.height * TSIZE;
+        // Update the objects size
+        this.objects.canvas.width = this.tiles.canvas.width;
+        this.objects.canvas.height = this.tiles.canvas.height;
+
+        this.texture = await AssetsLoader.loadMinimap();
+        this.explored = new ByteGrid(...this.floor.grid.size.xy).fill(this.getStartingState());
+        this.updateTilings();
     }
 
-    public isWall(tile: Tile) {
-        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL;
+    /** Returns the starting state of the minimap */
+    private getStartingState() {
+        return this.mode === MinimapMode.DEFAULT ? MinimapTilesVariants.CHARTED : MinimapTilesVariants.NOT_VISITED;
     }
 
-    /** Updates the map */
-    public update(playerPos: Vec2, floor: DungeonFloor) {
-        // Draw the base
-        this.updateBaseground(floor);
-        // Draw the background
-        this.updateBackground(playerPos, floor);
-        // Update the foreground
-        this.updateForeground(playerPos, floor);
+    /** Draws the minimap hud */
+    public update(position: Vec2) {
+        // Draw the tiles
+        this.drawTiles(position);
+        // Draw the objects
+        this.drawObjects(position);
     }
 
-    private drawGrid(ctx: CanvasRenderingContext2D, grid: ByteGrid, size: number, color: string) {
-        const offset = (size - MM_TILE_SIZE) / 2;
-        const isTransparent = color === "transparent";
-        if (!isTransparent) ctx.fillStyle = color;
-        for (const [pos, tile] of grid) {
-            // Draw the tile
-            if (tile === 0) continue;
-            else ctx.fillStyle = color;
-            if (isTransparent)
-                ctx.clearRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
-            else
-                ctx.fillRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
+    /** Returns true if the tile is a wall */
+    private isWall(tile: Tile) {
+        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL || tile === Tile.WATER;
+    }
+    /** Should be run every time the map changes */
+    private updateTilings() {
+        // Copy the grid
+        const gridCopy = this.floor.grid.copy();
+        // And change it to a map of not_walls=1 and walls=0
+        gridCopy.data = gridCopy.data.map((tile) => this.isWall(tile) ? 0 : 1);
+        // Save the maptilings
+        this.tilings = gridCopy.binaryMapTilings();
+    }
+
+    /** Puts there markers in the correct position
+     * based on the given position
+     */
+    private updateExplored(position: Vec2) {
+        // Replace all visiting with visited
+        this.explored.replace(MinimapTilesVariants.VISITED, MinimapTilesVariants.VISITING);
+        // Get the view area
+        const visited = this.floor.grid.getViewArea(position).replace(MinimapTilesVariants.VISITING);
+        // Update the explored grid with new data
+        this.explored.setIfNotZero(visited);
+    }
+
+    /** Draws the tiles on the minimap */
+    private drawTiles(position: Vec2) {
+        // Update the view
+        this.updateExplored(position);
+        // Clear the old stuff
+        Canvas.clear(this.tiles);
+        // Draw the tilemap
+        for (const [pos, tile] of this.tilings) {
+            if (tile === Tiling.BLANK) continue;
+            let visited: MinimapTilesVariants = this.explored.get(...pos.xy);
+            if (visited === MinimapTilesVariants.NOT_VISITED) continue;
+            const x = pos.x * TSIZE;
+            const y = pos.y * TSIZE;
+            // Visited is either VISITING or VISITED, so -1 gets you 0 or 1, which is the offset in the texture
+            const tileParams = DungeonTiling.getCrop(tile, Tile.WALL, visited - 1, TilingTextureMode.TEXTURE, TSIZE);
+            this.tiles.drawImage(this.texture, ...tileParams, x, y, TSIZE, TSIZE);
         }
     }
 
-    public getViewGrid(playerPos: Vec2, floor: DungeonFloor) {
-        const viewGrid = floor.grid.getViewArea(playerPos).inflateFromGrid(1, floor.grid);
-        const tileGrid = viewGrid.copy();
-        viewGrid.data = viewGrid.data.map((tile) => this.isWall(tile) ? 0 : 1);
-
-        for (const [pos, tile] of viewGrid) {
-            if (tile === 0) continue;
-            if (tileGrid.get(...pos.xy) === Tile.WATER) continue;
-            const up = pos.add(V2(0, -1));
-            const down = pos.add(V2(0, 1));
-            const left = pos.add(V2(-1, 0));
-            const right = pos.add(V2(1, 0));
-
-            if (this.explorationMap.get(...pos.xy) === 1) continue;
-
-            if (viewGrid.get(...up.xy) === -1) {
-                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_UP);
-            }
-            if (viewGrid.get(...down.xy) === -1) {
-                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_DOWN);
-            }
-            if (viewGrid.get(...left.xy) === -1) {
-                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_LEFT);
-            }
-            if (viewGrid.get(...right.xy) === -1) {
-                viewGrid.set(...pos.xy, ViewGridTile.UNEXPLORED_RIGHT);
-            }
-        }
-
-        return viewGrid;
+    private drawObject(pos: Vec2, type: MinimapObjectType) {
+        const [px, py] = pos.xy;
+        this.objects.drawImage(this.texture, ...MinimapObjectCropParams[type], px * TSIZE, py * TSIZE, TSIZE, TSIZE);
     }
 
-    /** Updates the wallMap */
-    private updateBackground(playerPos: Vec2, floor: DungeonFloor) {
-        // Get the offset grid
-        const viewGrid = this.getViewGrid(playerPos, floor);
-        // Put the data on the exploration map
-        this.explorationMap.paste(viewGrid);
+    /** Draws the objects on the minimap */
+    private drawObjects(position: Vec2) {
+        // Clear the old stuff
+        Canvas.clear(this.objects);
 
-        // Draw the offsetMask
-        this.bgCtx.clearRect(0, 0, this.background.width, this.background.height);
-
-        this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE + MM_BORDER_SIZE, MM_COLORS.BORDER_DARK);
-        this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE + MM_BORDER_SIZE - 2, MM_COLORS.BORDER_LIGHT);
-
-        for (const [pos, tile] of this.explorationMap) {
-            switch (tile) {
-                case ViewGridTile.UNEXPLORED_UP:
-                    this.drawTile(this.bgCtx, pos.add(V2(0, -1)), MM_TILE_SIZE + 4, "transparent");
-                    break;
-                case ViewGridTile.UNEXPLORED_DOWN:
-                    this.drawTile(this.bgCtx, pos.add(V2(0, 1)), MM_TILE_SIZE + 4, "transparent");
-                    break;
-                case ViewGridTile.UNEXPLORED_LEFT:
-                    this.drawTile(this.bgCtx, pos.add(V2(-1, 0)), MM_TILE_SIZE + 4, "transparent");
-                    break;
-                case ViewGridTile.UNEXPLORED_RIGHT:
-                    this.drawTile(this.bgCtx, pos.add(V2(1, 0)), MM_TILE_SIZE + 4, "transparent");
-                    break;
-            }
-        }
-
-        this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE, "transparent");
-        this.drawGrid(this.bgCtx, this.explorationMap, MM_TILE_SIZE, MM_COLORS.TILE);
-
-        // Get the water tiles in the area
-        const waterTiles = floor.grid.copy();
-        waterTiles.data = waterTiles.data.map((tile) => tile === Tile.WATER ? 1 : 0);
-        this.drawGrid(this.bgCtx, waterTiles.applyMask(this.explorationMap), MM_TILE_SIZE, MM_COLORS.WATER);
-    }
-
-    private drawTile(ctx: CanvasRenderingContext2D, pos: Vec2, size: number, color: string) {
-        const offset = (size - MM_TILE_SIZE) / 2;
-        ctx.fillStyle = color;
-        if (color === "transparent")
-            ctx.clearRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
-        else
-            ctx.fillRect(pos.x * MM_TILE_SIZE - offset, pos.y * MM_TILE_SIZE - offset, size, size);
-    }
-
-    private drawStairs(ctx: CanvasRenderingContext2D, pos: Vec2) {
-        const startX = pos.x * MM_TILE_SIZE;
-        const startY = pos.y * MM_TILE_SIZE;
-        ctx.fillStyle = MM_COLORS.STAIRS;
-        ctx.strokeStyle = MM_COLORS.BORDER_DARK;
-        const size = MM_TILE_THIRD;
-        ctx.beginPath();
-        ctx.moveTo(startX + size * 2, startY);
-        ctx.lineTo(startX + size * 3, startY);
-        ctx.lineTo(startX + size * 3, startY + size * 3);
-        ctx.lineTo(startX, startY + size * 3);
-        ctx.lineTo(startX, startY + size * 2);
-        ctx.lineTo(startX + size, startY + size * 2);
-        ctx.lineTo(startX + size, startY + size);
-        ctx.lineTo(startX + size * 2, startY + size);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillRect(startX, startY + size * 2, size, size);
-        ctx.fillRect(startX + size, startY + size, size, size * 2);
-        ctx.fillRect(startX + size * 2, startY, size, size * 3);
-    }
-
-    private drawEntity(ctx: CanvasRenderingContext2D, pos: Vec2, size: number, color: string) {
-        ctx.strokeStyle = MM_COLORS.BORDER_DARK;
-        // Draw a circle
-        const offset = (size - MM_TILE_SIZE) / 2;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(pos.x * MM_TILE_SIZE + MM_TILE_SIZE / 2 - offset, pos.y * MM_TILE_SIZE + MM_TILE_SIZE / 2 - offset, size / 2, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-    }
-
-    private drawOutlinedTile(ctx: CanvasRenderingContext2D, pos: Vec2, size: number, color: string) {
-        this.drawTile(ctx, pos, size, "black");
-        this.drawTile(ctx, pos, size - 2, color);
-    }
-
-    private updateForeground(playerPos: Vec2, floor: DungeonFloor) {
-        this.fgCtx.clearRect(0, 0, this.foreground.width, this.foreground.height);
-        // Draw all the carpets
-        for (const object of floor.objects) {
-            const itemPos = object.position;
-            if (this.explorationMap.get(...itemPos.xy) !== 1) continue;
+        // Draw the carpets if any
+        for (const object of this.floor.objects) {
+            const objpos = object.position;
+            // Draw if the object is on a tile you have visited or is at least charted
+            if (this.explored.get(...objpos.xy) === MinimapTilesVariants.NOT_VISITED) continue;
+            // For carpets
             if (object instanceof DungeonCarpet) {
-                this.drawTile(this.fgCtx, object.position, MM_TILE_SIZE, MM_COLORS.CARPET);
+                this.drawObject(objpos, MinimapObjectType.CARPET);
             }
         }
-        // Draw all the items
-        for (const object of floor.objects) {
-            const itemPos = object.position;
-            if (this.explorationMap.get(...itemPos.xy) !== 1) continue;
-            if (object instanceof DungeonItem) {
-                this.drawOutlinedTile(this.fgCtx, object.position, MM_TILE_SIZE - 2, MM_COLORS.ITEM);
-            } else if (object instanceof DungeonTile) {
-                if (!object.isHidden) {
-                    if (object.isStairs) {
-                        this.drawStairs(this.fgCtx, object.position);
-                    } else {
-                        this.drawOutlinedTile(this.fgCtx, object.position, MM_TILE_SIZE - 2, MM_COLORS.TRAP);
-                    }
-                }
+        // Draw other objects
+        for (const object of this.floor.objects) {
+            const objpos = object.position;
+            // Draw if the object is on a tile you have visited or is at least charted
+            if (this.explored.get(...objpos.xy) === MinimapTilesVariants.NOT_VISITED) continue;
+            // Skip carpets
+            if (object instanceof DungeonCarpet) continue;
+            // For items
+            if (object instanceof DungeonItem)
+                this.drawObject(objpos, MinimapObjectType.ITEM);
+            // For tiles
+            if (object instanceof DungeonTile && !object.isHidden) {
+                // For stairs
+                if (object.isStairs) this.drawObject(objpos, MinimapObjectType.STAIRS);
+                // For traps
+                else this.drawObject(objpos, MinimapObjectType.TRAP);
             }
         }
-
-        const enemies = floor.pokemon.getEnemies();
-        if (enemies.length > 0) {
-            const enemyGrid = floor.grid.getViewArea(playerPos).inflateFromGrid(1, floor.grid);
-            // Draw all the enemies
-            for (const enemy of enemies) {
-                const itemPos = enemy.position;
-                if (enemyGrid.get(...itemPos.xy) !== 1) continue;
-
-                this.drawEntity(this.fgCtx, enemy.position, MM_TILE_SIZE, MM_COLORS.ENEMY);
+        // Draw the enemies
+        for (const enemy of this.floor.pokemon.getEnemies()) {
+            const enemypos = enemy.position;
+            // Draw if the enemy is on a tile you are visiting
+            if (this.explored.get(...enemypos.xy) === MinimapTilesVariants.VISITING) {
+                this.drawObject(enemypos, MinimapObjectType.ENEMY);
             }
         }
-
-        this.drawEntity(this.fgCtx, playerPos, MM_TILE_SIZE, MM_COLORS.PLAYER);
-        // Draw all the partners
-        for (const partner of floor.pokemon.getPartners()) {
-            this.drawEntity(this.fgCtx, partner.position, MM_TILE_SIZE, MM_COLORS.PARTNER);
+        // Draw the player
+        this.drawObject(this.floor.pokemon.getLeader().position, MinimapObjectType.PLAYER);
+        // Draw the partners
+        for (const partner of this.floor.pokemon.getPartners()) {
+            this.drawObject(partner.position, MinimapObjectType.PARTNER);
         }
-
     }
 
-    private updateBaseground(floor: DungeonFloor) {
-        // Get the offset grid
-        this.baseCtx.clearRect(0, 0, this.background.width, this.background.height);
-        if (this.style === MinimapStyle.OBSCURED) return;
-        console.log("Updating the base");
-
-        const viewGrid = floor.grid.copy();
-        viewGrid.data = viewGrid.data.map((v) => this.isWall(v) ? 0 : 1);
-        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE + MM_BORDER_SIZE, MM_COLORS.BASE.BORDER_DARK);
-        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE + MM_BORDER_SIZE - 2, MM_COLORS.BASE.BORDER_LIGHT);
-        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE, "transparent");
-        this.drawGrid(this.baseCtx, viewGrid, MM_TILE_SIZE, MM_COLORS.BASE.TILE);
-        // Get the water tiles in the area
-        const waterTiles = floor.grid.copy();
-        waterTiles.data = waterTiles.data.map((tile) => tile === Tile.WATER ? 1 : 0);
-        this.drawGrid(this.baseCtx, waterTiles, MM_TILE_SIZE, MM_COLORS.BASE.WATER);
-        console.log("Done updating the base");
-    }
     /** Creates the canvas element and appends it to the ui */
-    public getElement() {
-        const div = document.createElement("div");
-        div.classList.add("minimap");
-        div.style.position = "relative";
-        div.style.top = "0px";
-        div.style.left = "0px";
-        this.background.style.position = "absolute";
-        this.foreground.style.position = "absolute";
-        this.baseground.style.position = "absolute";
-        this.background.style.top = "0px";
-        this.foreground.style.top = "0px";
-        this.baseground.style.top = "0px";
-        this.background.style.left = "0px";
-        this.foreground.style.left = "0px"
-        this.baseground.style.left = "0px";
-        this.foreground.style.zIndex = "2";
-        this.background.style.zIndex = "1";
-        this.baseground.style.zIndex = "0";
-        div.style.pointerEvents = "none";
-        div.appendChild(this.baseground);
-        div.appendChild(this.background);
-        div.appendChild(this.foreground);
-        return div;
+    public getElement(): HTMLElement {
+        const minimap = document.createElement("div");
+        minimap.classList.add("minimap");
+        minimap.appendChild(this.tiles.canvas);
+        minimap.appendChild(this.objects.canvas);
+        const tilesStyle = this.tiles.canvas.style;
+        const objctStyle = this.objects.canvas.style;
+        tilesStyle.position = "absolute";
+        tilesStyle.top = "0";
+        tilesStyle.left = "0";
+        objctStyle.position = "absolute";
+        objctStyle.top = "0";
+        objctStyle.left = "0";
+        minimap.style.position = "absolute";
+        minimap.style.top = "0";
+        minimap.style.left = "0";
+        return minimap;
     }
 
     static getStyleFromLightLevel(lightLevel: LightLevel) {
         switch (lightLevel) {
             case LightLevel.NORMAL:
-                return MinimapStyle.DEFAULT;
+                return MinimapMode.DEFAULT;
             case LightLevel.DARK:
-                return MinimapStyle.OBSCURED;
+                return MinimapMode.OBSCURED;
             case LightLevel.DARKEST:
-                return MinimapStyle.OBSCURED;
+                return MinimapMode.OBSCURED;
             case LightLevel.BRIGHT:
-                return MinimapStyle.DEFAULT;
+                return MinimapMode.DEFAULT;
         }
     }
 

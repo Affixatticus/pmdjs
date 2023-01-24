@@ -6,7 +6,7 @@ import { V2, Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 import { DungeonCarpet } from "../objects/carpet";
 import { DungeonPokemon } from "../objects/pokemon";
-import { DungeonTiling } from "./tiling";
+import { DungeonTiling, NeighborsLookupTable, Tiling } from "./tiling";
 
 export class ByteGrid {
     private _width: number;
@@ -21,6 +21,7 @@ export class ByteGrid {
 
     public fill(value: number) {
         this._data.fill(value);
+        return this;
     }
 
     public get(x: number, y: number) {
@@ -218,22 +219,48 @@ export class ByteGrid {
         }
     }
 
-    public applyMask(mask: ByteGrid) {
+    public setIfNotZero(mask: ByteGrid) {
         for (const [pos, tile] of mask) {
-            if (tile === 0) this.set(...pos.xy, tile);
+            // If the mask's tile is 0, skip it
+            if (tile === 0) continue;
+            this.set(...pos.xy, tile);
         }
         return this;
     }
 
+    /** Prints the grid as a table of hexadecimal bytes with alternating backgrounds */
     public print() {
         let str = '';
         for (let y = 0; y < this._height; y++) {
             for (let x = 0; x < this._width; x++) {
-                str += this.get(x, y);
+                const tile = this.get(x, y);
+                str += tile.toString(16).padStart(2, '0') + ' ';
             }
             str += '\n';
         }
-        console.log(str);
+        // Use a colored console log
+        console.log(`%c${str}`, 'font-family: monospace; font-size: 12px;');
+    }
+
+    public replace(new_: number, old: number = 1) {
+        this.data = this.data.map((t) => t === old ? new_ : t);
+        return this;
+    }
+
+    public binaryMapTilings() {
+        const tilingsGrid = this.copy();
+
+        for (const [pos, tile] of this) {
+            if (tile === 0) {
+                tilingsGrid.set(...pos.xy, 255);
+                continue;
+            }
+            const neighbors = this.getNeighbors(...pos.xy).map((t) => t ? true : false);
+            const tiling = NeighborsLookupTable[neighbors.map(n => n ? "1" : "0").join("")]
+            tilingsGrid.set(...pos.xy, tiling);
+        }
+
+        return tilingsGrid;
     }
 }
 
@@ -341,6 +368,20 @@ export class OffsetGrid extends ByteGrid {
         const newOffsetGrid = new OffsetGrid(this.width, this.height, this.start);
         newOffsetGrid.data = new Uint8Array(this.data.subarray(0, this.data.length - 1));
         return newOffsetGrid;
+    }
+
+    public print() {
+        let str = '';
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.get(x + this.start.x, y + this.start.y);
+                str += tile.toString(16).padStart(2, '0') + ' ';
+            }
+            str += '\n';
+        }
+        console.log("Offset Grid: (start=", this.start, "size=", this.size, ")");
+        console.log(str);
     }
 }
 
@@ -461,7 +502,7 @@ export class DungeonGrid extends ByteGrid {
 
         // Compose the offsetGrid
         const rect = Rect.fromPositions(savedPositions);
-        const offsetGrid = new OffsetGrid(rect.width, rect.height, V2(rect.left, rect.top));
+        const offsetGrid = new OffsetGrid(rect.width, rect.height, rect.topLeft);
 
         // Add all the points to the offsetGrid as 1s
         for (const pos of savedPositions) {
@@ -517,4 +558,5 @@ export class DungeonGrid extends ByteGrid {
         for (const [pos, _value] of super[Symbol.iterator]())
             yield [pos, this.get(pos.x, pos.y)];
     }
+
 }

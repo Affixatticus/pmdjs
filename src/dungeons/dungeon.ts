@@ -209,11 +209,11 @@ export class DungeonState {
             await this.floorGuide.init(),
         ]);
         // Init the minimap
-        this.ui.minimap.init(this.floor);
+        await this.ui.minimap.init(this.floor);
         // Look for the stairs
         this.floor.findStairs(spawn);
         // Update the minimap
-        this.ui.minimap.update(spawn, this.floor);
+        this.ui.minimap.update(spawn);
         // Move the camera to the spawn position
         this.moveCamera(spawn.toVec3());
         // TODO Understand why the light is less stuttery when you run this 2-3 times

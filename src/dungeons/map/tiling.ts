@@ -88,7 +88,7 @@ export enum Tiling {
     BLANK = 255,
 }
 
-const NeighborsLookupTable: Record<string, Tiling> = {
+export const NeighborsLookupTable: Record<string, Tiling> = {
     "11011011": Tiling.FULL_TO_SOUTH_WEST_AND_OPPOSITE,
     "01111110": Tiling.FULL_TO_SOUTH_EAST_AND_OPPOSITE,
 
@@ -414,14 +414,16 @@ export class DungeonTiling {
         tiling: Tiling,
         tileType: Tile = Tile.WALL,
         variant: number = 0,
-        textureMode: TilingTextureMode = TilingTextureMode.HEIGHTMAP
+        textureMode: TilingTextureMode = TilingTextureMode.HEIGHTMAP,
+        size: number = 24
     ): CropParams {
         const start = DungeonTilingStarts[textureMode][tileType];
         if (start === undefined) throw Error(`No valid texture for this kind of tile ${tileType}`);
-        const x = ((tiling % 3) + start + 3 * variant) * 24;
-        const y = Math.floor(tiling / 3) * 24;
-        return [x, y, 24, 24];
+        const x = ((tiling % 3) + start + 3 * variant) * size;
+        const y = Math.floor(tiling / 3) * size;
+        return [x, y, size, size];
     }
+
     /** Get the tiling for a tile based on the adjacent tiles
      * @param thisTile The tile to get the tiling for
      * @param neighbors The adjacent tiles

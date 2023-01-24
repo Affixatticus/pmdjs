@@ -16,6 +16,10 @@ function putImage(ctx: CanvasRenderingContext2D, image: CanvasImageSource, ...pa
     ctx.drawImage(image, ...params, 0, 0, params[2], params[3]);
 }
 
+function clearCanvas(ctx: CanvasRenderingContext2D) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
 // Function to convert a ctx to a base64 url
 function toDataURL(ctx: CanvasRenderingContext2D) {
     return ctx.canvas.toDataURL();
@@ -52,6 +56,7 @@ export {
 
 const Canvas = {
     create: createCanvas,
+    clear: clearCanvas,
     putImage,
     toDataURL,
     createURL,

@@ -153,7 +153,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 maxRoomSize: V2(7, 5),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
-                mapSize: V2(4, 4),
+                mapSize: V2(2, 2),
                 generateWater: true,
                 // generateWater: false,
                 terrainDensity: 10,
