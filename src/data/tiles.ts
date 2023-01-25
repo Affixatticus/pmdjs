@@ -21,7 +21,6 @@ export enum Tile {
     UNOBSTRUCTABLE,
     UNKNOWN,
     OUT_OF_BOUNDS = -1,
-    WHITE_GUIDE
 };
 
 /** Tiles that should render as FLOOR */

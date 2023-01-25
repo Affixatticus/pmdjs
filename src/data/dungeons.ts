@@ -99,7 +99,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
             name: "Grass Cove",
             path: "western_cave",
             enemies: null,
-            lightLevel: LightLevel.DARK,
+            lightLevel: LightLevel.DARKEST,
             items: [
                 { id: Item.ORAN_BERRY, chance: 20 },
                 { id: Item.COIN, chance: 30 },
@@ -115,7 +115,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 maxRoomSize: V2(9, 7),
                 connectionRate: 50,
                 bordersSize: V2(4, 6),
-                mapSize: V2(1, 1),
+                mapSize: V2(3, 2),
                 generateWater: false,
                 // generateWater: true,
                 layoutType: GeneratorLayouts.ALL_ROOMS,

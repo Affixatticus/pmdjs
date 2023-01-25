@@ -1,12 +1,10 @@
 import { Tile } from "../../data/tiles";
-import { Direction } from "../../utils/direction";
 import Random from "../../utils/random";
-import { Rect } from "../../utils/rect";
 import { V2, Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 import { DungeonCarpet } from "../objects/carpet";
 import { DungeonPokemon } from "../objects/pokemon";
-import { DungeonTiling, NeighborsLookupTable, Tiling } from "./tiling";
+import { DungeonTiling, NeighborsLookupTable } from "./tiling";
 
 export class ByteGrid {
     private _width: number;
@@ -278,6 +276,28 @@ export class ByteGrid {
             this.data[y * this._width + column] = predicate(this.data[y * this._width + column], y);
         }
     }
+
+    public floodFill(point: Vec2, set: number) {
+        const queue = [point];
+        const visited = new Set<string>();
+        const replace = this.get(...point.xy);
+
+        while (queue.length) {
+            const [x, y] = queue.pop()!.xy;
+
+            if (visited.has(`${x},${y}`)) continue;
+            visited.add(`${x},${y}`);
+
+            if (this.get(x, y) !== replace) continue;
+
+            this.set(x, y, set);
+
+            queue.push(V2(x + 1, y));
+            queue.push(V2(x - 1, y));
+            queue.push(V2(x, y + 1));
+            queue.push(V2(x, y - 1));
+        }
+    }
 }
 
 /** A reduced size grid that has an iterator with the correct x and y */
@@ -358,15 +378,36 @@ export class OffsetGrid extends ByteGrid {
 
     /** Removes the last rows and columns of all 0s from the original grid */
     public trim() {
-        const removeTop = this.data.every((value, index) => index < this.width && value === 0);
-        const removeBottom = this.data.every((value, index) => index >= this.data.length - this.width && value === 0);
-        const removeLeft = this.data.every((value, index) => index % this.width === 0 && value === 0);
-        const removeRight = this.data.every((value, index) => (index + 1) % this.width === 0 && value === 0);
+        let offsetX = 0;
+        let offsetY = 0;
+        let newWidth = this.width;
+        let newHeight = this.height;
 
-        const newStart = this.start.add(V2(removeLeft ? 1 : 0, removeTop ? 1 : 0));
-        const newWidth = this.width - (removeLeft ? 1 : 0) - (removeRight ? 1 : 0);
-        const newHeight = this.height - (removeTop ? 1 : 0) - (removeBottom ? 1 : 0);
+        // Determine top and bottom rows to remove
+        for (let y = 0; y < this.height; y++) {
+            if (this.data.slice(y * this.width, (y + 1) * this.width).every(v => v === 0)) {
+                offsetY++, newHeight--;
+            } else break;
+        }
+        for (let y = this.height - 1; y >= 0; y--) {
+            if (this.data.slice(y * this.width, (y + 1) * this.width).every(v => v === 0)) {
+                newHeight--;
+            } else break;
+        }
 
+        // Determine left and right columns to remove
+        for (let x = 0; x < this.width; x++) {
+            if (this.data.every((v, i) => (i % this.width === x) ? v === 0 : true)) {
+                offsetX++, newWidth--;
+            } else break;
+        }
+        for (let x = this.width - 1; x >= 0; x--) {
+            if (this.data.every((v, i) => (i % this.width === x) ? v === 0 : true)) {
+                newWidth--;
+            } else break;
+        }
+
+        const newStart = this.start.add(V2(offsetX, offsetY));
         const newGrid = new OffsetGrid(newWidth, newHeight, newStart);
         for (const [pos, value] of this)
             newGrid.set(...pos.xy, value);
@@ -403,7 +444,7 @@ export class OffsetGrid extends ByteGrid {
 
 export class DungeonGrid extends ByteGrid {
     static listOfWalkableTiles = [
-        Tile.FLOOR, Tile.TILE, Tile.ITEM, Tile.CLEAR_TILE,
+        Tile.FLOOR, Tile.TILE, Tile.ITEM, Tile.CLEAR_TILE, Tile.WATER,
         Tile.KECLEON_CARPET, Tile.KECLEON_ITEM, Tile.KECLEON_MARKER];
 
     static fromByteGrid(byteGrid: ByteGrid): DungeonGrid {
@@ -436,8 +477,7 @@ export class DungeonGrid extends ByteGrid {
     }
 
     /** Returns true if this tile is walkable for a given pokemon */
-    public isWalkable(position: Vec2, pokemon?: DungeonPokemon): boolean {
-        let tile = this.get(position.x, position.y);
+    public isWalkable(tile: number, pokemon?: DungeonPokemon): boolean {
         let isWalkable = DungeonGrid.listOfWalkableTiles.includes(tile);
 
         if (!isWalkable && pokemon)
@@ -450,85 +490,70 @@ export class DungeonGrid extends ByteGrid {
      * @param position The position to check
      * @returns `true` if the position is part of a corridor, `false` if it's part of a room
      */
-    public isCorridor(position: Vec2, pokemon?: DungeonPokemon) {
+    public isCorridor(position: Vec2) {
         // The position is a corridor, if the 3x3 grid it at its center
         // does not contain a 2x2 grid of walkable tiles
         const subGrid = DungeonGrid.fromByteGrid(this.getSubGrid(position.move(-1), V2(3, 3)));
-
-        // Look for a 2x2 subgrid of walkable tiles
-        for (let subY = 0; subY < 2; subY++) {
-            for (let subX = 0; subX < 2; subX++) {
-                // Check all tiles in this subgrid
-                let allWalkable = true;
-                for (let y = 0; y < 2; y++) {
-                    for (let x = 0; x < 2; x++) {
-                        if (!subGrid.isWalkable(V2(subX + x, subY + y), pokemon)) {
-                            allWalkable = false;
-                            break;
-                        }
-                    }
-                    if (!allWalkable) break;
-                }
-                // Found a 2x2 subgrid of walkable tiles
-                if (allWalkable) return false;
-            }
-        }
-
+        const walkable = [...subGrid.data].map((t) => subGrid.isWalkable(t));
+        // Get the grid of values
+        const [a0, a1, a2] = walkable.slice(0, 3);
+        const [b0, b1, b2] = walkable.slice(3, 6);
+        const [c0, c1, c2] = walkable.slice(6, 9);
+        // First square is all walkable, so it's a room
+        if (a0 && a1 && b0 && b1) return false;
+        // Second square is all walkable, so it's a room
+        if (a1 && a2 && b1 && b2) return false;
+        // Third square is all walkable, so it's a room
+        if (b0 && b1 && c0 && c1) return false;
+        // Fourth square is all walkable, so it's a room
+        if (b1 && b2 && c1 && c2) return false;
+        // If no walkable tiles, it's a room        
         return true;
     }
 
+    /** Gets the tiles that the player sees if it's in a corridor */
     public getCorridorViewArea(position: Vec2) {
-        const savedPositions: Vec2[] = [position];
-
-        for (const dir of Direction.CARDINAL) {
-            const dirVec = dir.toVector();
-            const nextPos = position.add(dirVec);
-
-            // Check if the next position is walkable
-            if (!this.isWalkable(nextPos)) continue;
-            // Add it to the list
-            savedPositions.push(nextPos);
-            // Exit if you run into a room
-            if (!this.isCorridor(nextPos)) continue;
-            // Try continuing down the same road
-            const nextNextPos = nextPos.add(dirVec);
-            if (this.isWalkable(nextNextPos)) {
-                savedPositions.push(nextNextPos);
-                continue;
-            }
-            // Try the counter-clockwise direction
-            const ccwDir = Direction.ALL[Direction.rollIndex(dir.index - 2)];
-            const ccwDirVec = ccwDir.toVector();
-            const nextCCWPos = nextPos.add(ccwDirVec);
-            // Check if the next position is walkable
-            if (this.isWalkable(nextCCWPos)) {
-                savedPositions.push(nextCCWPos);
-                continue;
-            };
-            // Try the clockwise direction
-            const cwDir = Direction.ALL[Direction.rollIndex(dir.index + 2)];
-            const cwDirVec = cwDir.toVector();
-            const nextCWPos = nextPos.add(cwDirVec);
-            // Check if the next position is walkable
-            if (this.isWalkable(nextCWPos)) {
-                savedPositions.push(nextCWPos);
-                continue;
-            }
+        // You have a view radius, all tiles that fit in that and are isWalkable are 1, others are 0
+        const viewRadius = 1;
+        const viewArea = this.toOffsetGrid(position.move(-viewRadius), V2(viewRadius * 2 + 1, viewRadius * 2 + 1));
+        for (const [pos, tile] of viewArea) {
+            if (pos.dist(position) <= viewRadius && this.isWalkable(tile))
+                viewArea.set(...pos.xy, 1);
+            else
+                viewArea.set(...pos.xy, 0);
         }
-
-        // Compose the offsetGrid
-        const rect = Rect.fromPositions(savedPositions);
-        const offsetGrid = new OffsetGrid(rect.width, rect.height, rect.topLeft);
-
-        // Add all the points to the offsetGrid as 1s
-        for (const pos of savedPositions) {
-            offsetGrid.set(pos.x, pos.y, 1);
-        }
-
-        return offsetGrid;
+        return viewArea;
     }
 
+    /** Gets the tiles that the player sees if it's in a room */
     public getRoomViewArea(position: Vec2) {
+        // Get a subgrid of this grid, with a maximum size
+        const maxSize = V2(21, 21);
+        const subGrid = this.toOffsetGrid(position.subtract(V2(10, 10)), maxSize);
+
+        // Calculate a map of possible rooms
+        for (const [pos, tile] of subGrid) {
+            if (!this.isWalkable(tile) || this.isCorridor(pos))
+                subGrid.set(...pos.xy, 0);
+            else
+                subGrid.set(...pos.xy, 1);
+        }
+
+        // Flood fill the map to find the room the position is in
+        subGrid.floodFill(position, 2);
+
+        // Replace everything that is not 2 with 0 amd everything that is 2 with 1
+        for (const [pos, tile] of subGrid) {
+            if (tile === 2)
+                subGrid.set(...pos.xy, 1);
+            else
+                subGrid.set(...pos.xy, 0);
+        }
+
+        return subGrid.trim();
+
+
+
         // Find the biggest rectangle that contains all the room tiles
         // Find the top left corner
         let topLeft = position;

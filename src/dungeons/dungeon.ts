@@ -206,7 +206,7 @@ export class DungeonState {
 
         // Move the camera to the spawn position
         this.moveCamera(spawn.toVec3());
-        
+
         /** Load some assets */
 
         // Load the assets for the light overlay
