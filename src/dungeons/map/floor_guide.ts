@@ -73,7 +73,7 @@ export class FloorGuide {
         this.hide();
 
         // Get the visible area of the pokemon
-        const actionArea = this.grid.getActionArea(this.pokemon.position);
+        const actionArea = this.floor.getActionArea(this.pokemon.position);
 
         // Place the guides
         let position = this.pokemon.position.clone();

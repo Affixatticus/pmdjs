@@ -6,8 +6,8 @@ import { DungeonCarpet } from "../objects/carpet";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonTiling, NeighborsLookupTable } from "./tiling";
 
-const ROOM_VIEW_RADIUS = V2(31, 31);
-const ROOM_VIEW_RADIUS_HALF = V2(15, 15);
+const ROOM_VIEW_RADIUS = V2(21, 21);
+const ROOM_VIEW_RADIUS_HALF = V2(10, 10);
 const CORRIDOR_VIEW_RADIUS = 1;
 const CORRIDOR_VIEW_AREA = V2(CORRIDOR_VIEW_RADIUS * 2 + 1, CORRIDOR_VIEW_RADIUS * 2 + 1);
 
@@ -284,15 +284,12 @@ export class ByteGrid {
 
     public floodFill(point: Vec2, set: number) {
         const queue = [point];
-        const visited = new Set<string>();
         const replace = this.get(...point.xy);
 
         while (queue.length) {
             const [x, y] = queue.pop()!.xy;
 
-            if (visited.has(`${x},${y}`)) continue;
-            visited.add(`${x},${y}`);
-
+            if (this.get(x, y) === set) continue;
             if (this.get(x, y) !== replace) continue;
 
             this.set(x, y, set);
@@ -312,6 +309,13 @@ export class OffsetGrid extends ByteGrid {
     constructor(width: number, height: number, start: Vec2, data?: Uint8Array) {
         super(width, height, data);
         this._start = start;
+    }
+
+    public toString() {
+        return `OffsetGrid(${this.width}, ${this.height}, ${this.start})`;
+    }
+    public hash() {
+        return `${this.width},${this.height},${this.start.x},${this.start.y}`;
     }
 
     public get start() {
@@ -428,7 +432,7 @@ export class OffsetGrid extends ByteGrid {
 
     public copy() {
         const newOffsetGrid = new OffsetGrid(this.width, this.height, this.start);
-        newOffsetGrid.data = new Uint8Array(this.data.subarray(0, this.data.length - 1));
+        newOffsetGrid.data = new Uint8Array(this.data.subarray(0, this.data.length));
         return newOffsetGrid;
     }
 
@@ -555,48 +559,6 @@ export class DungeonGrid extends ByteGrid {
         }
 
         return subGrid.trim();
-
-
-
-        // Find the biggest rectangle that contains all the room tiles
-        // Find the top left corner
-        let topLeft = position;
-        while (!this.isCorridor(topLeft.add(V2(0, -1))) || !this.isCorridor(topLeft.add(V2(0, -2)))) topLeft = topLeft.add(V2(0, -1));
-        while (!this.isCorridor(topLeft.add(V2(-1, 0))) || !this.isCorridor(topLeft.add(V2(-2, 0)))) topLeft = topLeft.add(V2(-1, 0));
-
-        // Find the bottom right corner
-        let bottomRight = position;
-        while (!this.isCorridor(bottomRight.add(V2(0, 1))) || !this.isCorridor(bottomRight.add(V2(0, 2)))) bottomRight = bottomRight.add(V2(0, 1));
-        while (!this.isCorridor(bottomRight.add(V2(1, 0))) || !this.isCorridor(bottomRight.add(V2(2, 0)))) bottomRight = bottomRight.add(V2(1, 0));
-
-        // Create the offsetGrid
-        // const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 3, bottomRight.y - topLeft.y + 3, topLeft.move(-1));
-        const offsetGrid = new OffsetGrid(bottomRight.x - topLeft.x + 1, bottomRight.y - topLeft.y + 1, topLeft);
-
-        // Set all tiles to 1
-        offsetGrid.fill(1);
-        return offsetGrid;
-    }
-
-    /** Returns an offsetgrid that marks with 1 all the positions that a
-     * pokemon in the given position can see
-     */
-    public getViewArea(position: Vec2): OffsetGrid {
-        // Calculate the area based on whether the pokemon is in a corridor or a room
-        const isCorridor = this.isCorridor(position);
-        if (isCorridor)
-            return this.getCorridorViewArea(position);
-        else
-            return this.getRoomViewArea(position);
-    }
-
-    public getActionArea(position: Vec2): OffsetGrid {
-        // Calculate the area based on whether the pokemon is in a corridor or a room
-        const isCorridor = this.isCorridor(position);
-        if (isCorridor)
-            return this.getCorridorViewArea(position);
-        else
-            return this.getRoomViewArea(position).inflate(1);
     }
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, Tile]> {

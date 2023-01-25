@@ -4,7 +4,7 @@ import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
 import { Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
-import { DungeonGrid } from "./map/grid";
+import { DungeonGrid, OffsetGrid } from "./map/grid";
 import { DungeonMap } from "./map/map";
 import { DungeonObjectContainer } from "./objects/object";
 import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./objects/pokemon";
@@ -39,6 +39,11 @@ export class DungeonFloor {
     public objects!: DungeonObjectContainer;
     /** The container for the pokemon on the floor */
     public pokemon!: DungeonPokemonList;
+
+    /** Map of positions to actionAreas */
+    public actionAreaPositions: Map<string, string> = new Map();
+    /** List of actionAreas */
+    public actionAreas: Record<string, OffsetGrid> = {};
 
     /** The species of the pokemon in the party */
     private partySpecies: PokemonFormIdentifier[] = [];
@@ -126,7 +131,48 @@ export class DungeonFloor {
         this.map.buildView(position);
     }
 
-    public update(tick: number) {
+    /** Called by DungeonState every time it changes the floor */
+    public onMapUpdate() {
+        // Clear the cache
+        this.actionAreaPositions.clear();
+        this.actionAreas = {};
+    }
+
+
+    private calculateActionArea(position: Vec2) {
+        // Calculate the area based on whether the pokemon is in a corridor or a room
+        const isCorridor = this.grid.isCorridor(position);
+        if (isCorridor)
+            return this.grid.getCorridorViewArea(position);
+        else
+            return this.grid.getRoomViewArea(position).inflate(1);
+    }
+
+    /** Returns an offsetgrid that marks with 1 all the positions that a
+     * pokemon in the given position can see or act upon
+     */
+    public getActionArea(position: Vec2): OffsetGrid {
+        const posString = position.toString();
+        // Check if the actionArea is already cached
+        if (this.actionAreaPositions.has(posString)) {
+            // Get a copy of the cached actionArea
+            return this.actionAreas[this.actionAreaPositions.get(posString)!].copy();
+        }
+        // If the position is not cached, calculate the actionArea
+        let actionArea = this.calculateActionArea(position);
+
+        const id = actionArea.hash();
+        // Add the actionArea to the actionAreas
+        this.actionAreas[id] = actionArea;
+        // Add the position to the actionAreaPositions
+        this.actionAreaPositions.set(posString, id);
+
+        // Return a copy of the retrieved actionArea
+        return actionArea.copy();
+    }
+
+
+    public animate(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
         this.pokemon.animate();
     }
@@ -136,7 +182,7 @@ export class DungeonFloor {
         const stairs = this.objects.getStairs() as DungeonTile;
         if (!stairs?.isHidden) return true;
         // Find the stairs
-        const viewArea = this.grid.getViewArea(position);
+        const viewArea = this.getActionArea(position);
         if (viewArea.get(...stairs.position.xy) !== Tile.OUT_OF_BOUNDS) {
             stairs.isHidden = false;
             return true;

@@ -97,8 +97,16 @@ export class DungeonState {
                 area.fill(Tile.WALL);
             }
 
+            // Calculate the actionArea of a point 100 times and time it
+            const start = performance.now();
+            for (let i = 0; i < 100; i++) {
+                this.floor.getActionArea(point);
+            }
+            const end = performance.now();
+            console.log(`Time: ${end - start}ms`);
+
             this.floor.map.changeGridSection(point, area);
-            this.ui.minimap.update();
+            this.updateFloor();
         });
     }
 
@@ -180,6 +188,14 @@ export class DungeonState {
         }
     }
 
+    /** Updates all the components when the grid changes */
+    public async updateFloor() {
+        // Update the floor
+        this.floor.onMapUpdate();
+        // Update the minimap
+        this.ui.minimap.update();
+    }
+
     public async changeFloor() {
         /** Dungeon Floor Loading */
         this.isLoaded = false;
@@ -219,8 +235,8 @@ export class DungeonState {
         /** Update the graphics */
 
         // Update the light overlay
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader());
+        this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader());
 
         /** Dungeon Floor done loading */
         await this.scene.whenReadyAsync();
@@ -253,7 +269,7 @@ export class DungeonState {
         this.logic.update();
         // this.controlCamera();
         this.lightOverlay.update();
-        this.floor.update(this.tick);
+        this.floor.animate(this.tick);
         this.tick++;
     }
 }

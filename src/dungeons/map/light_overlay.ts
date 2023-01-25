@@ -3,6 +3,7 @@ import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
+import { DungeonFloor } from "../floor";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
 import { DungeonTiling, TilingTextureMode } from "./tiling";
@@ -79,13 +80,13 @@ export class LightOverlay {
     }
 
     /** Turns on the lights around the specified pokemon */
-    public lightPokemon(grid: DungeonGrid, pokemon: DungeonPokemon, firstTime: boolean = false) {
+    public lightPokemon(floor: DungeonFloor, pokemon: DungeonPokemon) {
         if (!this.isEnabled) return;
 
-        const offsetGrid = grid.getViewArea(pokemon.nextTurnPosition);
-        if (!firstTime && this.lastOffsetGrid?.equals(offsetGrid))
-            return;
-        this.placeSpotlight(offsetGrid.inflate(1));
+        const offsetGrid = floor.getActionArea(pokemon.nextTurnPosition);
+        const isCorridor = floor.grid.isCorridor(pokemon.nextTurnPosition)
+
+        this.placeSpotlight(isCorridor ? offsetGrid.inflate(1) : offsetGrid);
         this.lastOffsetGrid = offsetGrid;
     }
 
