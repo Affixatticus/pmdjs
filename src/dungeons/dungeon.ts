@@ -62,9 +62,7 @@ export class DungeonState {
         // Instantiate the logic
         this.logic = new DungeonLogic(this);
         // Instantiate the UI
-        this.ui = new DungeonUI({
-            minimapStyle: Minimap.getStyleFromLightLevel(this.info.lightLevel)
-        });
+        this.ui = new DungeonUI({});
         // Build the floor guide
         this.floorGuide = new FloorGuide(this.scene);
 
@@ -232,7 +230,7 @@ export class DungeonState {
         // Initialize the floor guide
         await this.floorGuide.init(this.floor, this.floor.pokemon.getLeader());
         // Init the minimap
-        await this.ui.minimap.init(this.floor);
+        await this.ui.minimap.init(this.floor, Minimap.getStyleFromLightLevel(this.info.lightLevel));
 
         /** Update the graphics */
 

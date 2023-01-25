@@ -85,14 +85,14 @@ export class Minimap {
     private objects!: CanvasRenderingContext2D;
 
     /** Creates a new minimap */
-    constructor(style: MinimapMode) {
-        this.mode = style;
+    constructor() {
         this.tiles = Canvas.create(0, 0);
         this.objects = Canvas.create(0, 0);
     }
 
     /** Initializes the minimap with data from the loaded floor */
-    public async init(floor: DungeonFloor) {
+    public async init(floor: DungeonFloor, mode = MinimapMode.DEFAULT) {
+        this.mode = mode;
         this.floor = floor;
         // Update the tiles size
         this.tiles.canvas.width = this.floor.grid.width * TSIZE;

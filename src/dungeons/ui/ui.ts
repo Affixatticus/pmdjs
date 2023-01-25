@@ -1,14 +1,13 @@
-import { Minimap, MinimapMode } from "./minimap";
+import { Minimap } from "./minimap";
 
 export interface DungeonUIOptions {
-    minimapStyle: MinimapMode;
 };
 
 export class DungeonUI {
     public minimap: Minimap;
 
     constructor(options: DungeonUIOptions) {
-        this.minimap = new Minimap(options.minimapStyle);
+        this.minimap = new Minimap();
         this.placeInTopLeft(this.minimap.getElement());
     }
 
