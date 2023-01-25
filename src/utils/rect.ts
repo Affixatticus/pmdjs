@@ -1,4 +1,4 @@
-import { randInt } from "./random";
+import Random from "./random";
 import { V2, Vec2 } from "./vectors";
 
 export class Rect {
@@ -96,16 +96,16 @@ export class Rect {
      * @returns An rect contained in this one
      */
     public subrect(options: { maxWidth: number, maxHeight: number }): Rect {
-        // let width = randInt(5, this.width - 3);
-        // let height = randInt(4, this.height - 3);
+        // let width = Random.int(5, this.width - 3);
+        // let height = Random.int(4, this.height - 3);
 
         const minWidth = Math.min(5, this.width);
         const minHeight = Math.min(4, this.height);
         const maxWidth = options.maxWidth ?? this.width - 3;
         const maxHeight = options.maxHeight ?? this.height - 3;;
 
-        let width = randInt(minWidth, maxWidth);
-        let height = randInt(minHeight, maxHeight);
+        let width = Random.int(minWidth, maxWidth);
+        let height = Random.int(minHeight, maxHeight);
 
         if (width > height * 2 - 1)
             width = (width / 2 | 0) + 1;
@@ -114,8 +114,8 @@ export class Rect {
         // if (width % 2 == 0) width--;
         // if (height % 2 == 0) height--;
 
-        let x = randInt(this.left + 2, this.right - width - 1);
-        let y = randInt(this.top + 2, this.bottom - height - 1);
+        let x = Random.int(this.left + 2, this.right - width - 1);
+        let y = Random.int(this.top + 2, this.bottom - height - 1);
 
         return new Rect(x, y, width, height);
     }
@@ -123,8 +123,8 @@ export class Rect {
     /** Returns a random point withing the rect's bounds */
     public getRandomPoint(): Vec2 {
         return V2(
-            this.left + 1 + randInt(0, this.width - 2),
-            this.top + 1 + randInt(0, this.height - 2),
+            this.left + 1 + Random.int(0, this.width - 2),
+            this.top + 1 + Random.int(0, this.height - 2),
         );
     }
 
