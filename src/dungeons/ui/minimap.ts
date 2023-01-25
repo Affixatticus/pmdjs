@@ -72,8 +72,10 @@ export class Minimap {
     /** The last position of the visited minimap */
     private lastPosition!: Vec2;
 
-    /** The maptilings for the minimap */
-    private tilings!: ByteGrid;
+    /** The tilings for the ground tiles */
+    private wallTilings!: ByteGrid;
+    /** The tilings for the water tiles */
+    private waterTilings!: ByteGrid;
     /** The positions that have been visited already */
     private explored!: ByteGrid;
 
@@ -127,16 +129,23 @@ export class Minimap {
 
     /** Returns true if the tile is a wall */
     private isWall(tile: Tile) {
-        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL || tile === Tile.WATER;
+        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL;
     }
     /** Should be run every time the map changes */
     private updateTilings() {
         // Copy the grid
-        const gridCopy = this.floor.grid.copy();
+        const ground = this.floor.grid.copy();
         // And change it to a map of not_walls=1 and walls=0
-        gridCopy.data = gridCopy.data.map((tile) => this.isWall(tile) ? 0 : 1);
-        // Save the maptilings
-        this.tilings = gridCopy.binaryMapTilings();
+        ground.data = ground.data.map((tile) => this.isWall(tile) ? 0 : 1);
+        // Save the tilings
+        this.wallTilings = ground.binaryMapTilings();
+
+        // Update the water tilings
+        const water = this.floor.grid.copy();
+        // Change it to a map of water=1 and not_water=0
+        water.data = water.data.map((tile) => tile === Tile.WATER ? 1 : 0);
+        // Save the tilings
+        this.waterTilings = water.binaryMapTilings();
     }
 
     /** Puts there markers in the correct position
@@ -156,7 +165,7 @@ export class Minimap {
         // Clear the old stuff
         Canvas.clear(this.tiles);
         // Draw the tilemap
-        for (const [pos, tile] of this.tilings) {
+        for (const [pos, tile] of this.wallTilings) {
             if (tile === Tiling.BLANK) continue;
             let visited: MinimapTilesVariants = this.explored.get(...pos.xy);
             if (visited === MinimapTilesVariants.NOT_VISITED) continue;
@@ -165,6 +174,10 @@ export class Minimap {
             // Visited is either VISITING or VISITED, so -1 gets you 0 or 1, which is the offset in the texture
             const tileParams = DungeonTiling.getCrop(tile, Tile.WALL, visited - 1, TilingTextureMode.TEXTURE, TSIZE);
             this.tiles.drawImage(this.texture, ...tileParams, x, y, TSIZE, TSIZE);
+            // Draw the water tiles
+            if (this.floor.grid.get(...pos.xy) !== Tile.WATER) continue;
+            const waterParams = DungeonTiling.getCrop(this.waterTilings.get(...pos.xy), Tile.WALL, 3, TilingTextureMode.TEXTURE, TSIZE);
+            this.tiles.drawImage(this.texture, ...waterParams, x, y, TSIZE, TSIZE);
         }
     }
 

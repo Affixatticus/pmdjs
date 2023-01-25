@@ -137,8 +137,6 @@ export class DungeonGenerator {
 
     // Public methods
     public generate() {
-        const start = performance.now();
-
         // Fill the grid with walls
         this.grid.fill(Tile.WALL);
         // Place the borders on the map
@@ -167,10 +165,6 @@ export class DungeonGenerator {
         this.placeKecleonShopRoom(rooms);
         // Place items and traps
         this.placeItemsAndTraps(rooms);
-
-        // Log the generation time
-        const end = performance.now();
-        console.log(`Dungeon generated in ${(end - start).toFixed(2)} ms`);
 
 
         return this.grid;

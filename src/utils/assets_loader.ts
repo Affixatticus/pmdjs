@@ -56,9 +56,6 @@ export class AssetsLoader {
 
             const waterTextures = [];
 
-            // Time this segment
-            const start = performance.now();
-
             // If the water is animated
             if (properties.water.frames) {
                 // Create a canvas for each water frame
@@ -112,8 +109,6 @@ export class AssetsLoader {
                     ctx.drawImage(overlayCtx.canvas, 0, 0);
                 waterTextures.push(ctx.canvas);
             }
-            // Log the time it took to create the water textures
-            console.log(`Water textures took, ${(performance.now() - start).toFixed(2)}, ms`);
             // Save the water textures
             this.dungeonTextures[path].waterTextures = waterTextures;
         }

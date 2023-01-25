@@ -6,6 +6,11 @@ import { DungeonCarpet } from "../objects/carpet";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonTiling, NeighborsLookupTable } from "./tiling";
 
+const ROOM_VIEW_RADIUS = V2(31, 31);
+const ROOM_VIEW_RADIUS_HALF = V2(15, 15);
+const CORRIDOR_VIEW_RADIUS = 1;
+const CORRIDOR_VIEW_AREA = V2(CORRIDOR_VIEW_RADIUS * 2 + 1, CORRIDOR_VIEW_RADIUS * 2 + 1);
+
 export class ByteGrid {
     private _width: number;
     private _height: number;
@@ -514,10 +519,9 @@ export class DungeonGrid extends ByteGrid {
     /** Gets the tiles that the player sees if it's in a corridor */
     public getCorridorViewArea(position: Vec2) {
         // You have a view radius, all tiles that fit in that and are isWalkable are 1, others are 0
-        const viewRadius = 1;
-        const viewArea = this.toOffsetGrid(position.move(-viewRadius), V2(viewRadius * 2 + 1, viewRadius * 2 + 1));
+        const viewArea = this.toOffsetGrid(position.move(-CORRIDOR_VIEW_RADIUS), CORRIDOR_VIEW_AREA);
         for (const [pos, tile] of viewArea) {
-            if (pos.dist(position) <= viewRadius && this.isWalkable(tile))
+            if (pos.dist(position) <= CORRIDOR_VIEW_RADIUS && this.isWalkable(tile))
                 viewArea.set(...pos.xy, 1);
             else
                 viewArea.set(...pos.xy, 0);
@@ -528,8 +532,8 @@ export class DungeonGrid extends ByteGrid {
     /** Gets the tiles that the player sees if it's in a room */
     public getRoomViewArea(position: Vec2) {
         // Get a subgrid of this grid, with a maximum size
-        const maxSize = V2(21, 21);
-        const subGrid = this.toOffsetGrid(position.subtract(V2(10, 10)), maxSize);
+        const maxSize = ROOM_VIEW_RADIUS;
+        const subGrid = this.toOffsetGrid(position.subtract(ROOM_VIEW_RADIUS_HALF), maxSize);
 
         // Calculate a map of possible rooms
         for (const [pos, tile] of subGrid) {

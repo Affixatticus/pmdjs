@@ -11,6 +11,9 @@ import { Tiling } from "./tiling";
 export const TILE_VIEWPORT = V2(22, 14);
 export const TILE_VIEWPORT_HALF = V2(11, 7);
 
+const BORDER_WIDTH = 8;
+const BORDER_HEIGHT = 4;
+
 const ALWAYS_LOAD = [
     Tiling.CENTER_FULL, Tiling.EAST_FULL, Tiling.WEST_FULL, Tiling.NORTH_FULL, Tiling.SOUTH_FULL,
     Tiling.NORTH_EAST_CORNER_EMPTY, Tiling.NORTH_WEST_CORNER_EMPTY, Tiling.SOUTH_EAST_CORNER_EMPTY, Tiling.SOUTH_WEST_CORNER_EMPTY,
@@ -186,9 +189,6 @@ export class DungeonMap {
     }
 
     public async buildBorders() {
-        const BORDER_WIDTH = 8;
-        const BORDER_HEIGHT = 4;
-        console.log("building borders...");
         // Top grid
         const topBorder = new ByteGrid(this.grid.width + BORDER_WIDTH * 2, BORDER_HEIGHT).fill(Tiling.CENTER_FULL);
         const bottomBorder = new ByteGrid(this.grid.width + BORDER_WIDTH * 2, BORDER_HEIGHT).fill(Tiling.CENTER_FULL);
