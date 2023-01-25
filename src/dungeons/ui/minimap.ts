@@ -127,16 +127,12 @@ export class Minimap {
         this.drawObjects();
     }
 
-    /** Returns true if the tile is a wall */
-    private isWall(tile: Tile) {
-        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL;
-    }
     /** Should be run every time the map changes */
     private updateTilings() {
         // Copy the grid
         const ground = this.floor.grid.copy();
         // And change it to a map of not_walls=1 and walls=0
-        ground.data = ground.data.map((tile) => this.isWall(tile) ? 0 : 1);
+        ground.data = ground.data.map((tile) => this.floor.grid.isWall(tile) ? 0 : 1);
         // Save the tilings
         this.wallTilings = ground.binaryMapTilings();
 

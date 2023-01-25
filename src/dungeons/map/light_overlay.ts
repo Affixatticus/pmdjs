@@ -26,8 +26,6 @@ export class LightOverlay {
     private lightMapTileset!: CanvasImageSource;
     /** List of lights that are waiting to be turned off */
     private queue: [light: SpotLight, texture: DynamicTexture, reachedMaxIntensity: boolean][] = [];
-    /** Last checked area needed to see if you should update the lights */
-    private lastOffsetGrid!: OffsetGrid;
 
     public intensity = 1;
 
@@ -87,7 +85,6 @@ export class LightOverlay {
         const isCorridor = floor.grid.isCorridor(pokemon.nextTurnPosition)
 
         this.placeSpotlight(isCorridor ? offsetGrid.inflate(1) : offsetGrid);
-        this.lastOffsetGrid = offsetGrid;
     }
 
     /** Places a spotlight given an area */

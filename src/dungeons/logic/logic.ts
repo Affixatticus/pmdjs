@@ -8,8 +8,7 @@ import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";
 import { Player } from "./player";
-import { Tile, TileObject } from "../../data/tiles";
-import { DungeonTile } from "../objects/tile";
+
 export class DungeonLogic {
     public state: DungeonState;
 

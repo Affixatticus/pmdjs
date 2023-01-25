@@ -194,6 +194,8 @@ export class DungeonState {
         this.floor.onMapUpdate();
         // Update the minimap
         this.ui.minimap.update();
+        // Update the lighting
+        this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader());
     }
 
     public async changeFloor() {

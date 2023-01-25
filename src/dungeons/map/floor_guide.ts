@@ -23,10 +23,6 @@ export class FloorGuide {
         this.scene = scene;
     }
 
-    private get grid() {
-        return this.floor.grid;
-    }
-
     public async init(floor: DungeonFloor, pokemon: DungeonPokemon) {
         this.floor = floor;
         this.pokemon = pokemon;

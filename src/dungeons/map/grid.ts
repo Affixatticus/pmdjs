@@ -485,14 +485,14 @@ export class DungeonGrid extends ByteGrid {
         return tilingGrid;
     }
 
+    /** Returns true if the tile is a wall */
+    public isWall(tile: Tile | number) {
+        return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL;
+    }
+
     /** Returns true if this tile is walkable for a given pokemon */
-    public isWalkable(tile: number, pokemon?: DungeonPokemon): boolean {
-        let isWalkable = DungeonGrid.listOfWalkableTiles.includes(tile);
-
-        if (!isWalkable && pokemon)
-            isWalkable ||= pokemon.specialWalkable(tile);
-
-        return isWalkable;
+    public isWalkable(tile: number): boolean {
+        return !this.isWall(tile);
     }
 
     /** Checks if the specified position is part of a corridor

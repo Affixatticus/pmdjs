@@ -99,7 +99,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
             name: "Grass Cove",
             path: "western_cave",
             enemies: null,
-            lightLevel: LightLevel.DARK,
+            lightLevel: LightLevel.BRIGHT,
             items: [
                 { id: Item.ORAN_BERRY, chance: 20 },
                 { id: Item.COIN, chance: 30 },
