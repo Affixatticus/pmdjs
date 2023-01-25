@@ -169,18 +169,19 @@ export class TileMeshContainer {
 
     // Instances
     /** Creates an instance of the given tiling, and places it at the given coordinates */
-    public instance(pos: Vec2, tiling: Tiling, loaded: ByteGrid) {
+    public instance(pos: Vec2, tiling: Tiling, loaded: ByteGrid | null, height = 0) {
         if (tiling === Tiling.BLANK) return;
 
-        if (loaded.get(...pos.spread()) === 0) {
+        // If the tile is not loaded, or the loaded grid doesn't exist
+        if (!loaded || loaded.get(...pos.spread()) === 0) {
             const tileMesh = this.getVariantForPlacing(tiling, pos);
             if (tileMesh === null) return;
             // Create the instance
-            const instanceId = tileMesh.instance(pos);
+            const instanceId = tileMesh.instance(pos, height);
             // Add it to the list of instances
             this.instances[pos.toString()] = [instanceId, tileMesh.tiling, tileMesh.variant];
-
-            loaded.set(...pos.spread(), 1);
+            // Update the loaded grid if it exists
+            loaded?.set(...pos.spread(), 1);
         }
     }
 
@@ -212,7 +213,7 @@ export abstract class TileMesh {
     public abstract tiling: Tiling;
     public abstract variant: number;
 
-    public abstract instance(pos: Vec2): number;
+    public abstract instance(pos: Vec2, height?: number): number;
 
     constructor() { }
 }
@@ -264,10 +265,10 @@ export class WallTileMesh extends TileMesh {
         return this.tiling + "_" + this.variant;
     }
 
-    public instance(pos: Vec2): number {
+    public instance(pos: Vec2, height = 0): number {
         // Create the instance's matrix
         const matrix = Matrix.Translation(
-            ...pos.move(0.5).toVec3().gameFormat.spread()
+            ...pos.move(0.5).toVec3(height).gameFormat.spread()
         );
         // Create a new thin instance
         return this.mesh.thinInstanceAdd(matrix);
@@ -315,10 +316,10 @@ export class WaterTileMesh extends TileMesh {
         this.mesh.material = this.material;
     }
 
-    public instance(pos: Vec2): number {
+    public instance(pos: Vec2, height = 0): number {
         // Create the instance's matrix
         const matrix = Matrix.Translation(
-            ...pos.move(0.5).toVec3().gameFormat.add(V3(0, this.waterLevel, 0)).spread()
+            ...pos.move(0.5).toVec3(height).gameFormat.add(V3(0, this.waterLevel, 0)).spread()
         );
         // Create a new thin instance
         return this.mesh?.thinInstanceAdd(matrix);

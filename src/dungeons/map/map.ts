@@ -11,6 +11,11 @@ import { Tiling } from "./tiling";
 export const TILE_VIEWPORT = V2(22, 14);
 export const TILE_VIEWPORT_HALF = V2(11, 7);
 
+const ALWAYS_LOAD = [
+    Tiling.CENTER_FULL, Tiling.EAST_FULL, Tiling.WEST_FULL, Tiling.NORTH_FULL, Tiling.SOUTH_FULL,
+    Tiling.NORTH_EAST_CORNER_EMPTY, Tiling.NORTH_WEST_CORNER_EMPTY, Tiling.SOUTH_EAST_CORNER_EMPTY, Tiling.SOUTH_WEST_CORNER_EMPTY,
+];
+
 export class DungeonMap {
     // Input
     private scene: Scene;
@@ -96,7 +101,8 @@ export class DungeonMap {
         this.createUnderPlane(background);
 
         // Get all the used tile combinations
-        await this.createWallMeshes(this.grid.mapTilingsFor(Tile.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES).getUniqueValues());
+        await this.createWallMeshes(
+            [...this.grid.mapTilingsFor(Tile.WALL, WALL_IGNORE_TILES, WALL_INCLUDE_TILES).getUniqueValues(), ...ALWAYS_LOAD]);
 
         // Get the water tilings
         await this.createWaterMeshes(this.grid.mapTilingsFor(Tile.WATER).getUniqueValues());
@@ -161,17 +167,12 @@ export class DungeonMap {
 
     /** Renders to screen the first tiles and builds the ground */
     public async build(pos: Vec2) {
-        // Place the floor ground and time it
-        const fstart = performance.now();
+        // Place the floor ground
         this.floor.build(this.scene);
-        const fend = performance.now();
-        console.log(`Placed dungeon floor in ${(fend - fstart).toFixed(2)}ms`);
-
-        // Place the tiles and time it
-        const tstart = performance.now();
+        // Place the tiles
         this.buildView(pos);
-        const tend = performance.now();
-        console.log(`Placed dungeon tiles in ${tend - tstart}ms`);
+        // Place the outside walls
+        this.buildBorders();
     }
 
     /** Builds the map to fill the view with the position at the center */
@@ -182,6 +183,31 @@ export class DungeonMap {
         this.placeWallTiles(start, size);
         this.placeWaterTiles(start, size);
         this.floor.updateTexture(this.grid.mapTilingsFor(Tile.FLOOR, FLOOR_IGNORE_TILES, FLOOR_INCLUDE_TILES, start, size), this.grid);
+    }
+
+    public async buildBorders() {
+        const BORDER_WIDTH = 8;
+        const BORDER_HEIGHT = 4;
+        console.log("building borders...");
+        // Top grid
+        const topBorder = new ByteGrid(this.grid.width + BORDER_WIDTH * 2, BORDER_HEIGHT).fill(Tiling.CENTER_FULL);
+        const bottomBorder = new ByteGrid(this.grid.width + BORDER_WIDTH * 2, BORDER_HEIGHT).fill(Tiling.CENTER_FULL);
+        const leftBorder = new ByteGrid(BORDER_WIDTH, this.grid.height + BORDER_HEIGHT * 2).fill(Tiling.CENTER_FULL);
+        const rightBorder = new ByteGrid(BORDER_WIDTH, this.grid.height + BORDER_HEIGHT * 2).fill(Tiling.CENTER_FULL);
+
+        // Build the borders
+        for (const [pos, tile] of topBorder) {
+            this.wallMeshes.instance(pos.subtract(V2(BORDER_WIDTH, BORDER_HEIGHT)), tile, null);
+        }
+        for (const [pos, tile] of bottomBorder) {
+            this.wallMeshes.instance(pos.add(V2(-BORDER_WIDTH, this.grid.height)), tile, null);
+        }
+        for (const [pos, tile] of leftBorder) {
+            this.wallMeshes.instance(pos.subtract(V2(BORDER_WIDTH)), tile, null);
+        }
+        for (const [pos, tile] of rightBorder) {
+            this.wallMeshes.instance(pos.add(V2(this.grid.width, 0)), tile, null);
+        }
     }
 
     // Updating

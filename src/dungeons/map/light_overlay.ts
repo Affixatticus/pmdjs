@@ -69,11 +69,6 @@ export class LightOverlay {
             if (light.intensity === 1)
                 last[2] = true;
         }
-
-        // // If the last light has reached its max intensity, decrease it
-        // else {
-        //     light.intensity = Math.sin(Date.now() / 1000) * 0.25 + 1.5;
-        // }
     }
 
     public dispose() {

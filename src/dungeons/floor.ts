@@ -112,7 +112,8 @@ export class DungeonFloor {
     public build(position: Vec2) {
         // Build the first screen of the map
         this.map.build(position);
-        Promise.all([
+        
+        return Promise.all([
             // Build all the objects
             this.objects.render(this.scene),
             // Build all the pokemon

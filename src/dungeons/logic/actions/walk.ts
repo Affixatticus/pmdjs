@@ -20,9 +20,10 @@ export class WalkAction implements TurnAction {
     public currentStep: number = 0;
 
     /** Distance travelled each step */
+    public animationLength: number = WalkAction.ANIMATION_LENGTH;
     public walkDelta: number;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, speed = 1) {
         this.done = false;
         this.pokemon = pokemon;
         this.direction = direction;
@@ -32,7 +33,8 @@ export class WalkAction implements TurnAction {
         // Set the next turn direction of this pokemon
         this.pokemon.nextTurnDirection = direction;
 
-        this.walkDelta = 1 / (WalkAction.ANIMATION_LENGTH);
+        this.animationLength = WalkAction.ANIMATION_LENGTH / speed;
+        this.walkDelta = 1 / this.animationLength;
     }
 
     public tick(): boolean {
@@ -50,7 +52,7 @@ export class WalkAction implements TurnAction {
             }
         }
         // While you are still animating
-        else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
+        else if (this.currentStep < this.animationLength) {
             this.pokemon.position = this.pokemon.spritePosition.add(
                 this.direction.toVector().scale(this.walkDelta));
         }

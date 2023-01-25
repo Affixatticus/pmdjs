@@ -262,6 +262,22 @@ export class ByteGrid {
 
         return tilingsGrid;
     }
+
+    public updateRow(row: number, predicate: (value: number, index: number) => number) {
+        if (row < 0) row = this._height + row;
+        for (let x = 0; x < this._width; x++) {
+            // this.set(x, row, predicate(this.get(x, row), x));
+            this.data[row * this._width + x] = predicate(this.data[row * this._width + x], x);
+        }
+    }
+
+    public updateColumn(column: number, predicate: (value: number, index: number) => number) {
+        if (column < 0) column = this._width + column;
+        for (let y = 0; y < this._height; y++) {
+            // this.set(column, y, predicate(this.get(column, y), y));
+            this.data[y * this._width + column] = predicate(this.data[y * this._width + column], y);
+        }
+    }
 }
 
 /** A reduced size grid that has an iterator with the correct x and y */

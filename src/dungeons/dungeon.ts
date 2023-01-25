@@ -1,9 +1,9 @@
-import { AxesViewer, Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
 import { Controls } from "../utils/controls";
-import { V2, V3, Vec2, Vec3 } from "../utils/vectors";
+import { V2, V3, Vec3 } from "../utils/vectors";
 import { DungeonFloor } from "./floor";
 import { DungeonLogic } from "./logic/logic";
 import { DungeonStartup } from "./logic/startup";
@@ -202,8 +202,11 @@ export class DungeonState {
         // Get the spawn position
         const spawn = DungeonStartup.getStartingLeaderPosition();
         // Render the visible area
-        this.floor.build(spawn);
+        await this.floor.build(spawn);
 
+        // Move the camera to the spawn position
+        this.moveCamera(spawn.toVec3());
+        
         /** Load some assets */
 
         // Load the assets for the light overlay
@@ -213,6 +216,17 @@ export class DungeonState {
         // Init the minimap
         await this.ui.minimap.init(this.floor);
 
+        /** Update the graphics */
+
+        // Update the light overlay
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
+
+        /** Dungeon Floor done loading */
+        await this.scene.whenReadyAsync();
+        this.engine.hideLoadingUI();
+        this.isLoaded = true;
+
         /** Update the state */
 
         // Look for the stairs
@@ -221,19 +235,6 @@ export class DungeonState {
         this.ui.minimap.update(spawn);
         // Initialize the logic
         this.logic.init();
-
-        /** Update the graphics */
-
-        // Move the camera to the spawn position
-        this.moveCamera(spawn.toVec3());
-        // Update the light overlay
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-        this.lightOverlay.lightPokemon(this.floor.grid, this.floor.pokemon.getLeader(), true);
-
-        /** Dungeon Floor done loading */
-        this.engine.hideLoadingUI();
-        this.isLoaded = true;
-        await this.scene.whenReadyAsync();
     }
 
     /**
