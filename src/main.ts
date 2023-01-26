@@ -19,7 +19,7 @@ const INITIAL_GAME_DATA: Data = {
         floor: 0,
         party: [
             {
-                id: [6, 0, false, 0],
+                id: [133, 0, false, 0],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -52,23 +52,23 @@ const INITIAL_GAME_DATA: Data = {
             //         }
             //     ]
             // },
-            {
-                id: [495, 0, false, 0],
-                stats: {
-                    hp: 0,
-                    attack: 0,
-                    defense: 0,
-                    spatk: 0,
-                    spdef: 0,
-                    speed: 0,
-                },
-                moves: [
-                    {
-                        id: 0,
-                        ppLost: 0
-                    }
-                ]
-            },
+            // {
+            //     id: [495, 0, false, 0],
+            //     stats: {
+            //         hp: 0,
+            //         attack: 0,
+            //         defense: 0,
+            //         spatk: 0,
+            //         spdef: 0,
+            //         speed: 0,
+            //     },
+            //     moves: [
+            //         {
+            //             id: 0,
+            //             ppLost: 0
+            //         }
+            //     ]
+            // },
         ]
     }
 };

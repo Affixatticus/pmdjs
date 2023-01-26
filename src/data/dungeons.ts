@@ -95,7 +95,7 @@ export interface DungeonTextures {
 
 export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
     [Dungeon.GRASSY_COVE]: {
-        [30]: {
+        [10]: {
             name: "Grass Cove",
             path: "western_cave",
             enemies: null,
@@ -125,7 +125,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 tileDensity: 0,
             }
         },
-        [45]: {
+        [20]: {
             name: "Grass Cave",
             path: "grass_cove_01",
             lightLevel: LightLevel.DARK,
@@ -160,7 +160,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 groundItemDensity: .7,
             },
         },
-        [20]: {
+        [30]: {
             name: "Grassless Cave",
             path: "deep_boulder_quarry_01",
             lightLevel: LightLevel.DARKEST,

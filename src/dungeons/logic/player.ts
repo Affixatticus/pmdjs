@@ -9,6 +9,9 @@ import { DungeonLogic } from "./logic";
 const MAX_DISTANCE_FOR_INLINE_CHECK = 10;
 const WALKING_SPEED = 1;
 const RUNNING_SPEED = 40;
+const TURNING_TICKS = 2;
+const WALKING_TICKS = 2;
+const GUIDE_TICKS = 5;
 
 export let PLAYER_SPEED: number = 1;
 export let TICK_PER_TILE: number = 40;
@@ -40,6 +43,8 @@ export class Player {
         this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position);
         this.movementHaltedAt = null;
         this.movementTick = 0;
+        this.turningDirection = null;
+        this.turningTick = 0;
     }
 
     // ANCHOR Running Methods
@@ -203,13 +208,32 @@ export class Player {
         this.movementTick = 0;
         return false;
     }
+    private turningDirection: Direction | null = null;
+    private turningTick = 0;
+    private turnPlayer(direction: Direction = this.turningDirection!): boolean {
+        if (direction === null) return false;
+
+        // If the player is already facing the direction, stop turning
+        if (this.leader.direction === direction) {
+            this.turningDirection = null;
+            return false;
+        }
+        if (++this.turningTick < TURNING_TICKS) {
+            this.turningDirection = direction;
+            return true;
+        }
+        // If the player is not facing the direction, turn the player
+        this.leader.turnTowards(direction);
+        this.turningTick = 0;
+        return true;
+    }
 
     /** Takes in controller inputs from the connected joystick and returns
      * the direction the player wants to move in next turn or null if it wants
      * to stay still
      */
     public doInput() {
-        const input = Direction.fromVector(Controls.leftStick).flipY();
+        let input = Direction.fromVector(Controls.leftStick).flipY();
         let output = null;
 
         // See if the player should be able to walk after halting movement
@@ -220,12 +244,25 @@ export class Player {
             return null;
         }
 
+        // Turn the player if the process is not finished
+        if (this.turningDirection !== null) {
+            if (this.turnPlayer()) return null;
+            else {
+                this.movementTick = WALKING_TICKS;
+                input = this.leader.direction;
+            }
+        }
+        // Check if the input direction is the opposite of the player's current direction
+        else if (input !== Direction.NONE && this.leader.direction.isOpposite(input)) {
+            if (this.turnPlayer(input)) return null;
+        }
+
         // See if you should load the floor guide
         if (Controls.Y) {
             this.floorGuide.update(this.leader.direction);
 
             if (input !== Direction.NONE)
-                if (this.updateMovementTick(5)) return null;
+                if (this.updateMovementTick(GUIDE_TICKS)) return null;
 
             if (input !== Direction.NONE)
                 this.leader.direction = input;
@@ -239,15 +276,13 @@ export class Player {
         }
         // See if the player can move in that direction
         else if (input !== Direction.NONE) {
-            // Update the movement tick
-            if (this.updateMovementTick(2)) return null;
+            if (this.updateMovementTick(WALKING_TICKS)) return null;
             // Stop the player if it's running into a possible turning point
             if (Controls.B && this.isRunning && input !== Direction.NONE && this.shouldStopRunning(input)) {
                 this.setRunning(false);
                 this.movementHaltedAt = input;
                 return null;
             }
-
             const obstacle = this.leader.canMoveTowards(input, this.floor);
 
             switch (obstacle) {

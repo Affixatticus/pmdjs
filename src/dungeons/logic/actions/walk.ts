@@ -53,8 +53,9 @@ export class WalkAction implements TurnAction {
             }
         }
         // While you are still animating
-        else if (this.currentStep < this.animationLength) {
-            this.pokemon.position = this.pokemon.spritePosition.add(
+        else if (this.currentStep <= this.animationLength) {
+            this.pokemon.position = this.pokemon.spritePosition.clone();
+            this.pokemon.spritePosition.addInPlace(
                 this.direction.toVector().scale(this.walkDelta));
         }
         // When stopping
