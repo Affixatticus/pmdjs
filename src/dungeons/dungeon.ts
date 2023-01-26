@@ -2,7 +2,6 @@ import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, 
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
-import { Controls } from "../utils/controls";
 import { V2, V3, Vec3 } from "../utils/vectors";
 import { DungeonFloor } from "./floor";
 import { DungeonLogic } from "./logic/logic";
@@ -29,7 +28,6 @@ export interface DungeonStateData {
 export class DungeonState {
     // Engine
     private engine: Engine;
-    public controls: Controls;
     // Scene
     public scene: Scene;
     public camera: TargetCamera;
@@ -48,11 +46,10 @@ export class DungeonState {
     public info: DungeonFloorInfo;
     private logic: DungeonLogic;
 
-    constructor(engine: Engine, data: DungeonStateData, controls: Controls) {
+    constructor(engine: Engine, data: DungeonStateData) {
         // Definition
         this.engine = engine;
         this.scene = new Scene(this.engine);
-        this.controls = controls;
         this.camera = this.createCamera();
         this.moveCamera(V3(0, 0, 0));
         this.scene.clearColor = new Color4(0, 0, 0, 1);

@@ -1,6 +1,7 @@
 import { Direction } from "../../../utils/direction";
 import { DungeonPokemon } from "../../objects/pokemon";
 import { DungeonPokemonMaterial } from "../../objects/sprite";
+import { PLAYER_SPEED, TICK_PER_TILE } from "../player";
 import { TurnAction } from "./action";
 
 
@@ -15,7 +16,7 @@ export class WalkAction implements TurnAction {
 
 
     // Animation
-    public static ANIMATION_LENGTH = 52;
+    public static ANIMATION_LENGTH = TICK_PER_TILE;
 
     public currentStep: number = 0;
 
@@ -23,7 +24,7 @@ export class WalkAction implements TurnAction {
     public animationLength: number = WalkAction.ANIMATION_LENGTH;
     public walkDelta: number;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, speed = 1) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, speed = PLAYER_SPEED) {
         this.done = false;
         this.pokemon = pokemon;
         this.direction = direction;

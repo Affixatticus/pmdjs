@@ -1,5 +1,4 @@
 import { Scene } from "@babylonjs/core";
-import { TileObject } from "../../data/tiles";
 import { Vec2 } from "../../utils/vectors";
 import { DungeonTile } from "./tile";
 

@@ -19,6 +19,8 @@ export class FloorGuide {
     private whiteGuideInstances: InstancedMesh[] = [];
     private blackGuideInstances: InstancedMesh[] = [];
 
+    public lastDirection: Direction = Direction.NONE;
+
     constructor(scene: Scene) {
         this.scene = scene;
     }
@@ -51,6 +53,8 @@ export class FloorGuide {
             this.blackGuide.material = blackMaterial;
             this.blackGuide.renderingGroupId = RenderingGroupId.FLOOR;
         }
+
+        this.lastDirection = Direction.NONE;
     }
 
     public instanceBlack(pos: Vec2) {
@@ -65,6 +69,9 @@ export class FloorGuide {
     }
 
     public update(direction: Direction = this.pokemon.direction) {
+        // Skip if the direction is the same
+        if (this.lastDirection === direction) return;
+
         // Delete all guides
         this.hide();
 
@@ -88,10 +95,8 @@ export class FloorGuide {
             if (tile === 1) this.instanceWhite(pos);
             if (tile === 2) this.instanceBlack(pos);
         }
-    }
 
-    public show() {
-        this.update();
+        this.lastDirection = direction;
     }
 
     public hide() {
@@ -103,7 +108,10 @@ export class FloorGuide {
         for (const instance of this.blackGuideInstances) {
             instance.dispose();
         }
+        this.whiteGuide.instances = [];
         this.blackGuide.instances = [];
+        
+        this.lastDirection = Direction.NONE;
     }
 
     public dispose() {

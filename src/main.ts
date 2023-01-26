@@ -84,7 +84,7 @@ class App {
     private controls: Controls;
 
     public deltaTime: number = 0;
-    public clockSpeed: number = 6;
+    public clockSpeed: number = 7;
     public updateLoop!: number;
 
 
@@ -155,7 +155,7 @@ class App {
     private createState(state: GameState = this.gameState) {
         switch (state) {
             case GameState.DUNGEONS:
-                return new DungeonState(this.engine, this.data.dungeon, this.controls);
+                return new DungeonState(this.engine, this.data.dungeon);
         }
         throw Error(`No id correlated to that GameState (${state})`);
     }

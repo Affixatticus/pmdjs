@@ -9,7 +9,9 @@ export enum DirectionIndex {
     NORTH,
     NORTH_WEST,
     WEST,
-    SOUTH_WEST
+    SOUTH_WEST,
+
+    NONE = -1,
 };
 
 export class Direction {
@@ -53,6 +55,10 @@ export class Direction {
 
     static rollIndex(index: number) {
         return (index < 0 ? (8 - (index * - 1)) : index) % 8;
+    }
+
+    public roll(amount: number) {
+        return Direction.get(Direction.rollIndex(this.index + amount));
     }
 
     static fromVector(vector: Vec2) {

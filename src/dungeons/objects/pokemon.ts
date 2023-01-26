@@ -4,8 +4,9 @@ import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { Direction } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
-import { RenderingGroupId } from "../floor";
+import { DungeonFloor, RenderingGroupId } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
+import { DungeonGrid } from "../map/grid";
 import { DungeonPokemonMaterial } from "./sprite";
 
 export const enum DungeonPokemonType {
@@ -13,6 +14,13 @@ export const enum DungeonPokemonType {
     PARTNER,
     ENEMY,
     BOSS
+};
+
+export const enum Obstacle {
+    NONE,
+    WALL,
+    ENEMY,
+    PARTNER
 };
 
 export class DungeonPokemon {
@@ -132,10 +140,53 @@ export class DungeonPokemon {
         this.material.setAnimation(animName);
     }
 
-    /** TODO: Implement this to work with types 
-     * Returns true if this pokemon can pass over the specified tile */
-    public specialWalkable(_tile: Tile): boolean {
-        return false;
+
+    /** Returns true if this pokemon cannot stand on this tile */
+    public isTileObstacle(tile: Tile): boolean {
+        // If this pokemon cannot walk on water, then it's an obstacle
+        const canWalkOnWater = false;
+        if (!canWalkOnWater && tile === Tile.WATER) return true;
+        return DungeonGrid.isObstacle(tile);
+    }
+
+    /** Returns true if this pokemon cannot walk around this tile */
+    public isTileWalkable(tile: Tile): boolean {
+        return DungeonGrid.isWalkable(tile);
+    }
+
+    /** Returns the obstacle that's blocking this pokemon's path */
+    public getObstacle(pos: Vec2, floor: DungeonFloor): Obstacle {
+        // The tile to check if the pokemon can stand on
+        const tile = floor.grid.get(pos);
+
+        // If the tile is an obstacle, then return it
+        if (this.isTileObstacle(tile)) {
+            return Obstacle.WALL;
+        }
+        // If there is a pokemon on this tile, then return it
+        const pokemon = floor.pokemon.getAll().find(p => p.nextTurnPosition.equals(pos));
+        if (pokemon) {
+            if (pokemon.type === DungeonPokemonType.ENEMY) return Obstacle.ENEMY;
+            if (pokemon.type === DungeonPokemonType.PARTNER) return Obstacle.PARTNER;
+        }
+        return Obstacle.NONE;
+    }
+
+    public canMoveTowards(dir: Direction, floor: DungeonFloor): Obstacle {
+        const possiblePosition = this.position.add(dir.toVector());
+
+        // If the pokemon is moving diagonally
+        if (dir.isDiagonal()) {
+            // If the tiles around the pokemon are not walkable, then it cannot move
+            const oneSide = this.position.add(Direction.get(Direction.rollIndex(dir.index - 1)).toVector());
+            const twoSide = this.position.add(Direction.get(Direction.rollIndex(dir.index + 1)).toVector());
+            if (!this.isTileWalkable(floor.grid.get(oneSide)) || !this.isTileWalkable(floor.grid.get(twoSide))) {
+                return Obstacle.WALL;
+            }
+        }
+
+        // Return the obstacle on the possible position
+        return this.getObstacle(possiblePosition, floor);
     }
 }
 

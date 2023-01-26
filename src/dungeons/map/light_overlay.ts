@@ -4,6 +4,7 @@ import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
+import { PLAYER_SPEED, TICK_PER_TILE } from "../logic/player";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
 import { DungeonTiling, TilingTextureMode } from "./tiling";
@@ -27,6 +28,8 @@ export class LightOverlay {
     /** List of lights that are waiting to be turned off */
     private queue: [light: SpotLight, texture: DynamicTexture, reachedMaxIntensity: boolean][] = [];
 
+    private lastOffsetGrid!: OffsetGrid | null;
+
     public intensity = 1;
 
     public isEnabled: boolean;
@@ -39,6 +42,7 @@ export class LightOverlay {
     /** Loads the texture for the overlay */
     public async init() {
         this.lightMapTileset = await AssetsLoader.loadLightmap();
+        this.lastOffsetGrid = null;
     }
 
     /** Updates the queue */
@@ -49,7 +53,7 @@ export class LightOverlay {
         // And remove the lights that are completely off
         for (let i = this.queue.length - 2; i >= 0; i--) {
             const [light, texture] = this.queue[i];
-            light.intensity = Math.max(0, light.intensity -= this.intensity * 0.033);
+            light.intensity = Math.max(0, light.intensity -= this.intensity * (1/TICK_PER_TILE) * PLAYER_SPEED);
             if (light.intensity === 0) {
                 light.dispose();
                 texture.dispose();
@@ -64,7 +68,7 @@ export class LightOverlay {
         const [light, _, reachedMaxIntensity] = last;
 
         if (!reachedMaxIntensity) {
-            light.intensity = Math.min(this.intensity, light.intensity += this.intensity * 0.033);
+            light.intensity = Math.min(this.intensity, light.intensity += this.intensity * (1/TICK_PER_TILE) * PLAYER_SPEED);
             if (light.intensity === 1)
                 last[2] = true;
         }
@@ -79,11 +83,16 @@ export class LightOverlay {
 
     /** Turns on the lights around the specified pokemon */
     public lightPokemon(floor: DungeonFloor, pokemon: DungeonPokemon) {
+        // Return if lightOverlay is disabled
         if (!this.isEnabled) return;
-
+        // Get the current offsetGrid
         const offsetGrid = floor.getActionArea(pokemon.nextTurnPosition);
-        const isCorridor = floor.grid.isCorridor(pokemon.nextTurnPosition)
-
+        // Exit if the offsetGrid is the same as the last one
+        if (this.lastOffsetGrid?.equals(offsetGrid)) return;
+        // Save the last offsetGrid
+        this.lastOffsetGrid = offsetGrid;
+        
+        const isCorridor = floor.grid.isCorridor(pokemon.nextTurnPosition);
         this.placeSpotlight(isCorridor ? offsetGrid.inflate(1) : offsetGrid);
     }
 

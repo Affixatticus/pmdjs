@@ -508,24 +508,25 @@ export class DungeonGrid extends ByteGrid {
     }
 
     /** Returns true if the tile is a wall */
-    public isWall(tile: Tile | number) {
+    public static isObstacle(tile: Tile | number) {
         return tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL;
     }
 
     /** Returns true if this tile is walkable for a given pokemon */
-    public isWalkable(tile: number): boolean {
-        return !this.isWall(tile);
+    public static isWalkable(tile: number): boolean {
+        return !this.isObstacle(tile);
     }
 
     /** Checks if the specified position is part of a corridor
      * @param position The position to check
      * @returns `true` if the position is part of a corridor, `false` if it's part of a room
      */
-    public isCorridor(position: Vec2) {
+    public isCorridor(position: Vec2, pokemon?: DungeonPokemon) {
         // The position is a corridor, if the 3x3 grid it at its center
         // does not contain a 2x2 grid of walkable tiles
+        const predicate = pokemon ? ((t: Tile) => !pokemon.isTileObstacle(t)) : ((t: Tile) => DungeonGrid.isWalkable(t));
         const subGrid = DungeonGrid.fromByteGrid(this.getSubGrid(position.move(-1), V2(3, 3)));
-        const walkable = [...subGrid.data].map((t) => subGrid.isWalkable(t));
+        const walkable = [...subGrid.data].map((t) => predicate(t));
         // Get the grid of values
         const [a0, a1, a2] = walkable.slice(0, 3);
         const [b0, b1, b2] = walkable.slice(3, 6);
@@ -547,7 +548,7 @@ export class DungeonGrid extends ByteGrid {
         // You have a view radius, all tiles that fit in that and are isWalkable are 1, others are 0
         const viewArea = this.toOffsetGrid(position.move(-CORRIDOR_VIEW_RADIUS), CORRIDOR_VIEW_AREA);
         for (const [pos, tile] of viewArea) {
-            if (pos.dist(position) <= CORRIDOR_VIEW_RADIUS && this.isWalkable(tile))
+            if (pos.dist(position) <= CORRIDOR_VIEW_RADIUS && DungeonGrid.isWalkable(tile))
                 viewArea.set(pos, 1);
             else
                 viewArea.set(pos, 0);
@@ -563,7 +564,7 @@ export class DungeonGrid extends ByteGrid {
 
         // Calculate a map of possible rooms
         for (const [pos, tile] of subGrid) {
-            if (!this.isWalkable(tile) || this.isCorridor(pos))
+            if (!DungeonGrid.isWalkable(tile) || this.isCorridor(pos))
                 subGrid.set(pos, 0);
             else
                 subGrid.set(pos, 1);

@@ -41,6 +41,8 @@ export class DungeonLogic {
                     pokemon.ai = new DungeonPokemonAI(pokemon, this.state.floor);
             }
         }
+        // Update the player
+        this.player.update();
     }
 
     /** Updates the player movement and starts off the turn */

@@ -4,7 +4,7 @@ import { AssetsLoader } from "../../utils/assets_loader";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
-import { ByteGrid } from "../map/grid";
+import { ByteGrid, DungeonGrid } from "../map/grid";
 import { DungeonTiling, Tiling, TilingTextureMode } from "../map/tiling";
 import { DungeonCarpet } from "../objects/carpet";
 import { DungeonItem } from "../objects/item";
@@ -132,7 +132,7 @@ export class Minimap {
         // Copy the grid
         const ground = this.floor.grid.copy();
         // And change it to a map of not_walls=1 and walls=0
-        ground.data = ground.data.map((tile) => this.floor.grid.isWall(tile) ? 0 : 1);
+        ground.data = ground.data.map((tile) => DungeonGrid.isObstacle(tile) ? 0 : 1);
         // Save the tilings
         this.wallTilings = ground.binaryMapTilings();
 
@@ -249,6 +249,7 @@ export class Minimap {
         minimap.style.top = "0";
         minimap.style.left = "0";
         minimap.style.pointerEvents = "none";
+        minimap.style.opacity = "0.6";
         return minimap;
     }
 

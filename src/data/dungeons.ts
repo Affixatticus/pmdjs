@@ -95,11 +95,11 @@ export interface DungeonTextures {
 
 export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
     [Dungeon.GRASSY_COVE]: {
-        [3]: {
+        [30]: {
             name: "Grass Cove",
             path: "western_cave",
             enemies: null,
-            lightLevel: LightLevel.BRIGHT,
+            lightLevel: LightLevel.NORMAL,
             items: [
                 { id: Item.ORAN_BERRY, chance: 20 },
                 { id: Item.COIN, chance: 30 },
@@ -117,7 +117,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 bordersSize: V2(4, 6),
                 mapSize: V2(3, 2),
                 // generateWater: false,
-                generateWater: true,
+                generateWater: false,
                 layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .75,
                 terrainDensity: 40,
@@ -125,7 +125,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 tileDensity: 0,
             }
         },
-        [5]: {
+        [45]: {
             name: "Grass Cave",
             path: "grass_cove_01",
             lightLevel: LightLevel.DARK,
