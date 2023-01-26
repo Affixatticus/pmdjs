@@ -38,7 +38,7 @@ export const AssignmentFunctions: Record<GenerationRule, (mapSize: Vec2, roomCou
         Random.shuffle(positions);
 
         for (let i = 0; i < roomCount; i++)
-            grid.set(...positions[i].spread(), CellType.ROOM);
+            grid.set(positions[i], CellType.ROOM);
 
 
         return grid;
@@ -55,7 +55,7 @@ export const AssignmentFunctions: Record<GenerationRule, (mapSize: Vec2, roomCou
         Random.shuffle(positions);
 
         for (let i = 0; i < Math.min(roomCount, positions.length); i++)
-            grid.set(...positions[i].spread(), CellType.ROOM);
+            grid.set(positions[i], CellType.ROOM);
 
         return grid;
     }
@@ -175,7 +175,7 @@ export class DungeonGenerator {
     private fillRect(rect: Rect, tile: Tile = Tile.FLOOR) {
         for (let y = rect.y; y < rect.y + rect.height; y++)
             for (let x = rect.x; x < rect.x + rect.width; x++)
-                this.grid.set(x, y, tile);
+                this.grid.setXY(x, y, tile);
     }
     /** Checks if the connection is already in the given list, and adds it if not */
     private addConnections(list: Connection[], connections: Connection[]) {
@@ -199,7 +199,7 @@ export class DungeonGenerator {
         const positions = [];
         for (let y = room.top; y < room.bottom; y++)
             for (let x = room.left; x < room.right; x++) {
-                if (this.grid.get(x, y) === freeTile)
+                if (this.grid.getXY(x, y) === freeTile)
                     positions.push(V2(x, y));
             }
 
@@ -280,7 +280,7 @@ export class DungeonGenerator {
 
             for (let x = 0; x < cellTypes.width; x++) {
                 // Place the room
-                const room = this.generateRoom(x, y, cellTypes.get(x, y));
+                const room = this.generateRoom(x, y, cellTypes.getXY(x, y));
 
                 row.push(room);
             }
@@ -301,12 +301,12 @@ export class DungeonGenerator {
         const betweenP1 = V2(pos.x, nPos.y);
         const betweenP2 = V2(nPos.x, pos.y);
 
-        if (cellTypes.get(...betweenP1.spread()) === CellType.CORRIDOR && Random.chance(this.info.connectionRate))
+        if (cellTypes.get(betweenP1) === CellType.CORRIDOR && Random.chance(this.info.connectionRate))
             this.addConnections(connections, [
                 Vec2.sorted(pos, betweenP1) as Connection,
                 Vec2.sorted(betweenP1, nPos) as Connection,
             ]);
-        if (cellTypes.get(...betweenP2.spread()) === CellType.CORRIDOR && Random.chance(this.info.connectionRate))
+        if (cellTypes.get(betweenP2) === CellType.CORRIDOR && Random.chance(this.info.connectionRate))
             this.addConnections(connections, [
                 Vec2.sorted(pos, betweenP2) as Connection,
                 Vec2.sorted(betweenP2, nPos) as Connection,
@@ -391,7 +391,7 @@ export class DungeonGenerator {
         while (rooms.length > 0) {
             // Get the closest room to the current room
             const closestRoom = rooms.reduce((closest, room) => {
-                if (cellTypes.get(room.x, room.y) !== CellType.ROOM) return { room, dist: 100000 };
+                if (cellTypes.get(room) !== CellType.ROOM) return { room, dist: 100000 };
                 const dist = currentRoom.dist(room);
                 if (dist < closest.dist) return { room, dist };
                 return closest;
@@ -411,10 +411,10 @@ export class DungeonGenerator {
     private removeUnusedCorridors(cellTypes: ByteGrid, connections: Connection[]) {
         for (let y = 0; y < cellTypes.height; y++)
             for (let x = 0; x < cellTypes.width; x++)
-                if (cellTypes.get(x, y) === CellType.CORRIDOR) {
+                if (cellTypes.getXY(x, y) === CellType.CORRIDOR) {
                     const pos = V2(x, y);
                     if (!connections.some(([p1, p2]) => p1.equals(pos) || p2.equals(pos)))
-                        cellTypes.set(x, y, CellType.EMPTY);
+                        cellTypes.setXY(x, y, CellType.EMPTY);
                 }
     }
 
@@ -429,7 +429,7 @@ export class DungeonGenerator {
         for (let y = 0; y < cellTypes.height; y++)
             for (let x = 0; x < cellTypes.width; x++)
                 // If the cell is a room
-                if (cellTypes.get(x, y) === CellType.ROOM) {
+                if (cellTypes.getXY(x, y) === CellType.ROOM) {
                     // Get the connections
                     const cellConnections = this.connectionsForCell(cellTypes, V2(x, y));
                     // Add the connections to the list
@@ -459,7 +459,7 @@ export class DungeonGenerator {
         const points = seg.getPoints();
 
         for (const point of points)
-            this.grid.set(point.x, point.y, Tile.FLOOR);
+            this.grid.set(point, Tile.FLOOR);
 
         return points;
     }
@@ -567,7 +567,7 @@ export class DungeonGenerator {
             for (let x = 0; x < rooms[0].length; x++) {
                 const room = rooms[y][x];
                 // If the room exists
-                if (room && cellTypes.get(x, y) === CellType.ROOM) {
+                if (room && cellTypes.getXY(x, y) === CellType.ROOM) {
                     // Fill the room
                     this.fillRect(room, Tile.FLOOR);
                 }
@@ -618,7 +618,7 @@ export class DungeonGenerator {
     private extraCorridorsTopCheck(room: Rect): Vec2 | null {
         for (let x = room.left; x < room.right; x++) {
             const tile = V2(x, room.top);
-            if (this.grid.get(tile.x, tile.y - 1) === Tile.FLOOR) {
+            if (this.grid.getXY(tile.x, tile.y - 1) === Tile.FLOOR) {
                 return tile;
             }
         }
@@ -627,7 +627,7 @@ export class DungeonGenerator {
     private extraCorridorsRightCheck(room: Rect): Vec2 | null {
         for (let y = room.top; y < room.bottom; y++) {
             const tile = V2(room.right - 1, y);
-            if (this.grid.get(tile.x + 1, tile.y) === Tile.FLOOR) {
+            if (this.grid.getXY(tile.x + 1, tile.y) === Tile.FLOOR) {
                 return tile;
             }
         }
@@ -636,7 +636,7 @@ export class DungeonGenerator {
     private extraCorridorsBottomCheck(room: Rect): Vec2 | null {
         for (let x = room.left; x < room.right; x++) {
             const tile = V2(x, room.bottom - 1);
-            if (this.grid.get(tile.x, tile.y + 1) === Tile.FLOOR) {
+            if (this.grid.getXY(tile.x, tile.y + 1) === Tile.FLOOR) {
                 return tile;
             }
         }
@@ -645,7 +645,7 @@ export class DungeonGenerator {
     private extraCorridorsLeftCheck(room: Rect): Vec2 | null {
         for (let y = room.top; y < room.bottom; y++) {
             const tile = V2(room.left, y);
-            if (this.grid.get(tile.x - 1, tile.y) === Tile.FLOOR) {
+            if (this.grid.getXY(tile.x - 1, tile.y) === Tile.FLOOR) {
                 return tile;
             }
         }
@@ -673,15 +673,15 @@ export class DungeonGenerator {
             // The direction the corridor will go
             const offset = this.getDirectionOffset(dir);
             // Update the position
-            point.addInPlace(offset).spread();
+            point.addInPlace(offset);
             // Set the position to a floor
-            this.grid.set(...point.spread(), Tile.FLOOR);
+            this.grid.set(point, Tile.FLOOR);
             // Get the opposite sides
             const sides = this.getOppositeSides(dir);
 
             // If any of the opposite sides connect to a floor space, break
-            if (this.grid.get(...point.add(this.getDirectionOffset(sides[0])).spread()) !== Tile.WALL) break;
-            if (this.grid.get(...point.add(this.getDirectionOffset(sides[1])).spread()) !== Tile.WALL) break;
+            if (this.grid.get(point.add(this.getDirectionOffset(sides[0]))) !== Tile.WALL) break;
+            if (this.grid.get(point.add(this.getDirectionOffset(sides[1]))) !== Tile.WALL) break;
 
             // If the max length is reached, change direction
             if (maxLength-- <= 0) {
@@ -691,7 +691,7 @@ export class DungeonGenerator {
                 if (maxTurns-- <= 0) break;
             }
             // Stop once you reach a floor space or before you reach an unbreakable wall
-        } while (this.grid.get(...point.spread()) === Tile.FLOOR || this.grid.get(...point.spread()) !== Tile.UNBREAKABLE_WALL);
+        } while (this.grid.get(point) === Tile.FLOOR || this.grid.get(point) !== Tile.UNBREAKABLE_WALL);
     }
 
     // Place on this side
@@ -700,12 +700,12 @@ export class DungeonGenerator {
         if (!tile) return false;
 
         const proposedStart1 = V2(tile.x - 2, tile.y);
-        if (this.grid.get(...proposedStart1.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart1) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart1, 0);
             return true;
         }
         const proposedStart2 = V2(tile.x + 2, tile.y);
-        if (this.grid.get(...proposedStart2.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart2) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart2, 0);
             return true;
         }
@@ -717,12 +717,12 @@ export class DungeonGenerator {
         if (!tile) return false;
 
         const proposedStart1 = V2(tile.x, tile.y - 2);
-        if (this.grid.get(...proposedStart1.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart1) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart1, 1);
             return true;
         }
         const proposedStart2 = V2(tile.x, tile.y + 2);
-        if (this.grid.get(...proposedStart2.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart2) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart2, 1);
             return true;
         }
@@ -734,12 +734,12 @@ export class DungeonGenerator {
         if (!tile) return false;
 
         const proposedStart1 = V2(tile.x - 2, tile.y);
-        if (this.grid.get(...proposedStart1.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart1) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart1, 2);
             return true;
         }
         const proposedStart2 = V2(tile.x + 2, tile.y);
-        if (this.grid.get(...proposedStart2.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart2) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart2, 2);
             return true;
         }
@@ -751,12 +751,12 @@ export class DungeonGenerator {
         if (!tile) return false;
 
         const proposedStart1 = V2(tile.x, tile.y - 2);
-        if (this.grid.get(...proposedStart1.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart1) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart1, 3);
             return true;
         }
         const proposedStart2 = V2(tile.x, tile.y + 2);
-        if (this.grid.get(...proposedStart2.spread()) === Tile.FLOOR) {
+        if (this.grid.get(proposedStart2) === Tile.FLOOR) {
             this.drawExtraCorridor(proposedStart2, 3);
             return true;
         }
@@ -800,19 +800,19 @@ export class DungeonGenerator {
         // Loop through the top and bottom of the room
         for (let x = room.left; x < room.right; x++) {
             const top = V2(x, room.top);
-            if (this.grid.get(top.x, top.y - 1) === Tile.FLOOR)
+            if (this.grid.getXY(top.x, top.y - 1) === Tile.FLOOR)
                 vitalPoints.push(top);
             const bottom = V2(x, room.bottom - 1);
-            if (this.grid.get(bottom.x, bottom.y + 1) === Tile.FLOOR)
+            if (this.grid.getXY(bottom.x, bottom.y + 1) === Tile.FLOOR)
                 vitalPoints.push(bottom);
         }
         // Loop through the left and right of the room
         for (let y = room.top; y < room.bottom; y++) {
             const left = V2(room.left, y);
-            if (this.grid.get(left.x - 1, left.y) === Tile.FLOOR)
+            if (this.grid.getXY(left.x - 1, left.y) === Tile.FLOOR)
                 vitalPoints.push(left);
             const right = V2(room.right - 1, y);
-            if (this.grid.get(right.x + 1, right.y) === Tile.FLOOR)
+            if (this.grid.getXY(right.x + 1, right.y) === Tile.FLOOR)
                 vitalPoints.push(right);
         }
 
@@ -827,7 +827,7 @@ export class DungeonGenerator {
         // For each vital point
         for (const vitalPoint of unobstructablePoints) {
             // Place the vital point
-            this.grid.set(vitalPoint.x, vitalPoint.y, Tile.UNOBSTRUCTABLE);
+            this.grid.set(vitalPoint, Tile.UNOBSTRUCTABLE);
         }
     }
 
@@ -861,8 +861,8 @@ export class DungeonGenerator {
             // Loop through the area
             for (const pos of area.iter()) {
                 if (Random.chance(this.getTerrainDensity())) {
-                    if (this.grid.get(pos.x, pos.y) === Tile.WALL) {
-                        this.grid.set(pos.x, pos.y, Tile.WATER);
+                    if (this.grid.get(pos) === Tile.WALL) {
+                        this.grid.set(pos, Tile.WATER);
                     }
                 }
             }
@@ -874,7 +874,7 @@ export class DungeonGenerator {
         const points = this.getRoomFreePositions(room);
         if (points.length === 0) return;
         const point = Random.choose(points);
-        this.grid.set(point.x, point.y, tile);
+        this.grid.set(point, tile);
     }
 
     private placeMarkersInRooms(spaces: Room[][], amount: number, tile: Tile) {
@@ -923,11 +923,11 @@ export class DungeonGenerator {
             itemArea = itemArea.inflate(1);
 
         for (const pos of carpetArea.iter()) {
-            this.grid.set(pos.x, pos.y, Tile.KECLEON_CARPET);
+            this.grid.set(pos, Tile.KECLEON_CARPET);
         }
         for (const pos of itemArea.iter()) {
-            this.grid.set(pos.x, pos.y, Tile.KECLEON_ITEM);
+            this.grid.set(pos, Tile.KECLEON_ITEM);
         }
-        this.grid.set(...carpetArea.getRandomPoint().spread(), Tile.KECLEON_MARKER);
+        this.grid.set(carpetArea.getRandomPoint(), Tile.KECLEON_MARKER);
     }
 }

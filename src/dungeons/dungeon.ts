@@ -85,7 +85,7 @@ export class DungeonState {
             const area = new ByteGrid(1, 1);
 
             // If the tile is Unbreakable, return
-            if (this.floor.grid.get(...point.spread()) === Tile.UNBREAKABLE_WALL) return;
+            if (this.floor.grid.get(point) === Tile.UNBREAKABLE_WALL) return;
 
             if (event.event.button == 0) {
                 area.fill(Tile.FLOOR);

@@ -183,7 +183,7 @@ export class DungeonFloor {
         if (!stairs?.isHidden) return true;
         // Find the stairs
         const viewArea = this.getActionArea(position);
-        if (viewArea.get(...stairs.position.xy) !== Tile.OUT_OF_BOUNDS) {
+        if (viewArea.get(stairs.position) !== Tile.OUT_OF_BOUNDS) {
             stairs.isHidden = false;
             return true;
         }
@@ -202,7 +202,7 @@ export class DungeonFloor {
             Tile.WATER,
         ];
 
-        return OBSTACLES.includes(this.grid.get(x, y));
+        return OBSTACLES.includes(this.grid.getXY(x, y));
     }
 
     /** If this tile cannot be traversed by this pokemon while walking diagonally */
@@ -212,7 +212,7 @@ export class DungeonFloor {
             Tile.UNBREAKABLE_WALL,
         ];
 
-        return UNPASSABLE.includes(this.grid.get(x, y));
+        return UNPASSABLE.includes(this.grid.getXY(x, y));
     }
 
     public canMoveTowards(pokemon: DungeonPokemon, dir: Direction): boolean {

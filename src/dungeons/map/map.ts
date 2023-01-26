@@ -234,7 +234,7 @@ export class DungeonMap {
         // Update the grid
         for (let x = start.x; x < start.x + values.width; x++)
             for (let y = start.y; y < start.y + values.height; y++)
-                this.grid.set(x, y, values.get(x - start.x, y - start.y));
+                this.grid.setXY(x, y, values.getXY(x - start.x, y - start.y));
 
         // Calculate the new tilings for the portion of the grid
         const redoStart = start.subtract(V2(1, 1));
@@ -252,17 +252,17 @@ export class DungeonMap {
             for (let y = redoStart.y; y < redoStart.y + redoSize.y; y++) {
                 this.wallMeshes.removeInstanceAt(V2(x, y));
                 this.waterMeshes.removeInstanceAt(V2(x, y));
-                this.loaded.set(x, y, 0);
+                this.loaded.setXY(x, y, 0);
             }
 
         // Create the new instances
         for (let x = redoStart.x; x < redoStart.x + redoSize.x; x++)
             for (let y = redoStart.y; y < redoStart.y + redoSize.y; y++) {
-                const tile = this.grid.get(x, y);
+                const tile = this.grid.getXY(x, y);
                 if (tile === Tile.WALL || tile === Tile.UNBREAKABLE_WALL)
-                    this.wallMeshes.instance(V2(x, y), wallGridTilings.get(x, y), this.loaded);
+                    this.wallMeshes.instance(V2(x, y), wallGridTilings.getXY(x, y), this.loaded);
                 else if (tile === Tile.WATER)
-                    this.waterMeshes.instance(V2(x, y), waterGridTilings.get(x, y), this.loaded);
+                    this.waterMeshes.instance(V2(x, y), waterGridTilings.getXY(x, y), this.loaded);
             }
 
         // Update the floor

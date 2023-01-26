@@ -83,7 +83,9 @@ class App {
     private data: Data;
     private controls: Controls;
 
-    private deltaTime: number = 0;
+    public deltaTime: number = 0;
+    public clockSpeed: number = 6;
+    public updateLoop!: number;
 
 
     constructor() {
@@ -108,11 +110,17 @@ class App {
             this.state.render();
         });
 
-        setInterval(() => {
+        this.createUpdateLoop();
+    }
+
+    public createUpdateLoop(clockSpeed: number = this.clockSpeed) {
+        if (this.updateLoop) clearInterval(this.updateLoop);
+
+        this.updateLoop = setInterval(() => {
             const now = performance.now();
             this.state.update();
             this.deltaTime = performance.now() - now;
-        }, 6);
+        }, clockSpeed);
     }
 
     private addFPSCounter() {
@@ -155,3 +163,7 @@ class App {
 }
 
 export const app = new App();
+// @ts-ignore
+window.setClockSpeed = (value) => {
+    app.createUpdateLoop(value);
+};

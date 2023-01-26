@@ -163,7 +163,7 @@ export class Minimap {
         // Draw the tilemap
         for (const [pos, tile] of this.wallTilings) {
             if (tile === Tiling.BLANK) continue;
-            let visited: MinimapTilesVariants = this.explored.get(...pos.xy);
+            let visited: MinimapTilesVariants = this.explored.get(pos);
             if (visited === MinimapTilesVariants.NOT_VISITED) continue;
             const x = pos.x * TSIZE;
             const y = pos.y * TSIZE;
@@ -171,8 +171,8 @@ export class Minimap {
             const tileParams = DungeonTiling.getCrop(tile, Tile.WALL, visited - 1, TilingTextureMode.TEXTURE, TSIZE);
             this.tiles.drawImage(this.texture, ...tileParams, x, y, TSIZE, TSIZE);
             // Draw the water tiles
-            if (this.floor.grid.get(...pos.xy) !== Tile.WATER) continue;
-            const waterParams = DungeonTiling.getCrop(this.waterTilings.get(...pos.xy), Tile.WALL, 3, TilingTextureMode.TEXTURE, TSIZE);
+            if (this.floor.grid.get(pos) !== Tile.WATER) continue;
+            const waterParams = DungeonTiling.getCrop(this.waterTilings.get(pos), Tile.WALL, 3, TilingTextureMode.TEXTURE, TSIZE);
             this.tiles.drawImage(this.texture, ...waterParams, x, y, TSIZE, TSIZE);
         }
     }
@@ -191,7 +191,7 @@ export class Minimap {
         for (const object of this.floor.objects) {
             const objpos = object.position;
             // Draw if the object is on a tile you have visited or is at least charted
-            if (this.explored.get(...objpos.xy) === MinimapTilesVariants.NOT_VISITED) continue;
+            if (this.explored.get(objpos) === MinimapTilesVariants.NOT_VISITED) continue;
             // For carpets
             if (object instanceof DungeonCarpet) {
                 this.drawObject(objpos, MinimapObjectType.CARPET);
@@ -201,7 +201,7 @@ export class Minimap {
         for (const object of this.floor.objects) {
             const objpos = object.position;
             // Draw if the object is on a tile you have visited or is at least charted
-            if (this.explored.get(...objpos.xy) === MinimapTilesVariants.NOT_VISITED) continue;
+            if (this.explored.get(objpos) === MinimapTilesVariants.NOT_VISITED) continue;
             // Skip carpets
             if (object instanceof DungeonCarpet) continue;
             // For items
@@ -219,7 +219,7 @@ export class Minimap {
         for (const enemy of this.floor.pokemon.getEnemies()) {
             const enemypos = enemy.position;
             // Draw if the enemy is on a tile you are visiting
-            if (this.explored.get(...enemypos.xy) === MinimapTilesVariants.VISITING) {
+            if (this.explored.get(enemypos) === MinimapTilesVariants.VISITING) {
                 this.drawObject(enemypos, MinimapObjectType.ENEMY);
             }
         }

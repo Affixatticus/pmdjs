@@ -27,18 +27,26 @@ export class ByteGrid {
         return this;
     }
 
-    public get(x: number, y: number) {
+    public getXY(x: number, y: number) {
         if (!this.isInside(x, y))
             return -1;
 
         return this._data[y * this._width + x];
     }
 
-    public set(x: number, y: number, value: number) {
+    public get(position: Vec2) {
+        return this.getXY(position.x, position.y);
+    }
+
+    public setXY(x: number, y: number, value: number) {
         if (!this.isInside(x, y))
             return;
 
         this._data[y * this._width + x] = value;
+    }
+
+    public set(position: Vec2, value: number) {
+        this.setXY(position.x, position.y, value);
     }
 
     public get width() {
@@ -63,7 +71,7 @@ export class ByteGrid {
     public *[Symbol.iterator](): IterableIterator<[Vec2, number]> {
         for (let y = 0; y < this._height; y++)
             for (let x = 0; x < this._width; x++)
-                yield [V2(x, y), this.get(x, y)];
+                yield [V2(x, y), this.getXY(x, y)];
     }
 
     public getUniqueValues() {
@@ -93,7 +101,7 @@ export class ByteGrid {
 
         for (let y = y0; y < y1; y++)
             for (let x = x0; x < x1; x++)
-                yield [V2(x, y), this.get(x, y)];
+                yield [V2(x, y), this.getXY(x, y)];
     }
 
     public *getNeighborsPositions(x: number, y: number, range: number = 1) {
@@ -103,17 +111,21 @@ export class ByteGrid {
                 if (_x === x && _y === y)
                     continue;
 
-                const value = this.get(_x, _y);
+                const value = this.getXY(_x, _y);
 
                 yield [V2(_x, _y), value] as [Vec2, number];
             }
     }
 
-    public getNeighbors(x: number, y: number) {
+    public getNeighbors(position: Vec2) {
+        return this.getNeighborsXY(position.x, position.y);
+    }
+
+    public getNeighborsXY(x: number, y: number) {
         return [
-            this.get(x - 1, y - 1), this.get(x, y - 1), this.get(x + 1, y - 1),
-            this.get(x - 1, y), this.get(x + 1, y),
-            this.get(x - 1, y + 1), this.get(x, y + 1), this.get(x + 1, y + 1)
+            this.getXY(x - 1, y - 1), this.getXY(x, y - 1), this.getXY(x + 1, y - 1),
+            this.getXY(x - 1, y), /**********************/  this.getXY(x + 1, y),
+            this.getXY(x - 1, y + 1), this.getXY(x, y + 1), this.getXY(x + 1, y + 1)
         ];
     }
 
@@ -123,10 +135,10 @@ export class ByteGrid {
 
         for (let y = 2; y < this._height - 1; y++)
             for (let x = 2; x < this._width - 1; x++) {
-                if (this.get(x, y) !== Tile.FLOOR)
+                if (this.getXY(x, y) !== Tile.FLOOR)
                     continue;
 
-                const neighbors = this.getNeighbors(x, y);
+                const neighbors = this.getNeighborsXY(x, y);
 
                 if (neighbors.every(n => n === Tile.FLOOR))
                     openPositions.push(V2(x, y));
@@ -141,7 +153,7 @@ export class ByteGrid {
 
         for (let y = 0; y < this._height; y++)
             for (let x = 0; x < this._width; x++) {
-                if (this.get(x, y) === Tile.FLOOR)
+                if (this.getXY(x, y) === Tile.FLOOR)
                     freePositions.push(V2(x, y));
             }
 
@@ -165,7 +177,7 @@ export class ByteGrid {
 
         for (let y = 0; y < size.y; y++)
             for (let x = 0; x < size.x; x++)
-                grid.set(x, y, this.get(start.x + x, start.y + y));
+                grid.setXY(x, y, this.getXY(start.x + x, start.y + y));
 
         return grid;
     }
@@ -175,7 +187,7 @@ export class ByteGrid {
 
         for (const [pos] of grid) {
             const [x, y] = pos.xy;
-            grid.set(x, y, this.get(x, y));
+            grid.setXY(x, y, this.getXY(x, y));
         }
 
         return grid;
@@ -200,25 +212,25 @@ export class ByteGrid {
     public hideOccupiedPositions(floor: DungeonFloor, pokemon: DungeonPokemon = floor.pokemon.getLeader()) {
         // Hide under all the pokemon on the floor
         for (const pokemon of floor.pokemon.getAll()) {
-            this.set(...pokemon.position.xy, 0);
+            this.set(pokemon.position, 0);
         }
         // Hide under all the objects on the floor
         for (const object of floor.objects) {
             // But keep it on the carpet
             if (object instanceof DungeonCarpet) continue;
-            this.set(...object.position.xy, 0);
+            this.set(object.position, 0);
         }
         // Hide under all unpassable tiles
         for (const [pos, visible] of this) {
             if (!visible) continue;
-            if (floor.isObstacle(...pos.xy, pokemon)) this.set(...pos.xy, 0);
+            if (floor.isObstacle(...pos.xy, pokemon)) this.set(pos, 0);
         }
         return this;
     }
 
     public paste(mask: ByteGrid) {
         for (const [pos, tile] of mask) {
-            this.set(...pos.xy, tile);
+            this.set(pos, tile);
         }
     }
 
@@ -226,7 +238,7 @@ export class ByteGrid {
         for (const [pos, tile] of mask) {
             // If the mask's tile is 0, skip it
             if (tile === 0) continue;
-            this.set(...pos.xy, tile);
+            this.set(pos, tile);
         }
         return this;
     }
@@ -236,7 +248,7 @@ export class ByteGrid {
         let str = '';
         for (let y = 0; y < this._height; y++) {
             for (let x = 0; x < this._width; x++) {
-                const tile = this.get(x, y);
+                const tile = this.getXY(x, y);
                 str += tile.toString(16).padStart(2, '0') + ' ';
             }
             str += '\n';
@@ -255,12 +267,12 @@ export class ByteGrid {
 
         for (const [pos, tile] of this) {
             if (tile === 0) {
-                tilingsGrid.set(...pos.xy, 255);
+                tilingsGrid.set(pos, 255);
                 continue;
             }
-            const neighbors = this.getNeighbors(...pos.xy).map((t) => t ? true : false);
+            const neighbors = this.getNeighbors(pos).map((t) => t ? true : false);
             const tiling = NeighborsLookupTable[neighbors.map(n => n ? "1" : "0").join("")]
-            tilingsGrid.set(...pos.xy, tiling);
+            tilingsGrid.set(pos, tiling);
         }
 
         return tilingsGrid;
@@ -284,20 +296,20 @@ export class ByteGrid {
 
     public floodFill(point: Vec2, set: number) {
         const queue = [point];
-        const replace = this.get(...point.xy);
+        const replace = this.get(point);
 
         while (queue.length) {
-            const [x, y] = queue.pop()!.xy;
+            const position = queue.pop()!;
 
-            if (this.get(x, y) === set) continue;
-            if (this.get(x, y) !== replace) continue;
+            if (this.get(position) === set) continue;
+            if (this.get(position) !== replace) continue;
 
-            this.set(x, y, set);
+            this.set(position, set);
 
-            queue.push(V2(x + 1, y));
-            queue.push(V2(x - 1, y));
-            queue.push(V2(x, y + 1));
-            queue.push(V2(x, y - 1));
+            queue.push(V2(position.x + 1, position.y));
+            queue.push(V2(position.x - 1, position.y));
+            queue.push(V2(position.x, position.y + 1));
+            queue.push(V2(position.x, position.y - 1));
         }
     }
 }
@@ -322,16 +334,24 @@ export class OffsetGrid extends ByteGrid {
         return this._start;
     }
 
-    public set(x: number, y: number, value: number) {
-        super.set(x - this.start.x, y - this.start.y, value);
+    public setXY(x: number, y: number, value: number) {
+        super.setXY(x - this.start.x, y - this.start.y, value);
     }
 
-    public get(x: number, y: number) {
-        return super.get(x - this.start.x, y - this.start.y);
+    public set(position: Vec2, value: number) {
+        this.setXY(position.x, position.y, value);
+    }
+
+    public getXY(x: number, y: number) {
+        return super.getXY(x - this.start.x, y - this.start.y);
+    }
+
+    public get(position: Vec2) {
+        return this.getXY(position.x, position.y);
     }
 
     public getValueAt(x: number, y: number) {
-        return super.get(x, y);
+        return super.getXY(x, y);
     }
 
     public getActualPosition(x: number, y: number): Vec2 {
@@ -349,7 +369,7 @@ export class OffsetGrid extends ByteGrid {
             return false;
 
         for (const [pos, value] of this)
-            if (value !== other.get(...pos.xy))
+            if (value !== other.get(pos))
                 return false;
 
         return true;
@@ -367,9 +387,9 @@ export class OffsetGrid extends ByteGrid {
             // Set all the neighboring tiles to 1
             for (const [neighborPos, _]
                 of this.getNeighborsPositions(...pos.xy, amount)) {
-                newGrid.set(...neighborPos.xy, 1);
+                newGrid.set(neighborPos, 1);
             }
-            newGrid.set(...pos.xy, 1);
+            newGrid.set(pos, 1);
         }
 
         return newGrid;
@@ -380,7 +400,7 @@ export class OffsetGrid extends ByteGrid {
         // Loop through all the tiles in the grid
         for (const [pos, tile] of newGrid) {
             if (tile === Tile.OUT_OF_BOUNDS) continue;
-            newGrid.set(...pos.xy, grid.get(...pos.xy));
+            newGrid.set(pos, grid.get(pos));
         }
         return newGrid;
     }
@@ -419,15 +439,17 @@ export class OffsetGrid extends ByteGrid {
         const newStart = this.start.add(V2(offsetX, offsetY));
         const newGrid = new OffsetGrid(newWidth, newHeight, newStart);
         for (const [pos, value] of this)
-            newGrid.set(...pos.xy, value);
+            newGrid.set(pos, value);
 
         return newGrid;
     }
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, number]> {
         for (let y = 0; y < this.height; y++)
-            for (let x = 0; x < this.width; x++)
-                yield [V2(x + this.start.x, y + this.start.y), this.get(x + this.start.x, y + this.start.y)];
+            for (let x = 0; x < this.width; x++) {
+                const pos = this.start.add(V2(x, y));
+                yield [pos, this.get(pos)];
+            }
     }
 
     public copy() {
@@ -441,7 +463,7 @@ export class OffsetGrid extends ByteGrid {
 
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                const tile = this.get(x + this.start.x, y + this.start.y);
+                const tile = this.get(this.start.add(V2(x, y)));
                 str += tile.toString(16).padStart(2, '0') + ' ';
             }
             str += '\n';
@@ -472,12 +494,12 @@ export class DungeonGrid extends ByteGrid {
      * @param size The size of the grid (to get the tilings subgrid with all the context)
      */
     public mapTilingsFor(tile: number, ignoreTiles: number[] = [], includeTiles: number[] = [], start: Vec2 = V2(0, 0), size: Vec2 = this.size): OffsetGrid {
-        const tilingGrid = new OffsetGrid(...size.spread(), start);
+        const tilingGrid = new OffsetGrid(...size.xy, start);
 
         for (let y = start.y; y < start.y + size.y; y++) {
             for (let x = start.x; x < start.x + size.x; x++) {
-                tilingGrid.set(x, y, (DungeonTiling.getGridTiling(
-                    this.get(x, y), this.getNeighbors(x, y),
+                tilingGrid.setXY(x, y, (DungeonTiling.getGridTiling(
+                    this.getXY(x, y), this.getNeighborsXY(x, y),
                     tile, ignoreTiles, includeTiles)));
             }
         }
@@ -526,9 +548,9 @@ export class DungeonGrid extends ByteGrid {
         const viewArea = this.toOffsetGrid(position.move(-CORRIDOR_VIEW_RADIUS), CORRIDOR_VIEW_AREA);
         for (const [pos, tile] of viewArea) {
             if (pos.dist(position) <= CORRIDOR_VIEW_RADIUS && this.isWalkable(tile))
-                viewArea.set(...pos.xy, 1);
+                viewArea.set(pos, 1);
             else
-                viewArea.set(...pos.xy, 0);
+                viewArea.set(pos, 0);
         }
         return viewArea;
     }
@@ -542,9 +564,9 @@ export class DungeonGrid extends ByteGrid {
         // Calculate a map of possible rooms
         for (const [pos, tile] of subGrid) {
             if (!this.isWalkable(tile) || this.isCorridor(pos))
-                subGrid.set(...pos.xy, 0);
+                subGrid.set(pos, 0);
             else
-                subGrid.set(...pos.xy, 1);
+                subGrid.set(pos, 1);
         }
 
         // Flood fill the map to find the room the position is in
@@ -553,9 +575,9 @@ export class DungeonGrid extends ByteGrid {
         // Replace everything that is not 2 with 0 amd everything that is 2 with 1
         for (const [pos, tile] of subGrid) {
             if (tile === 2)
-                subGrid.set(...pos.xy, 1);
+                subGrid.set(pos, 1);
             else
-                subGrid.set(...pos.xy, 0);
+                subGrid.set(pos, 0);
         }
 
         return subGrid.trim();
@@ -563,7 +585,7 @@ export class DungeonGrid extends ByteGrid {
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, Tile]> {
         for (const [pos, _value] of super[Symbol.iterator]())
-            yield [pos, this.get(pos.x, pos.y)];
+            yield [pos, this.get(pos)];
     }
 
 }

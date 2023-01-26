@@ -112,7 +112,7 @@ export class LightOverlay {
         ctx.fillRect(0, 0, size * LMS, size * LMS);
         for (let x = 0; x < width; x++) {
             for (let y = 0; y < height; y++) {
-                const tiling = tilings.get(x, y);
+                const tiling = tilings.getXY(x, y);
                 const params: CropParams = DungeonTiling.getCrop(tiling, Tile.WALL, 0, TilingTextureMode.TEXTURE);
 
                 // Draw the light map

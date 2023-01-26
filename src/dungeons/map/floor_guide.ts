@@ -75,8 +75,8 @@ export class FloorGuide {
         let position = this.pokemon.position.clone();
         for (let i = 0; i < 10; i++) {
             position.addInPlace(direction.toVector());
-            if (actionArea.get(...position.xy) === -1) break;
-            actionArea.set(...position.xy, 2);
+            if (actionArea.get(position) === -1) break;
+            actionArea.set(position, 2);
         }
 
         // Remove hidden points

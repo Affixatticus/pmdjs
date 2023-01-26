@@ -109,7 +109,7 @@ export class DungeonObjectGenerator {
 
     /** Clears the tile */
     private clearTile(pos: Vec2, tile: Tile = Tile.FLOOR) {
-        this.grid.set(pos.x, pos.y, tile);
+        this.grid.set(pos, tile);
     }
 
     // ANCHOR Create x functions

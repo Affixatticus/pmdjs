@@ -111,8 +111,8 @@ export class TileMeshContainer {
 
     /** Gets a tiling variant for placing */
     public getVariantForPlacing(tiling: Tiling, pos: Vec2): TileMesh | null {
-        const meshGroup = this.list[tiling] as MeshGroup;
-        if (meshGroup === null) return null;
+        const meshGroup = this.list[tiling]!;
+        if (!meshGroup) return null;
         if (meshGroup instanceof TileMesh) return meshGroup;
 
         // Get all the keys for the meshgroup
@@ -173,7 +173,7 @@ export class TileMeshContainer {
         if (tiling === Tiling.BLANK) return;
 
         // If the tile is not loaded, or the loaded grid doesn't exist
-        if (!loaded || loaded.get(...pos.spread()) === 0) {
+        if (!loaded || loaded.get(pos) === 0) {
             const tileMesh = this.getVariantForPlacing(tiling, pos);
             if (tileMesh === null) return;
             // Create the instance
@@ -181,7 +181,7 @@ export class TileMeshContainer {
             // Add it to the list of instances
             this.instances[pos.toString()] = [instanceId, tileMesh.tiling, tileMesh.variant];
             // Update the loaded grid if it exists
-            loaded?.set(...pos.spread(), 1);
+            loaded?.set(pos, 1);
         }
     }
 
