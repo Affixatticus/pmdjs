@@ -107,7 +107,11 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 { id: ItemId.APPLE, chance: 10 },
                 // { id: ItemId.BIG_APPLE, chance: 1 },
             ],
-            traps: null,
+            traps: [
+                { id: TileObject.TRAP_01, chance: 100 },
+                { id: TileObject.FAN_TRAP, chance: 50 },
+                { id: TileObject.VOLTORB_TRAP, chance: 25 },
+            ],
             weathers: [{
                 id: Weather.CLEAR,
                 chance: 100
@@ -123,7 +127,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 roomDensity: .75,
                 terrainDensity: 40,
                 groundItemDensity: 4,
-                tileDensity: 0,
+                tileDensity: 4,
             }
         },
         [20]: {

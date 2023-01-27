@@ -29,7 +29,11 @@ export class ItemStack {
     public get isEdible(): boolean {
         return this.definition?.eat !== undefined;
     }
-    
+
+    public get itemAmount(): [ItemId, number] {
+        return [this.item, this.amount];
+    }
+
     // ANCHOR Methods
     public sameAs(stack: ItemStack): boolean {
         return this.item === stack.item;

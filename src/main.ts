@@ -1,9 +1,8 @@
 import { Engine } from '@babylonjs/core';
 import { Inventory } from './common/menu/inventory';
+import { GameMenu } from './common/menu/menu';
 import { ItemId } from './data/item/ids';
-import { ItemList } from './data/item/items';
 import { ItemStack } from './data/item/item_stack';
-import { Pokedex } from './data/pokemon';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
 
@@ -39,23 +38,23 @@ const INITIAL_GAME_DATA: Data = {
                     }
                 ]
             },
-            // {
-            //     id: [Pokedex.CHARIZARD, 0, false, 0],
-            //     stats: {
-            //         hp: 0,
-            //         attack: 0,
-            //         defense: 0,
-            //         spatk: 0,
-            //         spdef: 0,
-            //         speed: 0,
-            //     },
-            //     moves: [
-            //         {
-            //             id: 0,
-            //             ppLost: 0
-            //         }
-            //     ]
-            // },
+            {
+                id: [495, 0, false, 0],
+                stats: {
+                    hp: 0,
+                    attack: 0,
+                    defense: 0,
+                    spatk: 0,
+                    spdef: 0,
+                    speed: 0,
+                },
+                moves: [
+                    {
+                        id: 0,
+                        ppLost: 0
+                    }
+                ]
+            },
             // {
             //     id: [495, 0, false, 0],
             //     stats: {
@@ -87,6 +86,7 @@ class App {
     private data: Data;
     private controls: Controls;
 
+    private menu: GameMenu;
     private inventory: Inventory;
 
     public deltaTime: number = 0;
@@ -99,24 +99,26 @@ class App {
         this.canvas = <HTMLCanvasElement>document.getElementById("scene");
         this.engine = new Engine(this.canvas);
         this.controls = new Controls();
+        // Global components
+        this.inventory = new Inventory();
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
+        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
+        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
+        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
+        this.menu = new GameMenu(this.inventory);
         // State
         this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;
         this.state = this.createState(this.gameState);
-
-        this.inventory = new Inventory();
-        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
-        this.inventory.addStack(new ItemStack(ItemId.SILVER_THORN, 10));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.SILVER_THORN, 20));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.SILVER_THORN, 90));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        console.log(this.inventory);
-
-
         // Resize listener
         window.addEventListener("resize", this.onResize);
+
+        // @ts-ignore
+        window.controls = this.controls;
 
         // Add FPS counter
         this.addFPSCounter();
@@ -135,6 +137,7 @@ class App {
 
         this.updateLoop = setInterval(() => {
             const now = performance.now();
+            this.controls.tickUpdate();
             this.state.update();
             this.deltaTime = performance.now() - now;
         }, clockSpeed);
@@ -172,7 +175,7 @@ class App {
     private createState(state: GameState = this.gameState) {
         switch (state) {
             case GameState.DUNGEONS:
-                return new DungeonState(this.engine, this.data.dungeon);
+                return new DungeonState(this.engine, this.data.dungeon, this.menu);
         }
         throw Error(`No id correlated to that GameState (${state})`);
     }

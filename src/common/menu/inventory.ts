@@ -1,19 +1,23 @@
 import { ItemStack } from "../../data/item/item_stack";
+import { MenuOption, OptionMenuGUI } from "../../utils/gui";
+import { ClickableMenuOption, MenuListGUI, VerticalMenuListGUI } from "./gui/menu_list";
 
 export class Inventory {
     public items: ItemStack[];
     public money: number;
     public capacity: number = 8;
+    public gui: InventoryGUI;
 
     constructor() {
         this.items = [];
         this.money = 0;
+        this.gui = new InventoryGUI(this);
     }
 
     /** Function that runs when you try to merge a stack with the inventory 
      * (while sorting, or picking up items) 
      * returns true if the item was added correctly */
-    public addStack(stack: ItemStack, startIndex: number = 0): boolean {
+    public addStack(stack: ItemStack, startIndex: number = 0): ItemStack | null {
         // Just add the item if the maxStackSze is 1
         if (stack.definition.maxStackSize === 1) {
             return this.tryAddStack(stack);
@@ -33,7 +37,7 @@ export class Inventory {
         if (stack.amount <= freeSpace) {
             // Update an existing stack
             freeStack.amount += stack.amount;
-            return true;
+            return null;
         }
         // Otherwise, merge the two and retry merging with stacks further down
         else {
@@ -47,12 +51,12 @@ export class Inventory {
      * returns true if the item was added correctly
      * returns false if the inventory is full
      */
-    private tryAddStack(stack: ItemStack): boolean {
+    private tryAddStack(stack: ItemStack): ItemStack | null {
         if (this.items.length >= this.capacity) {
-            return false;
+            return stack;
         }
         this.items.push(stack);
-        return true;
+        return null;
     }
 
     public findSameFreeStack(stack: ItemStack, startIndex: number = 0): number {
@@ -69,4 +73,26 @@ export class Inventory {
         return this.items.length < this.capacity;
     }
 
+}
+
+export class InventoryGUI extends VerticalMenuListGUI {
+    private inventory: Inventory;
+
+    constructor(inventory: Inventory) {
+        super("menu-list-gui", []);
+        this.inventory = inventory;
+        this.options = this.generateOptions();
+    }
+
+    public generateOptions(): ClickableMenuOption[] {
+        const options: ClickableMenuOption[] = [];
+        for (let i = 0; i < this.inventory.capacity; i++) {
+            const option = new ClickableMenuOption(this.inventory.items[i]?.name, () => {
+                return false;
+            });
+            options.push(option);
+        }
+        this.options = options;
+        return options;
+    }
 }

@@ -1,3 +1,4 @@
+import { GUIManager } from "../../common/menu/gui/gui";
 import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
 import { Direction } from "../../utils/direction";
@@ -9,7 +10,7 @@ import { DungeonLogic } from "./logic";
 const MAX_DISTANCE_FOR_INLINE_CHECK = 10;
 const WALKING_SPEED = 1;
 const RUNNING_SPEED = 40;
-const TURNING_TICKS = 2;
+const TURNING_TICKS = 4;
 const WALKING_TICKS = 2;
 const GUIDE_TICKS = 5;
 
@@ -232,9 +233,17 @@ export class Player {
      * the direction the player wants to move in next turn or null if it wants
      * to stay still
      */
-    public doInput() {
+    public doInput(): Direction | null {
         let input = Direction.fromVector(Controls.leftStick).flipY();
         let output = null;
+
+        if (input !== Direction.NONE) Controls.B.resetLastPressed();
+        if (Controls.B.onReleased(2)) {
+            GUIManager.showGUI(this.logic.state.menu.gui);
+            return null;
+        }
+        if (GUIManager.tick()) return null;
+
 
         // See if the player should be able to walk after halting movement
         if (this.movementHaltedAt !== null) {
@@ -258,7 +267,7 @@ export class Player {
         }
 
         // See if you should load the floor guide
-        if (Controls.Y) {
+        if (Controls.Y.isDown) {
             this.floorGuide.update(this.leader.direction);
 
             if (input !== Direction.NONE)
@@ -270,7 +279,7 @@ export class Player {
             output = null;
         }
         // See if you should hide the floor guide
-        else if (!Controls.Y && this.floorGuide.lastDirection !== Direction.NONE) {
+        else if (Controls.Y.isUp && this.floorGuide.lastDirection !== Direction.NONE) {
             this.floorGuide.hide();
             output = null;
         }
@@ -278,7 +287,7 @@ export class Player {
         else if (input !== Direction.NONE) {
             if (this.updateMovementTick(WALKING_TICKS)) return null;
             // Stop the player if it's running into a possible turning point
-            if (Controls.B && this.isRunning && input !== Direction.NONE && this.shouldStopRunning(input)) {
+            if (Controls.B.isDown && this.isRunning && input !== Direction.NONE && this.shouldStopRunning(input)) {
                 this.setRunning(false);
                 this.movementHaltedAt = input;
                 return null;
@@ -288,7 +297,7 @@ export class Player {
             switch (obstacle) {
                 case Obstacle.NONE:
                     // TODO: Use a better function  
-                    this.setRunning(Controls.B);
+                    this.setRunning(Controls.B.isDown);
                     // You could run
                     output = input;
                     break;
@@ -300,7 +309,7 @@ export class Player {
                     this.noMove(input);
 
                     // Check to see if you can swap with the partner
-                    if (Controls.B) {
+                    if (Controls.B.isDown) {
                         output = Controls.B ? input : null;
                     }
                     // Check to see if you can push the partner

@@ -49,8 +49,6 @@ export class DungeonLogic {
     public update() {
         if (!this.state.isLoaded) return;
         const leader = this.state.floor.pokemon.getLeader();
-
-
         // Move the camera to the player
         this.state.moveCamera(this.state.floor.pokemon.getLeader().spritePosition.toVec3().add(V3(0, 0, 2)));
 
@@ -63,16 +61,12 @@ export class DungeonLogic {
         // Create the actions
         if (!this.turn) {
             this.turn = new Turn();
-            if (this.walkDirection === Direction.NONE)
-                this.turn.calculate(new NilAction(leader), this.state);
-            else {
-                // Add the action to the turn
-                this.turn.calculate(new WalkAction(leader, this.walkDirection), this.state);
-                // Update the screen
-                this.state.floor.renderToScreen(leader.position);
-                // Update the light overlay
-                this.state.lightOverlay.lightPokemon(this.state.floor, leader);
-            }
+
+            this.turn.calculate(WalkAction.getAction(leader, this.walkDirection, this.state), this.state);
+            // Update the screen
+            this.state.floor.renderToScreen(leader.position);
+            // Update the light overlay
+            this.state.lightOverlay.lightPokemon(this.state.floor, leader);
         }
 
         // Execute the turn
@@ -89,12 +83,14 @@ export class DungeonLogic {
             }
             // See if the stairs were found
             this.state.floor.findStairs(leader.position);
+
+
             this.state.ui.minimap.update(leader.position);
             // See if you are on the stairs
-            if (this.state.floor.objects.getStairs().position.equals(leader.position)) {
-                this.state.goUpAFloor();
-                this.state.changeFloor();
-            }
+            // if (this.state.floor.objects.getStairs().position.equals(leader.position)) {
+            //     this.state.goUpAFloor();
+            //     this.state.changeFloor();
+            // }
         }
     }
 }

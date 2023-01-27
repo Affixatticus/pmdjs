@@ -1,4 +1,5 @@
 import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { GameMenu } from "../common/menu/menu";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
@@ -43,10 +44,11 @@ export class DungeonState {
     // State
     public isLoaded: boolean;
     public data: DungeonStateData;
+    public menu: GameMenu;
     public info: DungeonFloorInfo;
     private logic: DungeonLogic;
 
-    constructor(engine: Engine, data: DungeonStateData) {
+    constructor(engine: Engine, data: DungeonStateData, menu: GameMenu) {
         // Definition
         this.engine = engine;
         this.scene = new Scene(this.engine);
@@ -56,6 +58,8 @@ export class DungeonState {
         this.data = data;
         this.info = this.getFloorInfo();
 
+        // Menu
+        this.menu = menu;
         // Instantiate the logic
         this.logic = new DungeonLogic(this);
         // Instantiate the UI

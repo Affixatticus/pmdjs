@@ -31,6 +31,10 @@ export class DungeonPokemon {
     public id: PokemonFormIdentifier;
     public ai!: DungeonPokemonAI;
 
+    public isLeader: boolean;
+    public isPartner: boolean;
+    public inFormation: boolean;
+
     /** Turn calculation components */
     public nextTurnPosition!: Vec2;
     public nextTurnDirection!: Direction;
@@ -42,6 +46,9 @@ export class DungeonPokemon {
 
     constructor(pos: Vec2, type: DungeonPokemonType, id: PokemonFormIdentifier) {
         this.type = type;
+        this.isLeader = type === DungeonPokemonType.LEADER;
+        this.isPartner = type === DungeonPokemonType.PARTNER;
+        this.inFormation = this.isLeader || this.isPartner;
         this.id = id;
         /** Create the AI */
         this._position = pos;

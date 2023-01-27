@@ -34,8 +34,8 @@ export class DungeonItem extends DungeonObject {
     private itemId: ItemId;
     private mesh!: Mesh;
     private material!: ItemMaterial;
-    private stack: ItemStack;
-    private isWanted: boolean = true;
+    public stack: ItemStack;
+    public isWanted: boolean = true;
 
     constructor(pos: Vec2, itemId: ItemId, amount: number = 1) {
         super(pos, ObjectType.ITEM);

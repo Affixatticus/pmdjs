@@ -48,18 +48,77 @@ export class Button {
     public button: string;
     public keyCode: string;
 
+    public ticksDown: number = 0;
+    public ticksUp: number = 0;
+    private lastTicksDown: number = 0;
+    private lastTicksUp: number = 0;
+    private isReset = false;
+
     constructor(button: string, keyboardKey: string) {
         this.isPressed = false;
         this.isDown = false;
         this.isUp = false;
         this.button = button;
         this.keyCode = keyboardKey;
+
+        this.ticksDown = 0;
+        this.ticksUp = 0;
+        this.lastTicksDown = 0;
+        this.lastTicksUp = 0;
+        this.isReset = false;
     }
 
     public Keyboard_update(isDown: boolean) {
-        this.isPressed = isDown;
         this.isDown = isDown;
         this.isUp = !isDown;
+    }
+
+    public Tick_update() {
+        if (this.isDown)
+            this.ticksDown++;
+        else {
+            this.lastTicksDown = this.ticksDown;
+            this.ticksDown = 0;
+        }
+
+        if (this.isUp) {
+            this.ticksUp++;
+            if (this.isReset && this.ticksUp >= 4)
+                this.isReset = false;
+        }
+        else {
+            this.lastTicksUp = this.ticksUp;
+            this.ticksUp = 0;
+        }
+
+        this.isPressed = this.isDown && this.ticksDown === 1;
+    }
+
+    public onReleased(ticks: number) {
+        if (this.isReset) {
+            return false;
+        }
+        if (this.isUp && this.lastTicksDown >= ticks) {
+            this.isReset = true;
+            return true;
+        }
+        return false;
+    }
+
+    public onPressed(ticks: number) {
+        if (this.isReset) {
+            return false;
+        }
+        if (this.isDown && this.ticksDown >= ticks) {
+            this.isReset = true;
+            return true;
+        }
+        return false;
+    }
+
+    public resetLastPressed() {
+        this.lastTicksDown = 0;
+        this.isReset = true;
     }
 };
 
@@ -83,10 +142,18 @@ export class Stick {
 
     public stickId: string;
     public buttonGroup: Button[];
+    public BUTTON_UP: Button;
+    public BUTTON_DOWN: Button;
+    public BUTTON_LEFT: Button;
+    public BUTTON_RIGHT: Button;
 
 
     constructor(stickId: string, buttonGroup: Button[]) {
         this.position = V2(0, 0);
+        this.BUTTON_UP = buttonGroup[0];
+        this.BUTTON_DOWN = buttonGroup[1];
+        this.BUTTON_LEFT = buttonGroup[2];
+        this.BUTTON_RIGHT = buttonGroup[3];
 
         this.stickId = stickId;
         this.buttonGroup = buttonGroup;
@@ -101,31 +168,38 @@ export class Stick {
 
         // Update the position
         this.position.x =
-            (this.buttonGroup[3].isPressed ? 1 : 0) - (this.buttonGroup[2].isPressed ? 1 : 0);
+            (this.buttonGroup[3].isDown ? 1 : 0) - (this.buttonGroup[2].isDown ? 1 : 0);
         this.position.y =
-            (this.buttonGroup[0].isPressed ? 1 : 0) - (this.buttonGroup[1].isPressed ? 1 : 0)
+            (this.buttonGroup[0].isDown ? 1 : 0) - (this.buttonGroup[1].isDown ? 1 : 0)
+    }
+
+    public Tick_updateButtons() {
+        this.buttonGroup.forEach((b) => b.Tick_update());
     }
 }
 
 export class Controls {
-    static get A() { return Button.A.isDown; };
-    static get B() { return Button.B.isDown; };
-    static get X() { return Button.X.isDown; };
-    static get Y() { return Button.Y.isDown; };
-    static get L() { return Button.L.isDown; };
-    static get R() { return Button.R.isDown; };
-    static get ZL() { return Button.ZL.isDown; };
-    static get ZR() { return Button.ZR.isDown; };
-    static get MINUS() { return Button.MINUS.isDown; };
-    static get PLUS() { return Button.PLUS.isDown; };
-    static get LCLICK() { return Button.LCLICK.isDown; };
-    static get RCLICK() { return Button.RCLICK.isDown; };
-    static get HOME() { return Button.HOME.isDown; };
-    static get CAPTURE() { return Button.CAPTURE.isDown; };
-    static get DPAD_UP() { return Button.DPAD_UP.isDown; };
-    static get DPAD_DOWN() { return Button.DPAD_DOWN.isDown; };
-    static get DPAD_LEFT() { return Button.DPAD_LEFT.isDown; };
-    static get DPAD_RIGHT() { return Button.DPAD_RIGHT.isDown; };
+    static A = Button.A;
+    static B = Button.B;
+    static X = Button.X;
+    static Y = Button.Y;
+    static L = Button.L;
+    static R = Button.R;
+    static ZL = Button.ZL;
+    static ZR = Button.ZR;
+    static MINUS = Button.MINUS;
+    static PLUS = Button.PLUS;
+    static LCLICK = Button.LCLICK;
+    static RCLICK = Button.RCLICK;
+    static HOME = Button.HOME;
+    static CAPTURE = Button.CAPTURE;
+    static DPAD_UP = Button.DPAD_UP;
+    static DPAD_DOWN = Button.DPAD_DOWN;
+    static DPAD_LEFT = Button.DPAD_LEFT;
+    static DPAD_RIGHT = Button.DPAD_RIGHT;
+
+    static LEFT_STICK = Stick.LEFT;
+    static RIGHT_STICK = Stick.RIGHT;
 
     static get leftStick() {
         return Stick.LEFT.position;
@@ -162,5 +236,11 @@ export class Controls {
         // Add event listeners
         document.addEventListener("keydown", (e) => mouseDown(e));
         document.addEventListener("keyup", (e) => mouseUp(e));
+    }
+
+    public tickUpdate() {
+        Button.list.forEach((b) => b.Tick_update());
+        Stick.LEFT.Tick_updateButtons();
+        Stick.RIGHT.Tick_updateButtons();
     }
 }

@@ -60,6 +60,14 @@ export class DungeonObjectContainer {
         this.objects = this.objects.filter(obj => !obj.position.equals(pos));
     }
 
+    public removeObject(obj: DungeonObject) {
+        const index = this.objects.indexOf(obj);
+        if (index !== -1) {
+            this.objects.splice(index, 1);
+        }
+        obj.dispose();
+    }
+
     public add(obj: DungeonObject) {
         this.objects.push(obj);
     }
