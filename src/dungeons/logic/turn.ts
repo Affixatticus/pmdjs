@@ -50,7 +50,7 @@ export class Turn {
 
         for (const action of this.actions) {
             finished &&= action.tick();
-        };
+        }
 
         return finished;
     }

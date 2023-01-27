@@ -1,4 +1,8 @@
 import { Engine } from '@babylonjs/core';
+import { Inventory } from './common/menu/inventory';
+import { ItemId } from './data/item/ids';
+import { ItemList } from './data/item/items';
+import { ItemStack } from './data/item/item_stack';
 import { Pokedex } from './data/pokemon';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
@@ -83,6 +87,8 @@ class App {
     private data: Data;
     private controls: Controls;
 
+    private inventory: Inventory;
+
     public deltaTime: number = 0;
     public clockSpeed: number = 7;
     public updateLoop!: number;
@@ -97,6 +103,17 @@ class App {
         this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;
         this.state = this.createState(this.gameState);
+
+        this.inventory = new Inventory();
+        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
+        this.inventory.addStack(new ItemStack(ItemId.SILVER_THORN, 10));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.SILVER_THORN, 20));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.SILVER_THORN, 90));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        console.log(this.inventory);
+
 
         // Resize listener
         window.addEventListener("resize", this.onResize);

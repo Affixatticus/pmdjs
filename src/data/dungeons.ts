@@ -1,6 +1,7 @@
 import { GenerationRule as GeneratorLayouts } from "../dungeons/map/map_generator";
 import { V2, Vec2 } from "../utils/vectors";
-import { ItemChance, Item } from "./items";
+import { ItemId } from "./item/ids";
+import { ItemChance } from "./item/items";
 import { Pokedex, PokemonChance } from "./pokemon";
 import { TileObject, TrapChance } from "./tiles";
 import { WeatherChance, Weather } from "./weather";
@@ -101,10 +102,10 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
             enemies: null,
             lightLevel: LightLevel.NORMAL,
             items: [
-                { id: Item.ORAN_BERRY, chance: 20 },
-                { id: Item.COIN, chance: 30 },
-                { id: Item.APPLE, chance: 10 },
-                { id: Item.BIG_APPLE, chance: 1 },
+                { id: ItemId.ORAN_BERRY, chance: 20 },
+                // { id: ItemId.COIN, chance: 30 },
+                { id: ItemId.APPLE, chance: 10 },
+                // { id: ItemId.BIG_APPLE, chance: 1 },
             ],
             traps: null,
             weathers: [{
@@ -133,8 +134,8 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
             items: [
-                { id: Item.ORAN_BERRY, chance: 20 },
-                { id: Item.COIN, chance: 50 },
+                { id: ItemId.ORAN_BERRY, chance: 20 },
+                // { id: Item.COIN, chance: 50 },
             ],
             traps: [
                 { id: TileObject.TRAP_01, chance: 100 },
@@ -168,8 +169,8 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
             ],
             items: [
-                { id: Item.ORAN_BERRY, chance: 20 },
-                { id: Item.COIN, chance: 50 },
+                { id: ItemId.ORAN_BERRY, chance: 20 },
+                // { id: ItemId.COIN, chance: 50 },
             ],
             traps: [
                 { id: TileObject.TRAP_01, chance: 100 },

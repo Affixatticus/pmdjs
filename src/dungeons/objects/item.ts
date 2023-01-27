@@ -1,12 +1,14 @@
-import { Color3, Constants, Mesh, MeshBuilder, Scene, SpotLight, StandardMaterial, Vector3 } from "@babylonjs/core";
+import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
 import { RenderingGroupId } from "../floor";
 import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { getItemCrop } from "../../data/items";
+import { fillOutStandardOptions } from "../../utils/material";
+import { ItemId } from "../../data/item/ids";
+import { ItemStack } from "../../data/item/item_stack";
+import { getItemCrop } from "../../data/item/items";
 
-const BLACK_EC = new Color3(0, 0, 0);
 const GRAYED_EC = new Color3(0.4, 0.4, 0.4);
 const WHITE_EC = new Color3(1, 1, 1);
 export class ItemMaterial extends StandardMaterial {
@@ -15,11 +17,8 @@ export class ItemMaterial extends StandardMaterial {
     constructor(name: string, source: CanvasImageSource, scene: Scene, ...params: CropParams) {
         super(name, scene);
         const texture = Canvas.toDynamicTexture(source, scene, ...params);
-        texture.hasAlpha = true;
-        texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-        texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
         this.diffuseTexture = texture;
-        this.specularColor = BLACK_EC;
+        fillOutStandardOptions(this, texture);
         this.setDisabled(this.disabled);
     }
 
@@ -32,17 +31,30 @@ export class ItemMaterial extends StandardMaterial {
 };
 
 export class DungeonItem extends DungeonObject {
-    private id: number;
+    private itemId: ItemId;
     private mesh!: Mesh;
     private material!: ItemMaterial;
+    private stack: ItemStack;
+    private isWanted: boolean = true;
 
-    constructor(pos: Vec2, id: number) {
+    constructor(pos: Vec2, itemId: ItemId, amount: number = 1) {
         super(pos, ObjectType.ITEM);
-        this.id = id;
+        this.itemId = itemId;
+        this.stack = new ItemStack(itemId, amount);
+    }
+
+    public setWanted(wanted: boolean) {
+        this.material.setEnabled(wanted);
+        this.isWanted = wanted;
+    }
+
+    public pickUp() {
+        this.dispose();
+        return this.stack;
     }
 
     public getId(start = ""): string {
-        return start + "_" + this.id.toString() + this.position.x.toString() + this.position.y.toString();
+        return start + "_" + this.itemId.toString() + this.position.x.toString() + this.position.y.toString();
     }
 
     public async render(scene: Scene): Promise<void> {
@@ -55,7 +67,7 @@ export class DungeonItem extends DungeonObject {
 
         // Load the texture
         const source = await AssetsLoader.loadItemsSheet();
-        const material = new ItemMaterial("item", source, scene, ...getItemCrop(this.id));
+        const material = new ItemMaterial("item", source, scene, ...getItemCrop(this.itemId));
 
         plane.material = material;
 
@@ -66,6 +78,7 @@ export class DungeonItem extends DungeonObject {
     public dispose() {
         if (!this.mesh) return false;
         this.mesh.dispose();
+        this.material.dispose();
         return true;
     }
 }
