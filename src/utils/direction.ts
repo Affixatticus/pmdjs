@@ -70,6 +70,23 @@ export class Direction {
         return Direction.NONE;
     }
 
+    /** Chooses the direction that is most plentiful in the given list */
+    static average(directions: Direction[]) {
+        const counts: Record<number, number> = {};
+        for (const direction of directions) {
+            counts[direction.index] = (counts[direction.index] || 0) + 1;
+        }
+        let max = 0;
+        let maxIndex = -1;
+        for (const key in counts) {
+            if (counts[key] > max) {
+                max = counts[key];
+                maxIndex = parseInt(key);
+            }
+        }
+        return Direction.get(maxIndex);
+    }
+
     public toVector(): Vec2 {
         return new Vec2(this.horizontal, this.vertical);
     }

@@ -174,7 +174,7 @@ export class DungeonFloor {
 
     public animate(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate();
+        this.pokemon.animate(DungeonPokemon.isRunning);
     }
 
     // Utility

@@ -62,10 +62,10 @@ export class DungeonObjectContainer {
 
     public removeObject(obj: DungeonObject) {
         const index = this.objects.indexOf(obj);
+        obj.dispose();
         if (index !== -1) {
             this.objects.splice(index, 1);
         }
-        obj.dispose();
     }
 
     public add(obj: DungeonObject) {

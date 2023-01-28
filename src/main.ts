@@ -1,6 +1,5 @@
 import { Engine } from '@babylonjs/core';
 import { Inventory } from './common/menu/inventory';
-import { GameMenu } from './common/menu/menu';
 import { ItemId } from './data/item/ids';
 import { ItemStack } from './data/item/item_stack';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
@@ -19,10 +18,10 @@ interface Data {
 const INITIAL_GAME_DATA: Data = {
     dungeon: {
         id: 0,
-        floor: 0,
+        floor: 30,
         party: [
             {
-                id: [133, 0, false, 0],
+                id: [495, 0, false, 0],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -39,7 +38,7 @@ const INITIAL_GAME_DATA: Data = {
                 ]
             },
             {
-                id: [495, 0, false, 0],
+                id: [133, 0, false, 0],
                 stats: {
                     hp: 0,
                     attack: 0,
@@ -86,7 +85,6 @@ class App {
     private data: Data;
     private controls: Controls;
 
-    private menu: GameMenu;
     private inventory: Inventory;
 
     public deltaTime: number = 0;
@@ -109,7 +107,6 @@ class App {
         this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
         this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
         this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
-        this.menu = new GameMenu(this.inventory);
         // State
         this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;
@@ -175,7 +172,7 @@ class App {
     private createState(state: GameState = this.gameState) {
         switch (state) {
             case GameState.DUNGEONS:
-                return new DungeonState(this.engine, this.data.dungeon, this.menu);
+                return new DungeonState(this.engine, this.data.dungeon);
         }
         throw Error(`No id correlated to that GameState (${state})`);
     }

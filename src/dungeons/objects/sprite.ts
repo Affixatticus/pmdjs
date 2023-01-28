@@ -1,6 +1,7 @@
 import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
 import { Direction } from "../../utils/direction";
 import { fillOutStandardOptions } from "../../utils/material";
+import { DungeonPokemon } from "./pokemon";
 
 export interface PokemonSpriteAnimationData {
     /** Name of the animation */
@@ -51,6 +52,8 @@ export class DungeonPokemonMaterial extends StandardMaterial {
     public animation: string;
     public direction: Direction;
 
+    /** Value that is set to true if the animation has looped completely */
+    public isAnimationDone = false;
 
     /** The currently displayed frame */
     private _currentFrame: number = 0;
@@ -108,25 +111,34 @@ export class DungeonPokemonMaterial extends StandardMaterial {
     }
 
     /** Updates the frame of the animation */
-    public animate() {
+    public animate(goFast: boolean = false) {
+        this.isAnimationDone = false;
+
         // Update the frame
         this._currentFrameDuration--;
         if (this._currentFrameDuration <= 0) {
             this._currentFrame++;
             const anim = this.data.animations[this.animation];
             if (this._currentFrame >= anim.durations.length) {
+                this.isAnimationDone = true;
                 this._currentFrame = 0;
                 this.runCallback();
             }
 
-            this._currentFrameDuration = this.getDuration();
+            this._currentFrameDuration = this.getDuration(this._currentFrame, goFast);
             this.draw();
         }
     }
 
-    private getDuration(currentFrame: number = this._currentFrame) {
+    public isDone() {
+        // Slow down the player
+        DungeonPokemon.setRunning(false);
+        return this.isAnimationDone;
+    }
+
+    private getDuration(currentFrame: number = this._currentFrame, goFast: boolean = false) {
         const anim = this.data.animations[this.animation];
-        return anim.durations[currentFrame] * FRAME_DURATION;
+        return anim.durations[currentFrame] * (goFast ? 0.25 : 1) * FRAME_DURATION;
     }
 
     private runCallback() {

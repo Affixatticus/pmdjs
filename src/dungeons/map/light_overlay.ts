@@ -4,7 +4,6 @@ import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
-import { PLAYER_SPEED, TICK_PER_TILE } from "../logic/player";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
 import { DungeonTiling, TilingTextureMode } from "./tiling";
@@ -53,7 +52,10 @@ export class LightOverlay {
         // And remove the lights that are completely off
         for (let i = this.queue.length - 2; i >= 0; i--) {
             const [light, texture] = this.queue[i];
-            light.intensity = Math.max(0, light.intensity -= this.intensity * (1/TICK_PER_TILE) * PLAYER_SPEED);
+            light.intensity =
+                Math.max(0,
+                    light.intensity -=
+                    this.intensity * (1 / DungeonPokemon.walkingTicks) * DungeonPokemon.animationSpeed);
             if (light.intensity === 0) {
                 light.dispose();
                 texture.dispose();
@@ -68,7 +70,10 @@ export class LightOverlay {
         const [light, _, reachedMaxIntensity] = last;
 
         if (!reachedMaxIntensity) {
-            light.intensity = Math.min(this.intensity, light.intensity += this.intensity * (1/TICK_PER_TILE) * PLAYER_SPEED);
+            light.intensity =
+                Math.min(this.intensity,
+                    light.intensity +=
+                    this.intensity * (1 / DungeonPokemon.walkingTicks) * DungeonPokemon.animationSpeed);
             if (light.intensity === 1)
                 last[2] = true;
         }
@@ -91,7 +96,7 @@ export class LightOverlay {
         if (this.lastOffsetGrid?.equals(offsetGrid)) return;
         // Save the last offsetGrid
         this.lastOffsetGrid = offsetGrid;
-        
+
         const isCorridor = floor.grid.isCorridor(pokemon.nextTurnPosition);
         this.placeSpotlight(isCorridor ? offsetGrid.inflate(1) : offsetGrid);
     }

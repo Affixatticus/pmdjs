@@ -1,4 +1,3 @@
-import { GUIManager, GUIType } from "../../../common/menu/gui/gui";
 import { Tile } from "../../../data/tiles";
 import { Direction } from "../../../utils/direction";
 import { DungeonState } from "../../dungeon";
@@ -7,10 +6,14 @@ import { ObjectType } from "../../objects/object";
 import { DungeonPokemon } from "../../objects/pokemon";
 import { DungeonPokemonMaterial } from "../../objects/sprite";
 import { DungeonTile } from "../../objects/tile";
-import { PLAYER_SPEED, TICK_PER_TILE } from "../player";
+import { DungeonLogic } from "../logic";
+import { Turn } from "../turn";
 import { TurnAction } from "./action";
 import { NilAction } from "./nil";
+import { GoDownStairsAction } from "./special";
 
+
+const TICK_PER_TILE = 40;
 
 export class WalkAction implements TurnAction {
     public readonly pokemon: DungeonPokemon;
@@ -29,24 +32,27 @@ export class WalkAction implements TurnAction {
     public animationLength: number = WalkAction.ANIMATION_LENGTH;
     public walkDelta: number;
 
-    static getAction(pokemon: DungeonPokemon, direction: Direction, state: DungeonState): TurnAction {
+    static getAction(pokemon: DungeonPokemon, direction: Direction, logic: DungeonLogic): TurnAction {
         // If the pokemon is not actually moving
         if (direction === Direction.NONE) return new NilAction(pokemon);
         // If there are stairs in the next position
         const nextPos = pokemon.position.add(direction.toVector());
-        if (state.floor.objects.getStairs().position.equals(nextPos))
-            return new StairsAction(pokemon, direction, state);
+        if (logic.state.floor.objects.getStairs().position.equals(nextPos)) {
+            return new StairsAction(pokemon, direction, logic);
+        }
         // If the next position is an item
-        if (state.floor.grid.get(nextPos) === Tile.ITEM)
-            return new ItemAction(pokemon, direction, state.floor.objects.get(nextPos) as DungeonItem, state);
+        if (logic.state.floor.grid.get(nextPos) === Tile.ITEM) {
+            return new ItemAction(pokemon, direction, logic.state.floor.objects.get(nextPos) as DungeonItem, logic.state);
+        }
         // If there is a trap in the next position
-        if (state.floor.objects.get(nextPos)?.type === ObjectType.TRAP)
-            return new TrapAction(pokemon, direction, state.floor.objects.get(nextPos) as DungeonTile);
+        if (logic.state.floor.objects.get(nextPos)?.type === ObjectType.TRAP) {
+            return new TrapAction(pokemon, direction, logic.state.floor.objects.get(nextPos) as DungeonTile);
+        }
 
         return new WalkAction(pokemon, direction);
     }
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, speed = PLAYER_SPEED) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, speed = DungeonPokemon.animationSpeed) {
         this.pokemon = pokemon;
         this.direction = direction;
 
@@ -85,7 +91,10 @@ export class WalkAction implements TurnAction {
                 this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
                     // Quick check to see if the pokemon is still moving
                     if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
+                        // Set the animation to idle
                         this.pokemon.setAnimation("Idle");
+                        // Set the pokemon speed to normal
+                        DungeonPokemon.setRunning(false);
                     }
                 }
             }
@@ -145,28 +154,33 @@ export class PushAction extends WalkAction {
 }
 
 export class StairsAction extends WalkAction {
-    public state: DungeonState;
+    public done: boolean;
+    public logic: DungeonLogic;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, state: DungeonState) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, logic: DungeonLogic) {
         super(pokemon, direction);
-        this.state = state;
+        this.logic = logic;
+        this.done = false;
         console.log("Created StairsAction");
         this.logMessage = `${pokemon.toString()} went up the stairs!`;
     }
 
+    private get turn(): Turn {
+        return this.logic.turn!;
+    }
+
+
     public tick(): boolean {
+        if (this.done) return true;
+
         const doneWalking = super.tick();
         if (!doneWalking) return false;
-        if (!this.pokemon.isLeader) return true;
-        // Prompt the user
-        const result = GUIManager.awaitOutput(GUIType.YES_NO);
-        if (result === null) return false;
 
-        if (result === true) {
-            this.state.goUpAFloor();
-            this.state.changeFloor();
+        // Append a new action at the end of this turn
+        if (this.pokemon.isLeader) {
+            this.turn.addAction(new GoDownStairsAction(this.pokemon, this.logic));
         }
-        return true;
+        return this.done = true;
     }
 }
 export class TrapAction extends WalkAction {
@@ -177,6 +191,7 @@ export class TrapAction extends WalkAction {
     }
 }
 export class ItemAction extends WalkAction {
+    public done: boolean;
     public item: DungeonItem;
     public state: DungeonState;
 
@@ -184,54 +199,47 @@ export class ItemAction extends WalkAction {
         super(pokemon, direction);
         this.item = item;
         this.state = state;
+        this.done = false;
         console.log("Created ItemAction");
         this.logMessage = `${pokemon.toString()} picked up an item!`;
     }
 
     public tick(): boolean {
+        if (this.done) return true;
+
         const doneWalking = super.tick();
-        if (!doneWalking) return false;
+        if (!doneWalking) return this.done = false;
 
         // If it is a wild pokemon
-        if (!this.pokemon.inFormation) {
+        if (this.pokemon.inFormation) {
             // Remove the item from the floor
             this.state.floor.objects.removeObject(this.item);
+            this.state.floor.grid.set(this.item.position, Tile.FLOOR);
             // TODO Add the item to the pokemon's inventory
-            return true;
+            return this.done = true;
         }
 
         // If it the player pokemon
-        if (this.pokemon.inFormation) {
-            // Try to add the item to the inventory
-            const leftoverStack = this.state.menu.inventory.addStack(this.item.stack);
-            // If there is a leftover stack
-            if (leftoverStack) {
-                // TODO Decide what to do with the leftover stack
-                if (this.pokemon.isLeader) {
-                    const output = GUIManager.awaitOutput(GUIType.YES_NO);
-                    if (output === null) return false;
+        // if (this.pokemon.inFormation) {
+        //     // Try to add the item to the inventory
+        //     const leftoverStack = this.state.menu.inventory.addStack(this.item.stack);
+        //     // If there is a leftover stack
+        //     if (leftoverStack) {
+        //         // TODO Decide what to do with the leftover stack
+        //         if (this.pokemon.isLeader) {
 
-                    if (output === true) {
-                        // Change the stack
-                        this.item.stack = leftoverStack;
-                    } else if (output === false) {
-                        // Change the stack
-                        this.item.stack = leftoverStack;
-                        // Set the item to not wanted
-                        this.item.setWanted(false);
-                    }
-                } else {
-                    // Change the stack
-                    this.item.stack = leftoverStack;
-                    // Set the item to not wanted
-                    this.item.setWanted(false);
-                }
-            } else {
-                // Remove the item from the floor
-                this.state.floor.objects.removeObject(this.item);
-                this.state.floor.grid.set(this.item.position, Tile.FLOOR);
-            }
-        }
+        //         } else {
+        //             // Change the stack
+        //             this.item.stack = leftoverStack;
+        //             // Set the item to not wanted
+        //             this.item.setWanted(false);
+        //         }
+        //     } else {
+        //         // Remove the item from the floor
+        //         this.state.floor.objects.removeObject(this.item);
+        //         this.state.floor.grid.set(this.item.position, Tile.FLOOR);
+        //     }
+        // }
         return true;
     }
 }

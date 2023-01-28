@@ -1,17 +1,13 @@
 import { ItemStack } from "../../data/item/item_stack";
-import { MenuOption, OptionMenuGUI } from "../../utils/gui";
-import { ClickableMenuOption, MenuListGUI, VerticalMenuListGUI } from "./gui/menu_list";
 
 export class Inventory {
     public items: ItemStack[];
     public money: number;
     public capacity: number = 8;
-    public gui: InventoryGUI;
 
     constructor() {
         this.items = [];
         this.money = 0;
-        this.gui = new InventoryGUI(this);
     }
 
     /** Function that runs when you try to merge a stack with the inventory 
@@ -73,26 +69,4 @@ export class Inventory {
         return this.items.length < this.capacity;
     }
 
-}
-
-export class InventoryGUI extends VerticalMenuListGUI {
-    private inventory: Inventory;
-
-    constructor(inventory: Inventory) {
-        super("menu-list-gui", []);
-        this.inventory = inventory;
-        this.options = this.generateOptions();
-    }
-
-    public generateOptions(): ClickableMenuOption[] {
-        const options: ClickableMenuOption[] = [];
-        for (let i = 0; i < this.inventory.capacity; i++) {
-            const option = new ClickableMenuOption(this.inventory.items[i]?.name, () => {
-                return false;
-            });
-            options.push(option);
-        }
-        this.options = options;
-        return options;
-    }
 }

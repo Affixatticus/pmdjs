@@ -1,4 +1,3 @@
-import { Direction } from "../../utils/direction";
 import { DungeonState } from "../dungeon";
 import { WalkAction } from "./actions/walk";
 import { NilAction } from "./actions/nil";
@@ -7,7 +6,8 @@ import { DungeonPokemonType } from "../objects/pokemon";
 import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";
-import { Player } from "./player";
+import { InputAction, InputType, Player } from "./player";
+import { TurnAction } from "./actions/action";
 
 export class DungeonLogic {
     public state: DungeonState;
@@ -17,7 +17,7 @@ export class DungeonLogic {
     public turnsHistory: Turn[];
     public player: Player;
 
-    private walkDirection: Direction | null;
+    private inputResult: InputType;
 
     /** Initalizes the game logic */
     constructor(state: DungeonState) {
@@ -26,7 +26,7 @@ export class DungeonLogic {
         this.turn = null;
         this.turnsHistory = [];
         this.player = new Player(this);
-        this.walkDirection = null;
+        this.inputResult = null;
     }
 
     /** Initializes the logic with all parameters that are created after its instancing */
@@ -53,16 +53,34 @@ export class DungeonLogic {
         this.state.moveCamera(this.state.floor.pokemon.getLeader().spritePosition.toVec3().add(V3(0, 0, 2)));
 
         // Await for the player input
-        if (this.walkDirection === null) {
-            this.walkDirection = this.player.doInput();
-            if (this.walkDirection === null) return;
+        if (this.inputResult === null) {
+            this.inputResult = this.player.doInput();
+            if (this.inputResult === null) return;
+
         };
 
         // Create the actions
         if (!this.turn) {
-            this.turn = new Turn();
+            let playerAction: TurnAction = new NilAction(leader);
 
-            this.turn.calculate(WalkAction.getAction(leader, this.walkDirection, this.state), this.state);
+            switch (this.inputResult[0]) {
+                case InputAction.WALK:
+                    // Do player movement
+                    playerAction = WalkAction.getAction(leader, this.inputResult[1], this);
+                    break;
+                case InputAction.TALK:
+                    // Do player talk
+                    console.log("HEY, How are you doing?");
+                    const partner = this.inputResult[1];
+                    const newDirection = leader.direction.getOpposite();
+                    if (!partner.animateTurning(newDirection)) return;
+                    this.inputResult = null;
+                    return;
+            }
+
+            this.turn = new Turn();
+            // Start the turn
+            this.turn.calculate(playerAction, this.state);
             // Update the screen
             this.state.floor.renderToScreen(leader.position);
             // Update the light overlay
@@ -74,23 +92,19 @@ export class DungeonLogic {
 
         if (done) {
             this.turnsHistory.push(this.turn);
-            this.turn = null;
-            this.currentTurn++;
-            this.walkDirection = null;
             // Reset all calcedActions
             for (const pokemon of this.state.floor.pokemon.getAll()) {
                 pokemon.ai.overwrittenAction = null;
             }
             // See if the stairs were found
             this.state.floor.findStairs(leader.position);
-
-
             this.state.ui.minimap.update(leader.position);
-            // See if you are on the stairs
-            // if (this.state.floor.objects.getStairs().position.equals(leader.position)) {
-            //     this.state.goUpAFloor();
-            //     this.state.changeFloor();
-            // }
+            // Execute the special flags
+            this.turn.executeSpecialFlags(this.state);
+            // Reset the turn
+            this.turn = null;
+            this.currentTurn++;
+            this.inputResult = null;
         }
     }
 }

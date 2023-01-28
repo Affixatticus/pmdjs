@@ -3,12 +3,17 @@ import { DungeonPokemonType } from "../objects/pokemon";
 import { TurnAction } from "./actions/action";
 import { WalkAction, MoveActionGroup } from "./actions/walk";
 
-/** A queue for actions */
+export const enum TurnFlags {
+    GO_UP_STAIRS = 1,
+}
+
 export class Turn {
     public actions: TurnAction[];
+    public specialFlags: TurnFlags[];
 
     constructor() {
         this.actions = [];
+        this.specialFlags = [];
     }
 
     private groupMoveActions(): void {
@@ -63,4 +68,20 @@ export class Turn {
     public addAction(action: TurnAction): void {
         this.actions.push(action);
     }
+
+    public setSpecialFlag(flag: TurnFlags): void {
+        this.specialFlags.push(flag);
+    }
+
+    public executeSpecialFlags(state: DungeonState): void {
+        for (const flag of this.specialFlags) {
+            switch (flag) {
+                case TurnFlags.GO_UP_STAIRS:
+                    state.goUpAFloor();
+                    state.changeFloor();
+                    break;
+            }
+        }
+    }
+
 }

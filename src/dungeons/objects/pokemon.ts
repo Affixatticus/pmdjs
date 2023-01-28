@@ -23,6 +23,9 @@ export const enum Obstacle {
     PARTNER
 };
 
+
+const TURNING_TICKS = 10;
+
 export class DungeonPokemon {
     private _position: Vec2;
     private _spritePosition: Vec2;
@@ -35,6 +38,8 @@ export class DungeonPokemon {
     public isPartner: boolean;
     public inFormation: boolean;
 
+    public turningTick: number = 0;
+
     /** Turn calculation components */
     public nextTurnPosition!: Vec2;
     public nextTurnDirection!: Direction;
@@ -42,6 +47,24 @@ export class DungeonPokemon {
     private opaqMesh!: Mesh;
     private tranMesh!: Mesh;
     public material!: DungeonPokemonMaterial;
+
+    static walkingTicks: number = 40;
+    static _walkingAnimationSpeed: number = 1;
+    static _runningAnimationSpeed: number = 40;
+    private static _animationSpeed = DungeonPokemon._walkingAnimationSpeed;
+
+    static get animationSpeed() {
+        return this._animationSpeed;
+    }
+    static get isRunning() {
+        return this._animationSpeed === this._runningAnimationSpeed;
+    }
+    static get isWalking() {
+        return this._animationSpeed === this._walkingAnimationSpeed;
+    }
+    static setRunning(running: boolean) {
+        this._animationSpeed = running ? this._runningAnimationSpeed : this._walkingAnimationSpeed;
+    }
 
 
     constructor(pos: Vec2, type: DungeonPokemonType, id: PokemonFormIdentifier) {
@@ -90,9 +113,9 @@ export class DungeonPokemon {
         this.tranMesh = tranMesh;
     }
 
-    public animate() {
+    public animate(goFast: boolean) {
         if (!this.material) return;
-        this.material.animate();
+        this.material.animate(goFast);
     }
 
     public dispose = () => {
@@ -147,6 +170,18 @@ export class DungeonPokemon {
         this.material.setAnimation(animName);
     }
 
+    /** Action that slowly turns this pokemon towards the final direction
+     * Returns true if the pokemon is facing the final direction
+     */
+    public animateTurning(finalDirection: Direction): boolean {
+        if (this.turningTick < TURNING_TICKS) {
+            this.turningTick++;
+            return false;
+        }
+        this.turningTick = 0;
+        this.turnTowards(finalDirection);
+        return this.direction === finalDirection;
+    }
 
     /** Returns true if this pokemon cannot stand on this tile */
     public isTileObstacle(tile: Tile): boolean {
@@ -226,9 +261,9 @@ export class DungeonPokemonList {
         }
     }
 
-    public animate() {
+    public animate(goFast: boolean) {
         for (const obj of this.objects) {
-            obj.animate();
+            obj.animate(goFast);
         }
     }
 

@@ -1,3 +1,4 @@
+import { Direction } from "./direction";
 import { V2, Vec2 } from "./vectors";
 
 export class Button {
@@ -157,6 +158,29 @@ export class Stick {
 
         this.stickId = stickId;
         this.buttonGroup = buttonGroup;
+    }
+
+    /** Gets the button from the direction */
+    public getButtonsFromDirection(dir: Direction): Button[] {
+        switch (dir) {
+            case Direction.NORTH:
+                return [this.BUTTON_UP];
+            case Direction.SOUTH:
+                return [this.BUTTON_DOWN];
+            case Direction.WEST:
+                return [this.BUTTON_LEFT];
+            case Direction.EAST:
+                return [this.BUTTON_RIGHT];
+            case Direction.NORTH_WEST:
+                return [this.BUTTON_UP, this.BUTTON_LEFT];
+            case Direction.NORTH_EAST:
+                return [this.BUTTON_UP, this.BUTTON_RIGHT];
+            case Direction.SOUTH_WEST:
+                return [this.BUTTON_DOWN, this.BUTTON_LEFT];
+            case Direction.SOUTH_EAST:
+                return [this.BUTTON_DOWN, this.BUTTON_RIGHT];
+        }
+        return [];
     }
 
     public Keyboard_updateButtons(isDown: boolean, keyCode: string) {
