@@ -2,7 +2,7 @@ import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
 import { Direction } from "../../utils/direction";
 import Random from "../../utils/random";
-import { DungeonPokemon, Obstacle } from "../objects/pokemon";
+import { DungeonPokemon } from "../objects/pokemon";
 import { PushAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 
@@ -10,9 +10,6 @@ import { DungeonLogic } from "./logic";
 const MAX_DISTANCE_FOR_INLINE_CHECK = 5;
 /** The number of ticks it should takes to turn 45 degrees */
 const TURNING_TICKS = 4;
-/** The number of ticks it takes to register the input direction */
-const WALKING_TICKS = 2;
-const GUIDE_TURN_TICKS = 5;
 
 export const enum InputAction {
     WALK,
@@ -21,20 +18,126 @@ export const enum InputAction {
 
 export type InputType = null | [InputAction.WALK, Direction] | [InputAction.TALK, DungeonPokemon];
 
+abstract class InputState {
+    public player!: Player;
+
+    constructor(player?: Player) {
+        console.log("Created new state");
+        if (player) this.player = player;
+    }
+
+    // Automatically goes to the idle state without returning a value
+    public exit(): null {
+        this.changeState(new IdleState());
+        return null;
+    }
+
+    public changeState(state: InputState) {
+        this.player.state = state;
+        state.player = this.player;
+    }
+
+    public abstract update(): InputType;
+}
+
+class IdleState extends InputState {
+    public update() {
+        if (Controls.Y.isDown) {
+            this.changeState(new TurningState());
+        }
+        return null;
+    }
+}
+
+class TurningState extends InputState {
+    static GUIDE_APPEAR_TIME = 16;
+    static TURN_TIME = 4;
+    public guideTick = 0;
+    public inputTick = 0;
+
+    public isInputDiagonal: boolean = false;
+    public lastCompatibleInput!: Direction;
+
+    public get floorGuide() {
+        return this.player.floorGuide;
+    }
+
+    public get guideAppeared() {
+        return this.guideTick >= TurningState.GUIDE_APPEAR_TIME;
+    }
+
+    public handleAutoTurn(): null {
+        console.log("Turning in the calculated direction");
+        return null;
+    }
+
+    public handleTurning(input: Direction) {
+        // If you haven't chosen a direction, reset the input tick
+        if (input === Direction.NONE) {
+            this.isInputDiagonal = false;
+            this.inputTick = 0;
+            return;
+        }
+        // When that time is up turn in the direction you've chosen
+        this.isInputDiagonal ||= input.isDiagonal();
+        this.lastCompatibleInput = this.isInputDiagonal ? input.isDiagonal() ? input : this.lastCompatibleInput : input;
+
+        // Turn in the direction you've chosen
+        if (this.isInputDiagonal && !input.isDiagonal()) {
+            // Give the player a little time to choose a direction, a bit more if it it's not diagonal
+            if (this.inputTick < TurningState.TURN_TIME) {
+                this.inputTick++;
+            }
+            else {
+                this.inputTick = 0;
+                this.isInputDiagonal = false;
+            }
+        }
+        this.player.leader.direction = this.lastCompatibleInput;
+    }
+
+    public handleGuide() {
+        if (this.guideAppeared)
+            this.floorGuide.update(this.player.leader.direction);
+
+        // Update the timer until the guide appears
+        else this.guideTick++;
+    }
+
+    public update() {
+        const input = Direction.fromVector(Controls.LEFT_STICK.position).flipY();
+
+        // If you release Y, turn in the calculated direction
+        if (Controls.Y.isUp) {
+            // Hide the guide
+            if (this.guideAppeared) this.floorGuide.hide();
+            this.handleAutoTurn();
+            // Go back to idle
+            return this.exit();
+        }
+        // Turn the player
+        this.handleTurning(input);
+        // Show the guide when the timer is up
+        this.handleGuide();
+
+        return null;
+    }
+}
+
 export class Player {
-    private logic: DungeonLogic;
-    private floor!: DungeonLogic["state"]["floor"];
-    private leader!: DungeonPokemon;
-    private floorGuide!: DungeonLogic["state"]["floorGuide"];
+    public logic: DungeonLogic;
+    public floor!: DungeonLogic["state"]["floor"];
+    public leader!: DungeonPokemon;
+    public floorGuide!: DungeonLogic["state"]["floorGuide"];
+
+    public state!: InputState;
 
     /** Saves whether the last waked tile was a corridor `true` or a room `false` */
     private lastWalkedTile!: boolean;
-    /** Set when you are stopped while running */
-    private movementHaltedAt!: Direction | null;
     /** The number of ticks since a direction other than NONE has been selected */
     private movementTick!: number;
 
-    constructor(logic: DungeonLogic) {
+    public constructor(logic: DungeonLogic) {
         this.logic = logic;
     }
 
@@ -43,10 +146,9 @@ export class Player {
         this.leader = this.floor.pokemon.getLeader();
         this.floorGuide = this.logic.state.floorGuide;
         this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position, this.leader);
-        this.movementHaltedAt = null;
+        // The currently active state
+        this.state = new IdleState(this);
         this.movementTick = 0;
-        this.turningDirection = null;
-        this.turningTick = 0;
     }
 
     // ANCHOR Running Methods
@@ -195,7 +297,7 @@ export class Player {
         // Update the leader's direction
         this.leader.direction = direction;
     }
-    private awaitMovementTick(tick: number): boolean {
+    public awaitMovementTick(tick: number): boolean {
         if (this.movementTick < tick) {
             this.movementTick++;
             return true;
@@ -236,110 +338,7 @@ export class Player {
      * to stay still
      */
     public doInput(): InputType {
-        let input = Direction.fromVector(Controls.leftStick).flipY();
-        let output = null;
-
-        // if (input !== Direction.NONE) Controls.B.resetLastPressed();
-        // if (Controls.B.onReleased(2)) {
-        //     GUIManager.showGUI(this.logic.state.menu.gui);
-        //     return null;
-        // }
-        // if (GUIManager.tick()) return null;
-
-
-        if (Controls.A.onPressed(1)) {
-            // Check if the player is facing a partner
-            const partner = this.facingPartner();
-            if (partner !== null) {
-                return [InputAction.TALK, partner];
-            }
-        }
-
-        // See if the player should be able to walk after halting movement
-        if (this.movementHaltedAt !== null) {
-            // If the player released the button it was pressing when the movement halted
-            if (input !== this.movementHaltedAt)
-                this.movementHaltedAt = null;
-            return null;
-        }
-
-        // Turn the player if the process is not finished
-        if (this.turningDirection !== null) {
-            if (this.turnPlayer()) return null;
-            else {
-                this.movementTick = WALKING_TICKS;
-                input = this.leader.direction;
-            }
-        }
-        // Check if the input direction is the opposite of the player's current direction
-        else if (input !== Direction.NONE && this.leader.direction.isOpposite(input)) {
-            if (this.turnPlayer(input)) return null;
-        }
-        // See if you should load the floor guide
-        if (Controls.Y.isDown) {
-            this.floorGuide.update(this.leader.direction);
-
-            if (input !== Direction.NONE)
-                if (this.awaitMovementTick((input.isDiagonal() ? 1 : 2) * GUIDE_TURN_TICKS)) return null;
-
-            if (input !== Direction.NONE)
-                this.leader.direction = input;
-
-            output = null;
-        }
-        else if (Controls.Y.isUp && this.floorGuide.lastDirection !== Direction.NONE) {
-            // See if you should hide the floor guide
-            this.floorGuide.hide();
-            output = null;
-        }
-        // See if the player can move in that direction
-        else if (input !== Direction.NONE) {
-            if (this.awaitMovementTick((this.leader.direction !== input ? 1 : 1) * WALKING_TICKS)) return null;
-            // Stop the player if it's running into a possible turning point
-            if (Controls.B.isDown && DungeonPokemon.isRunning && input !== Direction.NONE && this.shouldStopRunning(input)) {
-                DungeonPokemon.setRunning(false);
-                this.movementHaltedAt = input;
-                return null;
-            }
-            const obstacle = this.leader.canMoveTowards(input, this.floor);
-
-            switch (obstacle) {
-                case Obstacle.NONE:
-                    // TODO: Use a better function  
-                    DungeonPokemon.setRunning(Controls.B.isDown);
-                    // You could run
-                    output = input;
-                    break;
-                case Obstacle.WALL:
-                    this.noMove(input);
-                    output = null;
-                    break;
-                case Obstacle.PARTNER:
-                    this.noMove(input);
-
-                    // Check to see if you can swap with the partner
-                    if (Controls.B.isDown) {
-                        output = Controls.B ? input : null;
-                    }
-                    // Check to see if you can push the partner
-                    else {
-                        const pos = this.leader.position.add(input.toVector());
-                        // Find a partner that will be in the position you are trying to move in
-                        const partner = this.floor.pokemon.getPartners().find(p => p.nextTurnPosition.equals(pos))!;
-                        output = this.pushPartnerBackwards(partner, input) ? input : null;
-                    }
-                    break;
-                case Obstacle.ENEMY:
-                    this.noMove(input);
-
-                    this.leader.direction = input;
-                    output = null;
-                    break;
-            }
-        }
-        // Update the last walked tile
-        this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position, this.leader);
-        if (output === null) return null;
-        return [InputAction.WALK, output];
+        // Update the state
+        return this.state.update();
     }
 }

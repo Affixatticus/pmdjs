@@ -54,9 +54,8 @@ export class DungeonLogic {
 
         // Await for the player input
         if (this.inputResult === null) {
-            this.inputResult = this.player.doInput();
+            this.inputResult = this.player.state.update();
             if (this.inputResult === null) return;
-
         };
 
         // Create the actions
