@@ -165,7 +165,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 groundItemDensity: .7,
             },
         },
-        [30]: {
+        [100]: {
             name: "Grassless Cave",
             path: "deep_boulder_quarry_01",
             lightLevel: LightLevel.DARKEST,

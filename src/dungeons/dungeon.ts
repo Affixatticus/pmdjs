@@ -92,14 +92,6 @@ export class DungeonState {
                 area.fill(Tile.WALL);
             }
 
-            // Calculate the actionArea of a point 100 times and time it
-            const start = performance.now();
-            for (let i = 0; i < 100; i++) {
-                this.floor.getActionArea(point);
-            }
-            const end = performance.now();
-            console.log(`Time: ${end - start}ms`);
-
             this.floor.map.changeGridSection(point, area);
             this.updateFloor();
         });

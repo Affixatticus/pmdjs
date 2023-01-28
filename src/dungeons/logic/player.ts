@@ -7,7 +7,7 @@ import { PushAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 
 /** Radius in which the running algorithm will check to see if it should stop in line with a corridor */
-const MAX_DISTANCE_FOR_INLINE_CHECK = 3;
+const MAX_DISTANCE_FOR_INLINE_CHECK = 5;
 /** The number of ticks it should takes to turn 45 degrees */
 const TURNING_TICKS = 4;
 /** The number of ticks it takes to register the input direction */
@@ -42,7 +42,7 @@ export class Player {
         this.floor = this.logic.state.floor;
         this.leader = this.floor.pokemon.getLeader();
         this.floorGuide = this.logic.state.floorGuide;
-        this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position);
+        this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position, this.leader);
         this.movementHaltedAt = null;
         this.movementTick = 0;
         this.turningDirection = null;
@@ -337,13 +337,9 @@ export class Player {
                     break;
             }
         }
-
-        if (output === null) return null;
-
         // Update the last walked tile
-        this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position);
-        console.log("Updated last walked tile");
-
+        this.lastWalkedTile = this.floor.grid.isCorridor(this.leader.position, this.leader);
+        if (output === null) return null;
         return [InputAction.WALK, output];
     }
 }
