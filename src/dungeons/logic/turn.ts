@@ -2,6 +2,7 @@ import { DungeonState } from "../dungeon";
 import { DungeonPokemonType } from "../objects/pokemon";
 import { TurnAction } from "./actions/action";
 import { WalkAction, MoveActionGroup } from "./actions/walk";
+import { DungeonLogic } from "./logic";
 
 export const enum TurnFlags {
     GO_UP_STAIRS = 1,

@@ -45,6 +45,7 @@ export class DungeonPokemon {
     /** Turn calculation components */
     public nextTurnPosition!: Vec2;
     public nextTurnDirection!: Direction;
+    public lastVisitedPositions: Vec2[] = [];
 
     private opaqMesh!: Mesh;
     private tranMesh!: Mesh;
@@ -144,6 +145,10 @@ export class DungeonPokemon {
     public set position(pos: Vec2) {
         this._position = pos;
         this.spritePosition = pos;
+        this.lastVisitedPositions.push(pos);
+        if (this.lastVisitedPositions.length > 4) {
+            this.lastVisitedPositions.shift();
+        }
     }
 
     public get direction() {
@@ -227,8 +232,8 @@ export class DungeonPokemon {
         }
         // If there is an item on this tile, then return it
         if (floor.grid.get(possiblePosition) === Tile.ITEM) return Obstacle.ITEM;
-        if (possiblePosition.equals(floor.pokemon.getLeader().position))
-        return Obstacle.LEADER;
+        if (possiblePosition.equals(floor.pokemon.getLeader().nextTurnPosition))
+            return Obstacle.LEADER;
         return Obstacle.NONE;
     }
 }

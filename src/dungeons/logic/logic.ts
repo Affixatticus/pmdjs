@@ -35,10 +35,10 @@ export class DungeonLogic {
             // Assign the ai to the pokemon
             switch (pokemon.type) {
                 case DungeonPokemonType.PARTNER:
-                    pokemon.ai = new DungeonPokemonPartnerAI(pokemon, this.state.floor);
+                    pokemon.ai = new DungeonPokemonPartnerAI(pokemon, this);
                     break;
                 default:
-                    pokemon.ai = new DungeonPokemonAI(pokemon, this.state.floor);
+                    pokemon.ai = new DungeonPokemonAI(pokemon, this);
             }
         }
         // Update the player
@@ -89,9 +89,9 @@ export class DungeonLogic {
         }
 
         // Execute the turn
-        const done = this.turn.execute();
+        const turnFinished = this.turn.execute();
 
-        if (done) {
+        if (turnFinished) {
             this.turnsHistory.push(this.turn);
             // Reset all calcedActions
             for (const pokemon of this.state.floor.pokemon.getAll()) {
