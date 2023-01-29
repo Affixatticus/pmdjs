@@ -2,8 +2,10 @@ import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
 import { Direction } from "../../utils/direction";
 import Random from "../../utils/random";
+import { Vec2 } from "../../utils/vectors";
+import { DungeonItem } from "../objects/item";
 import { DungeonPokemon, Obstacle } from "../objects/pokemon";
-import { PushAction } from "./actions/walk";
+import { WalkAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 
 /** Radius in which the running algorithm will check to see if it should stop in line with a corridor */
@@ -73,7 +75,7 @@ class WalkingState extends InputState {
     private startRunning(input: Direction) {
         this.running = true;
         this.runningDirection = input;
-        this.inputTick = -4;
+        this.inputTick = -WalkingState.TURNING_TIME;
         DungeonPokemon.setRunning(true);
 
         return [InputAction.WALK, input] as InputType;
@@ -88,6 +90,62 @@ class WalkingState extends InputState {
 
         // Keep running in said direction
         return [InputAction.WALK, this.runningDirection] as InputType;
+    }
+
+    private createPushAction(partner: DungeonPokemon, direction: Direction) {
+        partner.ai.overwrittenAction = WalkAction.getAction(partner, direction, true, this.player.logic);
+    }
+
+    private handlePushing(input: Direction, partner: DungeonPokemon = this.player.partnerInFront(input)!): InputType | null {
+        // First thing is to check if the partner can scoot along the input direction
+        const obstacleInFront = partner.canMoveTowards(input, this.floor);
+        if (obstacleInFront === Obstacle.NONE || obstacleInFront === Obstacle.ITEM) {
+            this.createPushAction(partner, input);
+            return [InputAction.WALK, input] as InputType;
+        }
+        // If it can't, try to push it in the two adjacent directions
+        else {
+            const r = input.isDiagonal() ? 1 : 2;
+            const f = Random.chance(50) ? -1 : 1;
+            const firstDirection = input.roll(f * r);
+            const secondDirection = input.roll(-f * r);
+            const firstObstacle = partner.canMoveTowards(firstDirection, this.floor);
+            if (firstObstacle === Obstacle.NONE) {
+                this.createPushAction(partner, firstDirection);
+                return [InputAction.WALK, input] as InputType;
+            }
+            const secondObstacle = partner.canMoveTowards(secondDirection, this.floor);
+            if (secondObstacle === Obstacle.NONE) {
+                this.createPushAction(partner, secondDirection);
+                return [InputAction.WALK, input] as InputType;
+            }
+        }
+        // If there's a partner in the way
+        if (obstacleInFront === Obstacle.PARTNER) {
+            const otherPartner = this.player.partnerAt(partner.position.add(input.toVector()))!;
+            const pushingResult = this.handlePushing(input, otherPartner);
+            if (pushingResult !== null) {
+                this.createPushAction(partner, input);
+                return pushingResult;
+            }
+        }
+
+        // Turn the player        
+        this.leader.direction = input;
+        return null;
+    }
+
+    private handleSwapping(input: Direction, partner: DungeonPokemon = this.player.partnerInFront(input)!): InputType | null {
+        // If the partner can move in the input direction, swap with them
+        partner.ai.overwrittenAction = WalkAction.getAction(partner, input.getOpposite(), false, this.player.logic);
+        return [InputAction.WALK, input] as InputType;
+    }
+
+    // Sets the item you just walked on to discarded so that you don't open the gui when you walk on it
+    private handleDiscardingItem(input: Direction) {
+        const item = this.player.itemInFront(input)!;
+        item.discard(false);
+        return null;
     }
 
     public update() {
@@ -117,11 +175,21 @@ class WalkingState extends InputState {
                         return this.startRunning(input);
                     return null;
                 }
-
                 // If you chose a direction, and you are pressing B
                 return [InputAction.WALK, input] as InputType;
             case Obstacle.WALL:
+                // TODO make this turn like in the TurningState
+                this.leader.direction = input;
                 return null;
+            case Obstacle.PARTNER:
+                // Swap with partner
+                if (Controls.B.isDown)
+                    return this.handleSwapping(input);
+                // Push the partner
+                return this.handlePushing(input);
+            case Obstacle.ITEM:
+                if (Controls.B.isDown)
+                    this.handleDiscardingItem(input);
         }
 
         return [InputAction.WALK, input] as InputType;
@@ -146,8 +214,11 @@ class TurningState extends InputState {
     }
 
     private handleAutoTurn(): null {
-        if (!this.chosenDirection)
-            console.log("Turning in the calculated direction");
+        if (!this.chosenDirection) {
+            const partner = this.floor.pokemon.getPartners().find(p => p.position.dist(this.leader.position) < 2);
+            if (!partner) return null;
+            this.player.leader.direction = Direction.fromVector(partner.position.subtract(this.leader.position)) ?? this.leader.direction;
+        }
         return null;
     }
 
@@ -332,30 +403,6 @@ export class Player {
     }
 
     // ANCHOR Special Movement Methods
-    private pushPartnerBackwards(partner: DungeonPokemon, lastDirection: Direction): boolean {
-        // Check if the partner can move in the new position
-        if (this.logic.state.floor.canMoveTowards(partner, lastDirection)) {
-            // Add the new position to the action list
-            partner.ai.overwrittenAction = new PushAction(partner, lastDirection);
-            return true;
-        }
-        // Check if the partner can move in a diagonal direction
-        const ccwDirection = lastDirection.roll(-2);
-        if (Random.chance(50) && this.logic.state.floor.canMoveTowards(partner, ccwDirection)) {
-            partner.ai.overwrittenAction = new PushAction(partner, ccwDirection);
-            return true;
-        }
-        const cwDirection = lastDirection.roll(2);
-        if (this.logic.state.floor.canMoveTowards(partner, cwDirection)) {
-            partner.ai.overwrittenAction = new PushAction(partner, cwDirection);
-            return true;
-        }
-        if (this.logic.state.floor.canMoveTowards(partner, ccwDirection)) {
-            partner.ai.overwrittenAction = new PushAction(partner, ccwDirection);
-            return true;
-        }
-        return true;
-    }
     /** Function that runs when the input resulted in a obstacled way,
      * but you still want to turn the player
      */
@@ -393,12 +440,17 @@ export class Player {
         return true;
     }
 
-    private facingPartner(): DungeonPokemon | null {
-        const facing = this.leader.position.add(this.leader.direction.toVector());
-        for (const partner of this.floor.pokemon.getPartners()) {
-            if (partner.position.equals(facing)) return partner;
-        }
-        return null;
+    public partnerAt(position: Vec2): DungeonPokemon | null {
+        return this.floor.pokemon.getPartners().find(p => p.position.equals(position)) ?? null;
+    }
+
+    public partnerInFront(direction: Direction): DungeonPokemon | null {
+        return this.partnerAt(this.leader.position.add(direction.toVector()));
+    }
+
+    public itemInFront(direction: Direction): DungeonItem | null {
+        const nextPos = this.leader.position.add(direction.toVector());
+        return this.floor.objects.getItems().find(i => i.position.equals(nextPos)) ?? null;
     }
 
     /** Takes in controller inputs from the connected joystick and returns

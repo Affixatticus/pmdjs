@@ -1,5 +1,6 @@
 import { Scene } from "@babylonjs/core";
 import { Vec2 } from "../../utils/vectors";
+import { DungeonItem } from "./item";
 import { DungeonTile } from "./tile";
 
 export enum ObjectType {
@@ -50,6 +51,10 @@ export class DungeonObjectContainer {
 
     public get(pos: Vec2) {
         return this.objects.find(obj => obj.position.equals(pos));
+    }
+
+    public getItems(): DungeonItem[] {
+        return this.objects.filter(obj => obj.type === ObjectType.ITEM) as DungeonItem[];
     }
 
     public getStairs(): DungeonTile {

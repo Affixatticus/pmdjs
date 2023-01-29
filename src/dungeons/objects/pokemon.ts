@@ -18,9 +18,11 @@ export const enum DungeonPokemonType {
 
 export enum Obstacle {
     NONE,
+    LEADER,
     WALL,
     ENEMY,
-    PARTNER
+    PARTNER,
+    ITEM,
 };
 
 
@@ -97,7 +99,7 @@ export class DungeonPokemon {
 
         opaqMesh.position = this._position.gameFormat.add(V3(0.5, 0, -0.5));
 
-        opaqMesh.scalingDeterminant = 8;
+        opaqMesh.scalingDeterminant = 7;
         opaqMesh.renderingGroupId = RenderingGroupId.WALL;
         opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
 
@@ -223,6 +225,10 @@ export class DungeonPokemon {
             if (pokemon.type === DungeonPokemonType.ENEMY) return Obstacle.ENEMY;
             if (pokemon.type === DungeonPokemonType.PARTNER) return Obstacle.PARTNER;
         }
+        // If there is an item on this tile, then return it
+        if (floor.grid.get(possiblePosition) === Tile.ITEM) return Obstacle.ITEM;
+        if (possiblePosition.equals(floor.pokemon.getLeader().position))
+        return Obstacle.LEADER;
         return Obstacle.NONE;
     }
 }

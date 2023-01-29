@@ -32,29 +32,33 @@ export class WalkAction implements TurnAction {
     public animationLength: number = WalkAction.ANIMATION_LENGTH;
     public walkDelta: number;
 
-    static getAction(pokemon: DungeonPokemon, direction: Direction, logic: DungeonLogic): TurnAction {
+    /** Flag set at the creation of this action, which is set when the pokemon was pushed */
+    private usePushingAnimation: boolean;
+
+    static getAction(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic): TurnAction {
         // If the pokemon is not actually moving
         if (direction === Direction.NONE) return new NilAction(pokemon);
         // If there are stairs in the next position
         const nextPos = pokemon.position.add(direction.toVector());
         if (logic.state.floor.objects.getStairs().position.equals(nextPos)) {
-            return new StairsAction(pokemon, direction, logic);
+            return new StairsAction(pokemon, direction, push, logic);
         }
         // If the next position is an item
         if (logic.state.floor.grid.get(nextPos) === Tile.ITEM) {
-            return new ItemAction(pokemon, direction, logic.state.floor.objects.get(nextPos) as DungeonItem, logic.state);
+            return new ItemAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonItem, logic.state);
         }
         // If there is a trap in the next position
         if (logic.state.floor.objects.get(nextPos)?.type === ObjectType.TRAP) {
-            return new TrapAction(pokemon, direction, logic.state.floor.objects.get(nextPos) as DungeonTile);
+            return new TrapAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonTile);
         }
 
-        return new WalkAction(pokemon, direction);
+        return new WalkAction(pokemon, direction, push);
     }
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, speed = DungeonPokemon.animationSpeed) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, speed = DungeonPokemon.animationSpeed) {
         this.pokemon = pokemon;
         this.direction = direction;
+        this.usePushingAnimation = push;
 
         // Set the next turn position of this pokemon
         this.pokemon.nextTurnPosition = pokemon.position.add(direction.toVector());
@@ -65,8 +69,7 @@ export class WalkAction implements TurnAction {
         this.walkDelta = 1 / this.animationLength;
     }
 
-    /** Animates the walk, and returns true when it's finished */
-    public tick(): boolean {
+    public walk(): boolean {
         // For the first step
         if (this.currentStep === 0) {
             // If the direction is not the same as the sprite direction
@@ -93,8 +96,6 @@ export class WalkAction implements TurnAction {
                     if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
                         // Set the animation to idle
                         this.pokemon.setAnimation("Idle");
-                        // // Set the pokemon speed to normal
-                        // DungeonPokemon.setRunning(false);
                     }
                 }
             }
@@ -106,15 +107,7 @@ export class WalkAction implements TurnAction {
 
         return false;
     }
-}
-
-export class PushAction extends WalkAction {
-    constructor(pokemon: DungeonPokemon, direction: Direction) {
-        super(pokemon, direction);
-        this.logMessage = `${pokemon.toString()} pushed ${direction.toString()}!`;
-    }
-
-    public tick(): boolean {
+    public pushWalk(): boolean {
         // For the first step
         if (this.currentStep === 0) {
             // If the direction is not the same as the sprite direction
@@ -151,14 +144,20 @@ export class PushAction extends WalkAction {
 
         return false;
     }
+
+    /** Animates the walk, and returns true when it's finished */
+    public tick(): boolean {
+        if (this.usePushingAnimation) return this.pushWalk();
+        return this.walk();
+    }
 }
 
 export class StairsAction extends WalkAction {
     public done: boolean;
     public logic: DungeonLogic;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, logic: DungeonLogic) {
-        super(pokemon, direction);
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic) {
+        super(pokemon, direction, push);
         this.logic = logic;
         this.done = false;
         console.log("Created StairsAction");
@@ -184,8 +183,8 @@ export class StairsAction extends WalkAction {
     }
 }
 export class TrapAction extends WalkAction {
-    constructor(pokemon: DungeonPokemon, direction: Direction, trap: DungeonTile) {
-        super(pokemon, direction);
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, trap: DungeonTile) {
+        super(pokemon, direction, push);
         console.log("Created TrapAction");
         this.logMessage = `${pokemon.toString()} triggered a trap!`;
     }
@@ -195,8 +194,8 @@ export class ItemAction extends WalkAction {
     public item: DungeonItem;
     public state: DungeonState;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, item: DungeonItem, state: DungeonState) {
-        super(pokemon, direction);
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, item: DungeonItem, state: DungeonState) {
+        super(pokemon, direction, push);
         this.item = item;
         this.state = state;
         this.done = false;

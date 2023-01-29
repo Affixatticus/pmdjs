@@ -43,7 +43,7 @@ export class DungeonItem extends DungeonObject {
         this.stack = new ItemStack(itemId, amount);
     }
 
-    public setWanted(wanted: boolean) {
+    public discard(wanted: boolean) {
         this.material.setEnabled(wanted);
         this.isWanted = wanted;
     }
