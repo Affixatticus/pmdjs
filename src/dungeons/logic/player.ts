@@ -2,7 +2,7 @@ import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
 import { Direction } from "../../utils/direction";
 import Random from "../../utils/random";
-import { DungeonPokemon } from "../objects/pokemon";
+import { DungeonPokemon, Obstacle } from "../objects/pokemon";
 import { PushAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 
@@ -22,8 +22,19 @@ abstract class InputState {
     public player!: Player;
 
     constructor(player?: Player) {
-        console.log("Created new state");
         if (player) this.player = player;
+    }
+
+    public get leader() {
+        return this.player.leader;
+    }
+
+    public get floor() {
+        return this.player.floor;
+    }
+
+    public getInputDirection(): Direction {
+        return Direction.fromVector(Controls.LEFT_STICK.position).flipY();
     }
 
     // Automatically goes to the idle state without returning a value
@@ -35,6 +46,7 @@ abstract class InputState {
     public changeState(state: InputState) {
         this.player.state = state;
         state.player = this.player;
+        return null;
     }
 
     public abstract update(): InputType;
@@ -42,36 +54,104 @@ abstract class InputState {
 
 class IdleState extends InputState {
     public update() {
-        if (Controls.Y.isDown) {
+        if (Controls.Y.isDown)
             this.changeState(new TurningState());
-        }
+        if (this.getInputDirection() !== Direction.NONE)
+            this.changeState(new WalkingState());
+
         return null;
     }
 }
 
+class WalkingState extends InputState {
+    static TURNING_TIME = 4;
+    private inputTick: number = 0;
+
+    private running: boolean = false;
+    private runningDirection: Direction = Direction.NONE;
+
+    private startRunning(input: Direction) {
+        this.running = true;
+        this.runningDirection = input;
+        this.inputTick = -4;
+        DungeonPokemon.setRunning(true);
+
+        return [InputAction.WALK, input] as InputType;
+    }
+
+    private handleRunning() {
+        // Until you run into something, keep running
+        if (this.player.shouldStopRunning(this.runningDirection)) {
+            this.running = false;
+            return null;
+        }
+
+        // Keep running in said direction
+        return [InputAction.WALK, this.runningDirection] as InputType;
+    }
+
+    public update() {
+        const input = this.getInputDirection();
+
+        // Keep running while the direction is still locked
+        if (this.running)
+            return this.handleRunning();
+        else DungeonPokemon.setRunning(false);
+
+        // Exit if you're not pressing anything, automatically resets runningLockedDir
+        if (input === Direction.NONE) {
+            return this.exit();
+        }
+
+        // Give the player TURNING_TIME ticks to choose a diagonal direction
+        if (this.inputTick < WalkingState.TURNING_TIME) {
+            this.inputTick++;
+            return null;
+        }
+
+        // Handle obstacles in the best way
+        switch (this.leader.canMoveTowards(input, this.floor)) {
+            case Obstacle.NONE:
+                if (Controls.B.isDown) {
+                    if (this.runningDirection !== input)
+                        return this.startRunning(input);
+                    return null;
+                }
+
+                // If you chose a direction, and you are pressing B
+                return [InputAction.WALK, input] as InputType;
+            case Obstacle.WALL:
+                return null;
+        }
+
+        return [InputAction.WALK, input] as InputType;
+    }
+}
 class TurningState extends InputState {
     static GUIDE_APPEAR_TIME = 16;
     static TURN_TIME = 4;
-    public guideTick = 0;
-    public inputTick = 0;
+    private guideTick = 0;
+    private inputTick = 0;
+    private chosenDirection: boolean = false;
 
-    public isInputDiagonal: boolean = false;
-    public lastCompatibleInput!: Direction;
+    private isInputDiagonal: boolean = false;
+    private lastCompatibleInput!: Direction;
 
-    public get floorGuide() {
+    private get floorGuide() {
         return this.player.floorGuide;
     }
 
-    public get guideAppeared() {
+    private get guideAppeared() {
         return this.guideTick >= TurningState.GUIDE_APPEAR_TIME;
     }
 
-    public handleAutoTurn(): null {
-        console.log("Turning in the calculated direction");
+    private handleAutoTurn(): null {
+        if (!this.chosenDirection)
+            console.log("Turning in the calculated direction");
         return null;
     }
 
-    public handleTurning(input: Direction) {
+    private handleTurning(input: Direction) {
         // If you haven't chosen a direction, reset the input tick
         if (input === Direction.NONE) {
             this.isInputDiagonal = false;
@@ -93,19 +173,20 @@ class TurningState extends InputState {
                 this.isInputDiagonal = false;
             }
         }
-        this.player.leader.direction = this.lastCompatibleInput;
+        this.leader.direction = this.lastCompatibleInput;
+        this.chosenDirection = true;
     }
 
-    public handleGuide() {
+    private handleGuide() {
         if (this.guideAppeared)
-            this.floorGuide.update(this.player.leader.direction);
+            this.floorGuide.update(this.leader.direction);
 
         // Update the timer until the guide appears
         else this.guideTick++;
     }
 
     public update() {
-        const input = Direction.fromVector(Controls.LEFT_STICK.position).flipY();
+        const input = this.getInputDirection();
 
         // If you release Y, turn in the calculated direction
         if (Controls.Y.isUp) {
@@ -133,7 +214,7 @@ export class Player {
     public state!: InputState;
 
     /** Saves whether the last waked tile was a corridor `true` or a room `false` */
-    private lastWalkedTile!: boolean;
+    public lastWalkedTile!: boolean;
     /** The number of ticks since a direction other than NONE has been selected */
     private movementTick!: number;
 
@@ -165,36 +246,29 @@ export class Player {
     private isLinedUpWithCorridor(direction: Direction) {
         // Return false if the player is in a corridor already
         if (this.floor.grid.isCorridor(this.leader.position, this.leader)) return false;
-        // If the player is moving diagonally, return false
-        if (direction.isDiagonal()) return false;
 
+        const r = direction.isDiagonal() ? 1 : 2;
         // Get the sides of the player
-        const dir1 = Direction.get(Direction.rollIndex(direction.index - 2)).toVector();
-        const dir2 = Direction.get(Direction.rollIndex(direction.index + 2)).toVector();
+        const dir1 = Direction.get(Direction.rollIndex(direction.index - r)).toVector();
+        const dir2 = Direction.get(Direction.rollIndex(direction.index + r)).toVector();
 
         // Check if the player is lined up with a corridor entrance
-        let foundCorridorEntrance = false;
         let pos1 = this.leader.position.clone();
         let pos2 = this.leader.position.clone();
         // Look in the line of the opposite sides if you can find a corridor entrance
         for (let i = 0; i < MAX_DISTANCE_FOR_INLINE_CHECK; i++) {
             pos1.addInPlace(dir1);
             if (this.leader.isTileObstacle(this.floor.grid.get(pos1))) break;
-            if (this.floor.grid.isCorridor(pos1, this.leader)) {
-                foundCorridorEntrance = true;
-                break;
-            }
+            if (this.floor.grid.isCorridor(pos1, this.leader))
+                return true;
         }
         for (let i = 0; i < MAX_DISTANCE_FOR_INLINE_CHECK; i++) {
             pos2.addInPlace(dir2);
             if (this.leader.isTileObstacle(this.floor.grid.get(pos2))) break;
-            if (this.floor.grid.isCorridor(pos2, this.leader)) {
-                foundCorridorEntrance = true;
-                break;
-            }
+            if (this.floor.grid.isCorridor(pos2, this.leader))
+                return true;
         }
-        // Return the result
-        return foundCorridorEntrance;
+        return false;
     }
     /** Returns true if the player is at the center of a corridor that has 3 or 4 corridors adjacent to it */
     private isAtAJunction() {
@@ -226,11 +300,10 @@ export class Player {
         return false;
     }
     /** Returns true if there's an item or the stairs in front or at the sides of the player */
-    private isNextToAnEntity(direction: Direction) {
+    private isNextToAnObject(direction: Direction) {
+        const r = direction.isDiagonal() ? 1 : 2;
         // Check the two sides of the player
-        return this.isEntity(direction) ||
-            this.isEntity(Direction.get(Direction.rollIndex(direction.index - 2))) ||
-            this.isEntity(Direction.get(Direction.rollIndex(direction.index + 2)));
+        return this.isEntity(direction) || this.isEntity(direction.roll(-r)) || this.isEntity(direction.roll(r));
     }
     /** Returns true if any enemy is within a tile range of the player */
     private isInEnemyRange() {
@@ -249,18 +322,13 @@ export class Player {
      * 4. It is in range of an enemy
      * 5. It is in line with a corridor entrance
     */
-    private shouldStopRunning(current: Direction): boolean {
-        // If the player entered a room, stop running
-        if (this.justEnteredRoom()) return true;
-        // If the player is at a junction in a corridor, stop running
-        if (this.isAtAJunction()) return true;
-        // If the player is in front of an entity, stop running
-        if (this.isNextToAnEntity(current)) return true;
-        // If the player is in the 3x3 range of an enemy, stop running
-        if (this.isInEnemyRange()) return true;
-        // If the player is in line with a corridor entrance, stop running
-        if (this.isLinedUpWithCorridor(current)) return true;
-        return false;
+    public shouldStopRunning(current: Direction): boolean {
+        return this.leader.canMoveTowards(current, this.floor) !== Obstacle.NONE ||
+            this.justEnteredRoom() ||
+            this.isAtAJunction() ||
+            this.isNextToAnObject(current) ||
+            this.isInEnemyRange() ||
+            this.isLinedUpWithCorridor(current);
     }
 
     // ANCHOR Special Movement Methods

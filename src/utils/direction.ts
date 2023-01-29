@@ -37,6 +37,18 @@ export class Direction {
         Direction.SOUTH_WEST
     ];
 
+    static readonly VECTOR: Direction[] = [
+        Direction.NORTH_WEST,
+        Direction.NORTH,
+        Direction.NORTH_EAST,
+        Direction.WEST,
+        Direction.NONE,
+        Direction.EAST,
+        Direction.SOUTH_WEST,
+        Direction.SOUTH,
+        Direction.SOUTH_EAST
+    ];
+
     static readonly CARDINAL: Direction[] = [
         Direction.SOUTH,
         Direction.EAST,
@@ -62,12 +74,13 @@ export class Direction {
     }
 
     static fromVector(vector: Vec2) {
-        for (const direction of Direction.ALL) {
-            if (direction.horizontal === vector.x && direction.vertical === vector.y) {
-                return direction;
-            }
-        }
-        return Direction.NONE;
+        if (vector.x)
+            vector.x = vector.x > 0 ? 1 : -1;
+        if (vector.y)
+            vector.y = vector.y > 0 ? 1 : -1;
+        const x = vector.x + 1;
+        const y = vector.y + 1;
+        return Direction.VECTOR[y * 3 + x];
     }
 
     /** Chooses the direction that is most plentiful in the given list */

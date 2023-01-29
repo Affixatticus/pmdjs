@@ -64,6 +64,8 @@ export class DungeonLogic {
 
             switch (this.inputResult[0]) {
                 case InputAction.WALK:
+                    // Update the last walked tile
+                    this.player.lastWalkedTile = this.state.floor.grid.isCorridor(leader.position, leader);
                     // Do player movement
                     playerAction = WalkAction.getAction(leader, this.inputResult[1], this);
                     break;

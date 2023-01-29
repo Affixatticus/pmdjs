@@ -2,6 +2,7 @@ import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, 
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
+import { Direction } from "../utils/direction";
 import { V2, V3, Vec3 } from "../utils/vectors";
 import { DungeonFloor } from "./floor";
 import { DungeonLogic } from "./logic/logic";
@@ -80,6 +81,15 @@ export class DungeonState {
             if (!event.pickInfo) return;
             const point = V3(event.pickInfo.pickedPoint as Vector3).toVec2().roundDown().subtract(V2(0, -1)).multiply(V2(1, -1));
             const area = new ByteGrid(1, 1);
+
+            // const v = V2(1, 1);
+            // const time = performance.now();
+            // for (let i = 0; i < 100000; i++) {
+            //     Direction.fromVector(v);
+            // }
+            // console.log(performance.now() - time);
+
+
 
             // If the tile is Unbreakable, return
             if (this.floor.grid.get(point) === Tile.UNBREAKABLE_WALL) return;
@@ -255,10 +265,10 @@ export class DungeonState {
 
     private tick = 0;
     public update() {
+        this.floor.animate(this.tick);
         this.logic.update();
         // this.controlCamera();
         this.lightOverlay.update();
-        this.floor.animate(this.tick);
         this.tick++;
     }
 }

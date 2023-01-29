@@ -58,16 +58,16 @@ export class DungeonItem extends DungeonObject {
     }
 
     public async render(scene: Scene): Promise<void> {
+        // Load the texture
+        const source = await AssetsLoader.loadItemsSheet();
+        const material = new ItemMaterial("item", source, scene, ...getItemCrop(this.itemId));
+
         //Create a plane
         const plane = MeshBuilder.CreatePlane(this.getId("plane"), { size: 1 }, scene);
 
         plane.position = V3(this.position.x + .5, 0.001, this.position.y + .5).gameFormat;
         plane.rotate(Vector3.Right(), Math.PI / 2);
         plane.renderingGroupId = RenderingGroupId.FLOOR;
-
-        // Load the texture
-        const source = await AssetsLoader.loadItemsSheet();
-        const material = new ItemMaterial("item", source, scene, ...getItemCrop(this.itemId));
 
         plane.material = material;
 

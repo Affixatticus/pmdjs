@@ -93,8 +93,8 @@ export class WalkAction implements TurnAction {
                     if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
                         // Set the animation to idle
                         this.pokemon.setAnimation("Idle");
-                        // Set the pokemon speed to normal
-                        DungeonPokemon.setRunning(false);
+                        // // Set the pokemon speed to normal
+                        // DungeonPokemon.setRunning(false);
                     }
                 }
             }

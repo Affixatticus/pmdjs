@@ -130,7 +130,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 tileDensity: 4,
             }
         },
-        [20]: {
+        [50]: {
             name: "Grass Cave",
             path: "grass_cove_01",
             lightLevel: LightLevel.DARK,

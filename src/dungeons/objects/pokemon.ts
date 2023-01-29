@@ -16,7 +16,7 @@ export const enum DungeonPokemonType {
     BOSS
 };
 
-export const enum Obstacle {
+export enum Obstacle {
     NONE,
     WALL,
     ENEMY,
@@ -196,24 +196,7 @@ export class DungeonPokemon {
         return DungeonGrid.isWalkable(tile);
     }
 
-    /** Returns the obstacle that's blocking this pokemon's path */
-    public getObstacle(pos: Vec2, floor: DungeonFloor): Obstacle {
-        // The tile to check if the pokemon can stand on
-        const tile = floor.grid.get(pos);
-
-        // If the tile is an obstacle, then return it
-        if (this.isTileObstacle(tile)) {
-            return Obstacle.WALL;
-        }
-        // If there is a pokemon on this tile, then return it
-        const pokemon = floor.pokemon.getAll().find(p => p.nextTurnPosition.equals(pos));
-        if (pokemon) {
-            if (pokemon.type === DungeonPokemonType.ENEMY) return Obstacle.ENEMY;
-            if (pokemon.type === DungeonPokemonType.PARTNER) return Obstacle.PARTNER;
-        }
-        return Obstacle.NONE;
-    }
-
+    /** Returns the obstacle that would block the pokemon from moving in the given direction */
     public canMoveTowards(dir: Direction, floor: DungeonFloor): Obstacle {
         const possiblePosition = this.position.add(dir.toVector());
 
@@ -227,8 +210,20 @@ export class DungeonPokemon {
             }
         }
 
-        // Return the obstacle on the possible position
-        return this.getObstacle(possiblePosition, floor);
+        // The tile to check if the pokemon can stand on
+        const tile = floor.grid.get(possiblePosition);
+
+        // If the tile is an obstacle, then return it
+        if (this.isTileObstacle(tile)) {
+            return Obstacle.WALL;
+        }
+        // If there is a pokemon on this tile, then return it
+        const pokemon = floor.pokemon.getAll().find(p => p.nextTurnPosition.equals(possiblePosition));
+        if (pokemon) {
+            if (pokemon.type === DungeonPokemonType.ENEMY) return Obstacle.ENEMY;
+            if (pokemon.type === DungeonPokemonType.PARTNER) return Obstacle.PARTNER;
+        }
+        return Obstacle.NONE;
     }
 }
 
