@@ -36,6 +36,8 @@ export class DungeonItem extends DungeonObject {
     private material!: ItemMaterial;
     public stack: ItemStack;
     public isWanted: boolean = true;
+    /** If the game should show the GUI the next time the leader walks on this */
+    public noGui: boolean = false;
 
     constructor(pos: Vec2, itemId: ItemId, amount: number = 1) {
         super(pos, ObjectType.ITEM);
@@ -45,6 +47,7 @@ export class DungeonItem extends DungeonObject {
 
     public discard(wanted: boolean) {
         this.material.setEnabled(wanted);
+        this.noGui = !wanted;
         this.isWanted = wanted;
     }
 

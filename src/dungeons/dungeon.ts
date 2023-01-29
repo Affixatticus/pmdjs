@@ -2,7 +2,6 @@ import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, 
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
-import { Direction } from "../utils/direction";
 import { V2, V3, Vec3 } from "../utils/vectors";
 import { DungeonFloor } from "./floor";
 import { DungeonLogic } from "./logic/logic";
@@ -14,7 +13,7 @@ import { Minimap } from "./ui/minimap";
 import { DungeonUI } from "./ui/ui";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
-const CAMERA_OFFSET = V3(0.5, 10, 2);
+const CAMERA_OFFSET = V3(0.5, 8, 1);
 
 
 export interface DungeonStateData {
