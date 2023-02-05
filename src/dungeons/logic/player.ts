@@ -190,6 +190,10 @@ class WalkingState extends InputState {
             case Obstacle.ITEM:
                 if (Controls.B.isDown)
                     this.handleDiscardingItem(input);
+                break;
+            case Obstacle.ENEMY:
+                this.leader.direction = input;
+                return null;
         }
 
         return [InputAction.WALK, input] as InputType;

@@ -1,18 +1,18 @@
 import { DungeonPokemon } from "../../objects/pokemon";
 import { TurnAction } from "../actions/action";
 import { DungeonLogic } from "../logic";
-import { DungeonFollowAI, DungeonPokemonAI } from "./ai";
+import { DungeonPokemonAI, DungeonWanderAI } from "./ai";
 
-export class DungeonPokemonPartnerAI extends DungeonPokemonAI {
-    private followAI: DungeonFollowAI;
-
+export class DungeonPokemonEnemyAI extends DungeonPokemonAI {
+    private wanderAI: DungeonWanderAI;
+    
     constructor(pokemon: DungeonPokemon, logic: DungeonLogic) {
         super(pokemon, logic);
-        this.followAI = new DungeonFollowAI(pokemon, logic.state.floor.pokemon.getLeader(), logic);
+        this.wanderAI = new DungeonWanderAI(pokemon, logic);
     }
 
     public calculateNextAction(): TurnAction {
         if (this.overwrittenAction) return this.overwrittenAction;
-        return this.followAI.follow();
+        return this.wanderAI.wander();
     }
 }

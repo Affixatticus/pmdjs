@@ -204,26 +204,37 @@ export class ByteGrid {
         return positions;
     }
 
+    public getFilteredPositions(tileCheck: (tile: Tile) => boolean): Vec2[] {
+        const positions: Vec2[] = [];
+
+        for (let y = 0; y < this._height; y++)
+            for (let x = 0; x < this._width; x++)
+                if (tileCheck(this.getXY(x, y)))
+                    positions.push(V2(x, y));
+
+        return positions;
+    }
+
     /** Sets to zero all points that are occupied by:
      * - Fellow pokemon
      * - objects
      * - untraversable tiles for the specified pokemon
      */
     public hideOccupiedPositions(floor: DungeonFloor, pokemon: DungeonPokemon = floor.pokemon.getLeader()) {
-        // Hide under all the pokemon on the floor
+        // Hide below all the pokemon on the floor
         for (const pokemon of floor.pokemon.getAll()) {
             this.set(pokemon.position, 0);
         }
-        // Hide under all the objects on the floor
+        // Hide below all the objects on the floor
         for (const object of floor.objects) {
             // But keep it on the carpet
             if (object instanceof DungeonCarpet) continue;
             this.set(object.position, 0);
         }
-        // Hide under all unpassable tiles
+        // Hide over all unpassable tiles
         for (const [pos, visible] of this) {
             if (!visible) continue;
-            if (floor.isObstacle(...pos.xy, pokemon)) this.set(pos, 0);
+            if (pokemon.isTileObstacle(floor.grid.get(pos))) this.set(pos, 0);
         }
         return this;
     }
@@ -544,7 +555,7 @@ export class DungeonGrid extends ByteGrid {
     }
 
     /** Gets the tiles that the player sees if it's in a corridor */
-    public getCorridorViewArea(position: Vec2) {
+    public getCorridorActionArea(position: Vec2) {
         // You have a view radius, all tiles that fit in that and are isWalkable are 1, others are 0
         const viewArea = this.toOffsetGrid(position.move(-CORRIDOR_VIEW_RADIUS), CORRIDOR_VIEW_AREA);
         for (const [pos, tile] of viewArea) {
@@ -557,7 +568,7 @@ export class DungeonGrid extends ByteGrid {
     }
 
     /** Gets the tiles that the player sees if it's in a room */
-    public getRoomViewArea(position: Vec2) {
+    public getRoomActionArea(position: Vec2) {
         // Get a subgrid of this grid, with a maximum size
         const maxSize = ROOM_VIEW_RADIUS;
         const subGrid = this.toOffsetGrid(position.subtract(ROOM_VIEW_RADIUS_HALF), maxSize);
@@ -582,6 +593,14 @@ export class DungeonGrid extends ByteGrid {
         }
 
         return subGrid.trim();
+    }
+
+    /** Gets the tiles that any pokemon can interact with based on its current location */
+    public getActionArea(position: Vec2) {
+        if (this.isCorridor(position))
+            return this.getCorridorActionArea(position);
+        else
+            return this.getRoomActionArea(position).inflate(1);
     }
 
     public *[Symbol.iterator](): IterableIterator<[Vec2, Tile]> {

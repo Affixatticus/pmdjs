@@ -71,13 +71,13 @@ export class FloorGuide {
     public update(direction: Direction = this.pokemon.direction) {
         // Skip if the direction is the same
         if (this.lastDirection === direction) return;
-
+        
         // Delete all guides
         this.hide();
-
+        
         // Get the visible area of the pokemon
         const actionArea = this.floor.getActionArea(this.pokemon.position);
-
+        
         // Place the guides
         let position = this.pokemon.position.clone();
         for (let i = 0; i < 10; i++) {
@@ -85,17 +85,17 @@ export class FloorGuide {
             if (actionArea.get(position) === -1) break;
             actionArea.set(position, 2);
         }
-
+        
         // Remove hidden points
         actionArea.hideOccupiedPositions(this.floor);
-
+        
         // Loop through the view area and create instances
         for (const [pos, tile] of actionArea) {
             if (tile === 0) continue;
             if (tile === 1) this.instanceWhite(pos);
             if (tile === 2) this.instanceBlack(pos);
         }
-
+        
         this.lastDirection = direction;
     }
 

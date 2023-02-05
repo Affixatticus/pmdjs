@@ -28,8 +28,7 @@ export class DungeonTile extends DungeonObject {
         super(pos, isStairs ? ObjectType.STAIRS : ObjectType.TRAP);
         this.id = id;
         this.isStairs = isStairs ?? false;
-        this.isHidden = false;
-        // this.isHidden = isHidden ?? true;
+        this.isHidden = isHidden ?? true;
     }
 
     // ANCHOR Utility
@@ -102,6 +101,7 @@ export class DungeonTile extends DungeonObject {
     public dispose() {
         if (!this.mesh) return false;
         this.mesh.dispose();
+        this.material.dispose();
         return true;
     }
 }

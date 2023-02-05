@@ -99,8 +99,11 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
         [10]: {
             name: "Grass Cove",
             path: "western_cave",
-            enemies: null,
-            lightLevel: LightLevel.NORMAL,
+            enemies: [
+                { species: Pokedex.EEVEE, chance: 100, levelRange: [5, 5] },
+                { species: 134, chance: 100, levelRange: [5, 8] },
+            ],
+            lightLevel: LightLevel.DARK,
             items: [
                 { id: ItemId.ORAN_BERRY, chance: 20 },
                 // { id: ItemId.COIN, chance: 30 },
@@ -117,10 +120,10 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 chance: 100
             }],
             generation: {
-                maxRoomSize: V2(9, 7),
+                maxRoomSize: V2(7, 7),
                 connectionRate: 50,
-                bordersSize: V2(4, 6),
-                mapSize: V2(3, 2),
+                bordersSize: V2(3, 3),
+                mapSize: V2(2, 2),
                 // generateWater: false,
                 generateWater: false,
                 layoutType: GeneratorLayouts.ALL_ROOMS,

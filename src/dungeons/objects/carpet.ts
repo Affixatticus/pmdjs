@@ -42,6 +42,7 @@ export class DungeonCarpet extends DungeonObject {
     public dispose() {
         if (!this.mesh) return false;
         this.mesh.dispose();
+        this.material.dispose();
         return true;
     }
 }

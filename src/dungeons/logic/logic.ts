@@ -8,6 +8,7 @@ import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";
 import { InputAction, InputType, Player } from "./player";
 import { TurnAction } from "./actions/action";
+import { DungeonPokemonEnemyAI as DungeonPokemonEnemyAI } from "./ai/enemy_ai";
 
 export class DungeonLogic {
     public state: DungeonState;
@@ -36,6 +37,9 @@ export class DungeonLogic {
             switch (pokemon.type) {
                 case DungeonPokemonType.PARTNER:
                     pokemon.ai = new DungeonPokemonPartnerAI(pokemon, this);
+                    break;
+                case DungeonPokemonType.ENEMY:
+                    pokemon.ai = new DungeonPokemonEnemyAI(pokemon, this);
                     break;
                 default:
                     pokemon.ai = new DungeonPokemonAI(pokemon, this);

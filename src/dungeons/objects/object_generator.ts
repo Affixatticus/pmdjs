@@ -1,5 +1,5 @@
 import { DungeonFloorInfo } from "../../data/dungeons";
-import { ItemChance } from "../../data/items";
+import { ItemChance } from "../../data/item/items";
 import { TileObject, Tile, TrapChance } from "../../data/tiles";
 import Random from "../../utils/random";
 import { Vec2 } from "../../utils/vectors";
@@ -9,17 +9,19 @@ import { DungeonItem } from "./item";
 import { DungeonObject } from "./object";
 import { DungeonTile } from "./tile";
 
+type IdChancePair = [id: number, chance: number];
+
 export class DungeonObjectGenerator {
     private grid: DungeonGrid;
 
-    private items!: [number, number][];
-    private traps!: [number, number][];
+    private items!: IdChancePair[];
+    private traps!: IdChancePair[];
 
     constructor(grid: DungeonGrid, info: DungeonFloorInfo) {
         this.grid = grid;
 
-        this.items = this.extractItemChances(info?.items ?? null);
-        this.traps = this.extractTrapChances(info?.traps ?? null);
+        this.items = this.extractItemChances(info.items);
+        this.traps = this.extractTrapChances(info.traps);
     }
 
     private getRandomItem(): number {
@@ -42,10 +44,10 @@ export class DungeonObjectGenerator {
         throw new Error('No trap was chosen');
     }
 
-    private extractItemChances(items: ItemChance[] | null): [number, number][] {
+    private extractItemChances(items: ItemChance[] | null): IdChancePair[] {
         if (!items) return [];
 
-        const chances: [number, number][] = [];
+        const chances: IdChancePair[] = [];
 
         let chance = 0;
         for (const item of items) {
@@ -62,10 +64,10 @@ export class DungeonObjectGenerator {
         return chances;
     }
 
-    private extractTrapChances(traps: TrapChance[] | null): [number, number][] {
+    private extractTrapChances(traps: TrapChance[] | null): IdChancePair[] {
         if (!traps) return [];
 
-        const chances: [number, number][] = [];
+        const chances: IdChancePair[] = [];
 
         let chance = 0;
         for (const trap of traps) {

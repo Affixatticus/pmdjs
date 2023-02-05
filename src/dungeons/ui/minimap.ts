@@ -219,9 +219,9 @@ export class Minimap {
         for (const enemy of this.floor.pokemon.getEnemies()) {
             const enemypos = enemy.position;
             // Draw if the enemy is on a tile you are visiting
-            if (this.explored.get(enemypos) === MinimapTilesVariants.VISITING) {
+            // if (this.explored.get(enemypos) === MinimapTilesVariants.VISITING) {
                 this.drawObject(enemypos, MinimapObjectType.ENEMY);
-            }
+            // }
         }
         // Draw the player
         this.drawObject(this.floor.pokemon.getLeader().position, MinimapObjectType.PLAYER);

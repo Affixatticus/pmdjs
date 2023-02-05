@@ -11,8 +11,8 @@ import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./object
 import { DungeonStartup } from "./logic/startup";
 import { Tile } from "../data/tiles";
 import { AssetsLoader } from "../utils/assets_loader";
-import { Direction } from "../utils/direction";
 import { DungeonTile } from "./objects/tile";
+import { DungeonEnemyGenerator } from "./objects/enemy_generator";
 
 export enum RenderingGroupId {
     WATER,
@@ -85,6 +85,9 @@ export class DungeonFloor {
                 DungeonStartup.placePartner(this), DungeonPokemonType.PARTNER, p.id);
             this.pokemon.add(partner);
         });
+        // Place the enemies
+        const enemyGenerator = new DungeonEnemyGenerator(this.grid, this.info);
+        enemyGenerator.generate().forEach(e => this.pokemon.add(e));
     }
 
     /** Preloads the map's tiles and pokemon */
@@ -138,16 +141,6 @@ export class DungeonFloor {
         this.actionAreas = {};
     }
 
-
-    private calculateActionArea(position: Vec2) {
-        // Calculate the area based on whether the pokemon is in a corridor or a room
-        const isCorridor = this.grid.isCorridor(position);
-        if (isCorridor)
-            return this.grid.getCorridorViewArea(position);
-        else
-            return this.grid.getRoomViewArea(position).inflate(1);
-    }
-
     /** Returns an offsetgrid that marks with 1 all the positions that a
      * pokemon in the given position can see or act upon
      */
@@ -159,7 +152,7 @@ export class DungeonFloor {
             return this.actionAreas[this.actionAreaPositions.get(posString)!].copy();
         }
         // If the position is not cached, calculate the actionArea
-        let actionArea = this.calculateActionArea(position);
+        let actionArea = this.grid.getActionArea(position);
 
         const id = actionArea.hash();
         // Add the actionArea to the actionAreas
@@ -171,7 +164,7 @@ export class DungeonFloor {
         return actionArea.copy();
     }
 
-
+    /** Real-time updates all its subcomponents */
     public animate(tick: number) {
         this.map.animateTiles(tick / 5 | 0);
         this.pokemon.animate(DungeonPokemon.isRunning);
@@ -192,47 +185,6 @@ export class DungeonFloor {
 
     public getSpawnPosition(): Vec2 {
         return this.grid.getOpenPosition() ?? this.grid.getFreePosition() ?? this.grid.getRandomPosition();
-    }
-
-    /** If a tile cannot possibly be occupied by this pokemon */
-    public isObstacle(x: number, y: number, pokemon: DungeonPokemon): boolean {
-        const OBSTACLES = [
-            Tile.WALL,
-            Tile.UNBREAKABLE_WALL,
-            Tile.WATER,
-        ];
-
-        return OBSTACLES.includes(this.grid.getXY(x, y));
-    }
-
-    /** If this tile cannot be traversed by this pokemon while walking diagonally */
-    public isUntraversable(x: number, y: number, pokemon: DungeonPokemon): boolean {
-        const UNPASSABLE = [
-            Tile.WALL,
-            Tile.UNBREAKABLE_WALL,
-        ];
-
-        return UNPASSABLE.includes(this.grid.getXY(x, y));
-    }
-
-    public canMoveTowards(pokemon: DungeonPokemon, dir: Direction): boolean {
-        const position = pokemon.position;
-        const nextPosition = position.add(dir.toVector());
-
-        // Check if the position in the grid is usable for this pokemon
-        if (this.isObstacle(nextPosition.x, nextPosition.y, pokemon)) return false;
-
-        // If the pokemon is moving diagonally, check if the two adjacent tiles are free
-        if (dir.isDiagonal()) {
-            // Check the two adjacent tiles
-            if (this.isUntraversable(position.x + dir.horizontal, position.y, pokemon)) return false;
-            if (this.isUntraversable(position.x, position.y + dir.vertical, pokemon)) return false;
-        }
-
-        // Check if no pokemon will occupy this position
-        if (this.pokemon.getAll().some(p => p.nextTurnPosition.equals(nextPosition))) return false;
-
-        return true;
     }
 
     public dispose() {

@@ -37,40 +37,40 @@ const INITIAL_GAME_DATA: Data = {
                     }
                 ]
             },
-            {
-                id: [501, 0, false, 0],
-                stats: {
-                    hp: 0,
-                    attack: 0,
-                    defense: 0,
-                    spatk: 0,
-                    spdef: 0,
-                    speed: 0,
-                },
-                moves: [
-                    {
-                        id: 0,
-                        ppLost: 0
-                    }
-                ]
-            },
-            {
-                id: [135, 0, false, 0],
-                stats: {
-                    hp: 0,
-                    attack: 0,
-                    defense: 0,
-                    spatk: 0,
-                    spdef: 0,
-                    speed: 0,
-                },
-                moves: [
-                    {
-                        id: 0,
-                        ppLost: 0
-                    }
-                ]
-            },
+            // {
+            //     id: [501, 0, false, 0],
+            //     stats: {
+            //         hp: 0,
+            //         attack: 0,
+            //         defense: 0,
+            //         spatk: 0,
+            //         spdef: 0,
+            //         speed: 0,
+            //     },
+            //     moves: [
+            //         {
+            //             id: 0,
+            //             ppLost: 0
+            //         }
+            //     ]
+            // },
+            // {
+            //     id: [135, 0, false, 0],
+            //     stats: {
+            //         hp: 0,
+            //         attack: 0,
+            //         defense: 0,
+            //         spatk: 0,
+            //         spdef: 0,
+            //         speed: 0,
+            //     },
+            //     moves: [
+            //         {
+            //             id: 0,
+            //             ppLost: 0
+            //         }
+            //     ]
+            // },
             // {
             //     id: [136, 0, false, 0],
             //     stats: {
