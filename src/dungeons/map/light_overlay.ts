@@ -3,6 +3,7 @@ import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
 import { V3, Vec3 } from "../../utils/vectors";
+import { DungeonState } from "../dungeon";
 import { DungeonFloor } from "../floor";
 import { DungeonPokemon } from "../objects/pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
@@ -45,7 +46,7 @@ export class LightOverlay {
     }
 
     /** Updates the queue */
-    public update() {
+    public update(animationSpeed: number) {
         if (!this.isEnabled) return;
 
         // Decrease towards 0 all the lights that are not the last one
@@ -55,7 +56,7 @@ export class LightOverlay {
             light.intensity =
                 Math.max(0,
                     light.intensity -=
-                    this.intensity * (1 / DungeonPokemon.walkingTicks) * DungeonPokemon.animationSpeed);
+                    this.intensity * (1 / DungeonState.WALKING_TICKS) * animationSpeed);
             if (light.intensity === 0) {
                 light.dispose();
                 texture.dispose();
@@ -73,7 +74,7 @@ export class LightOverlay {
             light.intensity =
                 Math.min(this.intensity,
                     light.intensity +=
-                    this.intensity * (1 / DungeonPokemon.walkingTicks) * DungeonPokemon.animationSpeed);
+                    this.intensity * (1 / DungeonState.WALKING_TICKS) * animationSpeed);
             if (light.intensity === 1)
                 last[2] = true;
         }

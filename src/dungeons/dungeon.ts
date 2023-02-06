@@ -1,4 +1,4 @@
-import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MotionBlurPostProcess, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
@@ -45,6 +45,27 @@ export class DungeonState {
     public data: DungeonStateData;
     public info: DungeonFloorInfo;
     private logic: DungeonLogic;
+    private motionBlur: MotionBlurPostProcess;
+
+    // Pokemon Movement
+    public static readonly WALKING_TICKS: number = 40;
+    public static readonly _walkingAnimationSpeed: number = 1;
+    public static readonly _runningAnimationSpeed: number = 20;
+    public _animationSpeed = DungeonState._walkingAnimationSpeed;
+
+    public get animationSpeed() {
+        return this._animationSpeed;
+    }
+    public get isRunning() {
+        return this._animationSpeed === DungeonState._runningAnimationSpeed;
+    }
+    public get isWalking() {
+        return this._animationSpeed === DungeonState._walkingAnimationSpeed;
+    }
+    public setRunning(running: boolean) {
+        this.motionBlur.motionStrength = running ? 40000 : 0;
+        this._animationSpeed = running ? DungeonState._runningAnimationSpeed : DungeonState._walkingAnimationSpeed;
+    }
 
     constructor(engine: Engine, data: DungeonStateData) {
         // Definition
@@ -63,12 +84,14 @@ export class DungeonState {
         // Build the floor guide
         this.floorGuide = new FloorGuide(this.scene);
 
+        // Add the post-processing
+        this.motionBlur = new MotionBlurPostProcess("motionBlur", this.scene, 1.0, this.camera);
+
         // Add optimizations
         const options = new SceneOptimizerOptions(144);
         options.addOptimization(new HardwareScalingOptimization(0, 1));
         const optimizer = new SceneOptimizer(this.scene, options);
         optimizer.start();
-
 
         // Loading
         this.isLoaded = false;
@@ -267,7 +290,7 @@ export class DungeonState {
         this.floor.animate(this.tick);
         this.logic.update();
         // this.controlCamera();
-        this.lightOverlay.update();
+        this.lightOverlay.update(this.animationSpeed);
         this.tick++;
     }
 }

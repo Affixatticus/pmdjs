@@ -51,25 +51,6 @@ export class DungeonPokemon {
     private tranMesh!: Mesh;
     public material!: DungeonPokemonMaterial;
 
-    static walkingTicks: number = 40;
-    static _walkingAnimationSpeed: number = 1;
-    static _runningAnimationSpeed: number = 40;
-    private static _animationSpeed = DungeonPokemon._walkingAnimationSpeed;
-
-    static get animationSpeed() {
-        return this._animationSpeed;
-    }
-    static get isRunning() {
-        return this._animationSpeed === this._runningAnimationSpeed;
-    }
-    static get isWalking() {
-        return this._animationSpeed === this._walkingAnimationSpeed;
-    }
-    static setRunning(running: boolean) {
-        this._animationSpeed = running ? this._runningAnimationSpeed : this._walkingAnimationSpeed;
-    }
-
-
     constructor(pos: Vec2, type: DungeonPokemonType, id: PokemonFormIdentifier) {
         this.type = type;
         this.isLeader = type === DungeonPokemonType.LEADER;

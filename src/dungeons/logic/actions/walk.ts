@@ -43,13 +43,13 @@ export class WalkAction extends TurnAction {
         }
         // If there is a trap in the next position
         if (logic.state.floor.objects.get(nextPos)?.type === ObjectType.TRAP) {
-            return new TrapAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonTile);
+            return new TrapAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonTile, logic.state);
         }
 
-        return new WalkAction(pokemon, direction, push);
+        return new WalkAction(pokemon, direction, push, logic.state.animationSpeed);
     }
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, speed = DungeonPokemon.animationSpeed) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, speed: number) {
         super();
         this.pokemon = pokemon;
         this.direction = direction;
@@ -143,7 +143,7 @@ export class StairsAction extends WalkAction {
     public logic: DungeonLogic;
 
     constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic) {
-        super(pokemon, direction, push);
+        super(pokemon, direction, push, logic.state.animationSpeed);
         this.logic = logic;
         this.logMessage = `${pokemon.toString()} went up the stairs!`;
         this.generator = this.run();
@@ -164,8 +164,11 @@ export class StairsAction extends WalkAction {
     }
 }
 export class TrapAction extends WalkAction {
-    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, trap: DungeonTile) {
-        super(pokemon, direction, push);
+    public state: DungeonState;
+
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, trap: DungeonTile, state: DungeonState) {
+        super(pokemon, direction, push, state.animationSpeed);
+        this.state = state;
         this.logMessage = `${pokemon.toString()} triggered a trap!`;
     }
 }
@@ -174,7 +177,7 @@ export class ItemAction extends WalkAction {
     public state: DungeonState;
 
     constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, item: DungeonItem, state: DungeonState) {
-        super(pokemon, direction, push);
+        super(pokemon, direction, push, state.animationSpeed);
         this.item = item;
         this.state = state;
         this.logMessage = `${pokemon.toString()} picked up an item!`;

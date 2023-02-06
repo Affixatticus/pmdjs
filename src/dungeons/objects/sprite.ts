@@ -1,6 +1,7 @@
 import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
 import { Direction } from "../../utils/direction";
 import { fillOutStandardOptions } from "../../utils/material";
+import { DungeonState } from "../dungeon";
 import { DungeonPokemon } from "./pokemon";
 
 export interface PokemonSpriteAnimationData {
@@ -132,7 +133,6 @@ export class DungeonPokemonMaterial extends StandardMaterial {
 
     public isDone() {
         // Slow down the player
-        DungeonPokemon.setRunning(false);
         return this.isAnimationDone;
     }
 

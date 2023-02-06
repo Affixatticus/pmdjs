@@ -17,6 +17,7 @@ export class GoDownStairsAction extends TurnAction {
     }
 
     public *run(): Generator {
+        this.logic.state.setRunning(false);
         // Skip until the animation is done
         while (this.pokemon.material.isDone()) yield;
         // Tell the logic to go down the stairs at the end of the turn

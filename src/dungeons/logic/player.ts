@@ -10,8 +10,6 @@ import { DungeonLogic } from "./logic";
 
 /** Radius in which the running algorithm will check to see if it should stop in line with a corridor */
 const MAX_DISTANCE_FOR_INLINE_CHECK = 5;
-/** The number of ticks it should takes to turn 45 degrees */
-const TURNING_TICKS = 4;
 
 export const enum InputAction {
     WALK,
@@ -51,6 +49,10 @@ abstract class InputState {
         return null;
     }
 
+    public setRunning(running: boolean) {
+        this.player.logic.state.setRunning(running);
+    }
+
     public abstract update(): InputType;
 }
 
@@ -76,7 +78,7 @@ class WalkingState extends InputState {
         this.running = true;
         this.runningDirection = input;
         this.inputTick = -WalkingState.TURNING_TIME;
-        DungeonPokemon.setRunning(true);
+        this.setRunning(true);
 
         return [InputAction.WALK, input] as InputType;
     }
@@ -154,7 +156,7 @@ class WalkingState extends InputState {
         // Keep running while the direction is still locked
         if (this.running)
             return this.handleRunning();
-        else DungeonPokemon.setRunning(false);
+        else this.setRunning(false);
 
         // Exit if you're not pressing anything, automatically resets runningLockedDir
         if (input === Direction.NONE) {
@@ -407,15 +409,6 @@ export class Player {
     }
 
     // ANCHOR Special Movement Methods
-    /** Function that runs when the input resulted in a obstacled way,
-     * but you still want to turn the player
-     */
-    private noMove(direction: Direction) {
-        // Halt the player
-        DungeonPokemon.setRunning(false);
-        // Update the leader's direction
-        this.leader.direction = direction;
-    }
     public awaitMovementTick(tick: number): boolean {
         if (this.movementTick < tick) {
             this.movementTick++;
@@ -424,26 +417,6 @@ export class Player {
         this.movementTick = 0;
         return false;
     }
-    private turningDirection: Direction | null = null;
-    private turningTick = 0;
-    private turnPlayer(direction: Direction = this.turningDirection!): boolean {
-        if (direction === null) return false;
-
-        // If the player is already facing the direction, stop turning
-        if (this.leader.direction === direction) {
-            this.turningDirection = null;
-            return false;
-        }
-        if (++this.turningTick < TURNING_TICKS) {
-            this.turningDirection = direction;
-            return true;
-        }
-        // If the player is not facing the direction, turn the player
-        this.leader.turnTowards(direction);
-        this.turningTick = 0;
-        return true;
-    }
-
     public partnerAt(position: Vec2): DungeonPokemon | null {
         return this.floor.pokemon.getPartners().find(p => p.position.equals(position)) ?? null;
     }
