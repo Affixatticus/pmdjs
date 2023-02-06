@@ -12,7 +12,7 @@ export abstract class TurnAction {
         return this.generator.next()?.done ?? true;
     }
 
-    public *repeat(times: number, method: (i: number) => void) {
+    public *repeat(times: number, method: (i: number) => void = () => { }) {
         for (let i = 0; i < times; i++) {
             method(i);
             if (i < times - 1) yield true;

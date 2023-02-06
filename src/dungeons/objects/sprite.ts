@@ -1,8 +1,6 @@
 import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
 import { Direction } from "../../utils/direction";
 import { fillOutStandardOptions } from "../../utils/material";
-import { DungeonState } from "../dungeon";
-import { DungeonPokemon } from "./pokemon";
 
 export interface PokemonSpriteAnimationData {
     /** Name of the animation */

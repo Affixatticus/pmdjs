@@ -50,7 +50,7 @@ export class DungeonState {
     // Pokemon Movement
     public static readonly WALKING_TICKS: number = 40;
     public static readonly _walkingAnimationSpeed: number = 1;
-    public static readonly _runningAnimationSpeed: number = 20;
+    public static readonly _runningAnimationSpeed: number = 40;
     public _animationSpeed = DungeonState._walkingAnimationSpeed;
 
     public get animationSpeed() {
@@ -63,7 +63,7 @@ export class DungeonState {
         return this._animationSpeed === DungeonState._walkingAnimationSpeed;
     }
     public setRunning(running: boolean) {
-        this.motionBlur.motionStrength = running ? 40000 : 0;
+        this.motionBlur.motionStrength = running ? 400000 : 4;
         this._animationSpeed = running ? DungeonState._runningAnimationSpeed : DungeonState._walkingAnimationSpeed;
     }
 
@@ -254,13 +254,13 @@ export class DungeonState {
         await this.ui.minimap.init(this.floor, Minimap.getStyleFromLightLevel(this.info.lightLevel));
 
         /** Update the graphics */
-
         // Update the light overlay
-        this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader());
-        this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader());
+        this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader())
+
 
         /** Dungeon Floor done loading */
         await this.scene.whenReadyAsync();
+
         this.engine.hideLoadingUI();
         this.isLoaded = true;
 
@@ -287,7 +287,7 @@ export class DungeonState {
 
     private tick = 0;
     public update() {
-        this.floor.animate(this.tick);
+        this.floor.animate(this.tick, this.isRunning);
         this.logic.update();
         // this.controlCamera();
         this.lightOverlay.update(this.animationSpeed);

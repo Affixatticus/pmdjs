@@ -165,9 +165,9 @@ export class DungeonFloor {
     }
 
     /** Real-time updates all its subcomponents */
-    public animate(tick: number) {
+    public animate(tick: number, isRunning: boolean) {
         this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate(DungeonPokemon.isRunning);
+        this.pokemon.animate(isRunning);
     }
 
     // Utility

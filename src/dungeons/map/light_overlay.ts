@@ -2,7 +2,7 @@ import { Constants, DynamicTexture, Scene, SpotLight } from "@babylonjs/core";
 import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { CropParams } from "../../utils/canvas";
-import { V3, Vec3 } from "../../utils/vectors";
+import { V2, V3, Vec3 } from "../../utils/vectors";
 import { DungeonState } from "../dungeon";
 import { DungeonFloor } from "../floor";
 import { DungeonPokemon } from "../objects/pokemon";
@@ -34,6 +34,8 @@ export class LightOverlay {
 
     public isEnabled: boolean;
 
+    static MAX_QUEUE_SIZE = 3;
+
     constructor(scene: Scene) {
         this.scene = scene;
         this.isEnabled = true;
@@ -43,6 +45,8 @@ export class LightOverlay {
     public async init() {
         this.lightMapTileset = await AssetsLoader.loadLightmap();
         this.lastOffsetGrid = null;
+        for (let i = 0; i < LightOverlay.MAX_QUEUE_SIZE - 1; i++)
+            this.placeSpotlight(new OffsetGrid(1, 1, V2(0, 0), new Uint8Array(0)));
     }
 
     /** Updates the queue */
@@ -153,11 +157,11 @@ export class LightOverlay {
 
     /** Adds a light to the queue */
     private addLight(light: SpotLight, texture: DynamicTexture) {
-        if (this.queue.length === 3) {
+        if (this.queue.length === LightOverlay.MAX_QUEUE_SIZE) {
             // Remove the first light
             const [firstLight, firstTexture] = this.queue.shift()!;
-            firstLight.dispose();
-            firstTexture.dispose();
+            firstLight?.dispose();
+            firstTexture?.dispose();
         }
         this.queue.push([light, texture, false]);
     }

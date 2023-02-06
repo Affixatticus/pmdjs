@@ -20,6 +20,8 @@ export class GoDownStairsAction extends TurnAction {
         this.logic.state.setRunning(false);
         // Skip until the animation is done
         while (this.pokemon.material.isDone()) yield;
+        // Wait 20 ticks
+        yield* this.repeat(20);
         // Tell the logic to go down the stairs at the end of the turn
         this.logic.turn?.setSpecialFlag(TurnFlag.GO_UP_STAIRS);
     }
