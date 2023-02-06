@@ -1,0 +1,5 @@
++ Motion blur when running
++ Render the Pokemon's shadows
+
+Capital TODOs
++ Render sprites always in front of the blocks on the same Z

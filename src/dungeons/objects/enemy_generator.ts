@@ -30,7 +30,7 @@ export class DungeonEnemyGenerator {
         // Find a list of suitable positions for the enemies
         const spawns = this.grid.getFilteredPositions((t) => t === Tile.FLOOR);
         // Pick a random number of enemies
-        const numEnemies = Random.int(1, 1);
+        const numEnemies = Random.int(0);
         // Pick random positions for the enemies
         return Random.shuffle(spawns).splice(0, numEnemies);
     }

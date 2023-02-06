@@ -15,18 +15,12 @@ import { GoDownStairsAction } from "./special";
 
 const TICK_PER_TILE = 40;
 
-export class WalkAction implements TurnAction {
+export class WalkAction extends TurnAction {
     public readonly pokemon: DungeonPokemon;
     public readonly direction: Direction;
 
-    /** Logging */
-    public doLogging: boolean = false;
-    public logMessage!: string | never;
-
     // Animation
     public static ANIMATION_LENGTH = TICK_PER_TILE;
-
-    public currentStep: number = 0;
 
     /** Distance travelled each step */
     public animationLength: number = WalkAction.ANIMATION_LENGTH;
@@ -56,6 +50,7 @@ export class WalkAction implements TurnAction {
     }
 
     constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, speed = DungeonPokemon.animationSpeed) {
+        super();
         this.pokemon = pokemon;
         this.direction = direction;
         this.usePushingAnimation = push;
@@ -67,130 +62,114 @@ export class WalkAction implements TurnAction {
 
         this.animationLength = WalkAction.ANIMATION_LENGTH / speed;
         this.walkDelta = 1 / this.animationLength;
+
+        this.generator = this.run();
     }
 
-    public walk(): boolean {
-        // For the first step
-        if (this.currentStep === 0) {
-            // If the direction is not the same as the sprite direction
-            if (this.pokemon.direction !== this.direction) {
-                this.pokemon.resetAnimation("Walk");
-                // Turn in the correct direction
-                this.pokemon.direction = this.direction;
-            } else {
-                this.pokemon.setAnimation("Walk");
-            }
+    public *playWalkAnimation(): Generator {
+        // If the pokemon changed direction, restart the walking animation
+        if (this.pokemon.direction !== this.direction) {
+            this.pokemon.resetAnimation("Walk");
+            // Turn in the correct direction
+            this.pokemon.direction = this.direction;
         }
-        // While you are still animating
-        else if (this.currentStep <= this.animationLength) {
+        // Otherwise, continue smoothly
+        else this.pokemon.setAnimation("Walk");
+
+        // Animate the movement
+        yield* this.repeat(this.animationLength + 1, () => {
             this.pokemon.position = this.pokemon.spritePosition.clone();
             this.pokemon.spritePosition.addInPlace(
                 this.direction.toVector().scale(this.walkDelta));
-        }
-        // When stopping
-        else {
-            this.pokemon.position = this.pokemon.nextTurnPosition;
-            if (this.pokemon.material) {
-                this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
-                    // Quick check to see if the pokemon is still moving
-                    if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
-                        // Set the animation to idle
-                        this.pokemon.setAnimation("Idle");
-                    }
+        });
+
+        // Stop the animation, and set the position to the next turn position
+        this.pokemon.position = this.pokemon.nextTurnPosition;
+        if (this.pokemon.material) {
+            this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
+                // Quick check to see if the pokemon is still moving
+                if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
+                    // Set the animation to idle
+                    this.pokemon.setAnimation("Idle");
                 }
             }
-            return true;
         }
-
-        // Increment the step
-        this.currentStep++;
-
-        return false;
     }
-    public pushWalk(): boolean {
-        // For the first step
-        if (this.currentStep === 0) {
-            // If the direction is not the same as the sprite direction
-            if (this.pokemon.direction !== this.direction) {
-                this.pokemon.resetAnimation("Walk");
-            } else {
-                this.pokemon.setAnimation("Walk");
-            }
+
+    private *playPushedAnimation(): Generator {
+        // If the pokemon changed direction, restart the walking animation
+        if (this.pokemon.direction !== this.direction) {
+            this.pokemon.resetAnimation("Walk");
+            // Turn in the correct direction
+            this.pokemon.direction = this.direction;
         }
-        // While you are still animating
-        else if (this.currentStep < WalkAction.ANIMATION_LENGTH) {
-            this.pokemon.position = this.pokemon.spritePosition.add(
+        // Otherwise, continue smoothly
+        else this.pokemon.setAnimation("Walk");
+
+        // Animate the movement
+        yield* this.repeat(this.animationLength + 1, (currentStep) => {
+            this.pokemon.position = this.pokemon.spritePosition.clone();
+            this.pokemon.spritePosition.addInPlace(
                 this.direction.toVector().scale(this.walkDelta));
             // Modify the direction of the pokemon
-            const newDirection = Math.round((this.currentStep / WalkAction.ANIMATION_LENGTH) * 8);
+            const newDirection = Math.round((currentStep / WalkAction.ANIMATION_LENGTH) * 8);
             this.pokemon.direction = Direction.ALL[Direction.rollIndex(this.direction.index + newDirection + 4)];
-        }
-        // When stopping
-        else {
-            this.pokemon.position = this.pokemon.nextTurnPosition;
-            if (this.pokemon.material) {
-                this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
-                    // Quick check to see if the pokemon is still moving
-                    if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
-                        this.pokemon.setAnimation("Idle");
-                    }
+        });
+
+        // Stop the animation, and set the position to the next turn position
+        this.pokemon.position = this.pokemon.nextTurnPosition;
+        if (this.pokemon.material) {
+            this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
+                // Quick check to see if the pokemon is still moving
+                if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
+                    // Set the animation to idle
+                    this.pokemon.setAnimation("Idle");
                 }
             }
-            return true;
         }
-
-        // Increment the step
-        this.currentStep++;
-
-        return false;
     }
 
-    /** Animates the walk, and returns true when it's finished */
-    public tick(): boolean {
-        if (this.usePushingAnimation) return this.pushWalk();
-        return this.walk();
+    public *run(): Generator {
+        if (this.usePushingAnimation) {
+            yield* this.playPushedAnimation();
+        }
+        else {
+            yield* this.playWalkAnimation();
+        }
     }
 }
 
 export class StairsAction extends WalkAction {
-    public done: boolean;
     public logic: DungeonLogic;
 
     constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic) {
         super(pokemon, direction, push);
         this.logic = logic;
-        this.done = false;
-        console.log("Created StairsAction");
         this.logMessage = `${pokemon.toString()} went up the stairs!`;
+        this.generator = this.run();
     }
 
     private get turn(): Turn {
         return this.logic.turn!;
     }
 
+    public *run(): Generator {
+        // Wait for the walk animation to finish
+        yield* super.run();
 
-    public tick(): boolean {
-        if (this.done) return true;
-
-        const doneWalking = super.tick();
-        if (!doneWalking) return false;
-
-        // Append a new action at the end of this turn
+        // If the pokemon is the leader, go down the stairs
         if (this.pokemon.isLeader) {
             this.turn.addAction(new GoDownStairsAction(this.pokemon, this.logic));
         }
-        return this.done = true;
     }
 }
 export class TrapAction extends WalkAction {
     constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, trap: DungeonTile) {
         super(pokemon, direction, push);
-        console.log("Created TrapAction");
         this.logMessage = `${pokemon.toString()} triggered a trap!`;
     }
 }
 export class ItemAction extends WalkAction {
-    public done: boolean;
     public item: DungeonItem;
     public state: DungeonState;
 
@@ -198,16 +177,12 @@ export class ItemAction extends WalkAction {
         super(pokemon, direction, push);
         this.item = item;
         this.state = state;
-        this.done = false;
-        console.log("Created ItemAction");
         this.logMessage = `${pokemon.toString()} picked up an item!`;
+        this.generator = this.run();
     }
 
-    public tick(): boolean {
-        if (this.done) return true;
-
-        const doneWalking = super.tick();
-        if (!doneWalking) return this.done = false;
+    public *run(): Generator {
+        yield* super.run();
 
         // If it is a wild pokemon
         if (this.pokemon.inFormation) {
@@ -215,9 +190,7 @@ export class ItemAction extends WalkAction {
             this.state.floor.objects.removeObject(this.item);
             this.state.floor.grid.set(this.item.position, Tile.FLOOR);
             // TODO Add the item to the pokemon's inventory
-            return this.done = true;
         }
-
         // If it the player pokemon
         // if (this.pokemon.inFormation) {
         //     // Try to add the item to the inventory
@@ -239,29 +212,32 @@ export class ItemAction extends WalkAction {
         //         this.state.floor.grid.set(this.item.position, Tile.FLOOR);
         //     }
         // }
-        return true;
     }
 }
 
-export class MoveActionGroup implements TurnAction {
+export class MoveActionGroup extends TurnAction {
     public actions: WalkAction[];
 
     constructor(...moveActions: WalkAction[]) {
+        super();
         this.actions = moveActions;
+        this.generator = this.run();
     }
 
     public addAction(action: WalkAction) {
         this.actions.push(action);
     }
 
-    public tick(): boolean {
+    public *run(): Generator {
         let allDone = true;
-
-        for (const action of this.actions) {
-            const done = action.tick();
-            allDone &&= done;
+        do {
+            allDone = true;
+            for (let action of this.actions) {
+                const done = action.tick();
+                allDone &&= done;
+            }
+            yield;
         }
-
-        return allDone;
+        while (!allDone);
     }
 }

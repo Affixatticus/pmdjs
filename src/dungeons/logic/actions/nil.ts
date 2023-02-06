@@ -1,22 +1,19 @@
 import { DungeonPokemon } from "../../objects/pokemon";
 import { TurnAction } from "./action";
 
-export class NilAction implements TurnAction {
-    public done: boolean;
+export class NilAction extends TurnAction {
     /** @ts-ignore Unused */
     private pokemon: DungeonPokemon;
 
-    /** Logging */
-    public doLogging: boolean = false;
-    public logMessage!: string | never;
-
     constructor(pokemon: DungeonPokemon) {
-        this.done = false;
+        super();
         this.pokemon = pokemon;
+        this.generator = this.run();
     }
 
-    public tick(): boolean {
-        this.done = true;
-        return true;
+    public *run() {
+        // TODO Should turn the pokemon to face the specified direction,
+        // plus it should run with the other walking actions
+        // Do not yield
     }
 }

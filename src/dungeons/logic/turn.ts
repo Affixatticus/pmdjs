@@ -2,7 +2,6 @@ import { DungeonState } from "../dungeon";
 import { DungeonPokemonType } from "../objects/pokemon";
 import { TurnAction } from "./actions/action";
 import { WalkAction, MoveActionGroup } from "./actions/walk";
-import { DungeonLogic } from "./logic";
 
 export const enum TurnFlags {
     GO_UP_STAIRS = 1,
@@ -53,15 +52,16 @@ export class Turn {
     /** Exectues all the actions and recturns true if all actions are finished */
     public runAllActions(): boolean {
         let finished = true;
-
+        
         for (const action of this.actions) {
-            finished &&= action.tick();
+            const done = action.tick();
+            finished &&= done;
         }
 
         return finished;
     }
 
-    /** Runs all the animations if the turn is ready */
+    /** Runs all the actions when the turn is ready */
     public execute(): boolean {
         return this.runAllActions();
     }
@@ -70,10 +70,14 @@ export class Turn {
         this.actions.push(action);
     }
 
+    /** Sets a special flag
+     * - special flags represent actions that must be executed after all the actions are finished
+     */
     public setSpecialFlag(flag: TurnFlags): void {
         this.specialFlags.push(flag);
     }
 
+    /** Executes a special flag */
     public executeSpecialFlags(state: DungeonState): void {
         for (const flag of this.specialFlags) {
             switch (flag) {

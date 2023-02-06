@@ -3,26 +3,23 @@ import { DungeonLogic } from "../logic";
 import { TurnFlags as TurnFlag } from "../turn";
 import { TurnAction } from "./action";
 
-export class GoDownStairsAction implements TurnAction {
+export class GoDownStairsAction extends TurnAction {
     public pokemon: DungeonPokemon;
     public logic: DungeonLogic;
     public doLogging = true;
     public logMessage = `You went down the stairs!`;
 
     constructor(pokemon: DungeonPokemon, logic: DungeonLogic) {
+        super();
         this.pokemon = pokemon;
         this.logic = logic;
-        console.log("Created GoDownStairsAction");
+        this.generator = this.run();
     }
 
-    // Do stuff
-    public tick(): boolean {
-        // Await for the pokemon's animations to finish
-        const animationDone = this.pokemon.material.isDone();
-        if (!animationDone) return false;
-
+    public *run(): Generator {
+        // Skip until the animation is done
+        while (this.pokemon.material.isDone()) yield;
         // Tell the logic to go down the stairs at the end of the turn
         this.logic.turn?.setSpecialFlag(TurnFlag.GO_UP_STAIRS);
-        return true;
     }
 }
