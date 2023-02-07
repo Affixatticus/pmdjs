@@ -163,8 +163,10 @@ export class DungeonGenerator {
         this.drawWaterFeatures();
         // Place keckleon shop
         const chosenRoom = this.placeKecleonShopRoom(rooms);
+        let usableRooms = this.getRooms(rooms);
+        usableRooms = usableRooms.length > 1 ? usableRooms.filter(r => r !== chosenRoom) : usableRooms;
         // Place items and traps, skip the room with the kecleon shop
-        this.placeItemsAndTraps(this.getRooms(rooms).filter(r => r !== chosenRoom));
+        this.placeItemsAndTraps(usableRooms);
 
 
         return this.grid;
