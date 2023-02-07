@@ -195,12 +195,12 @@ export class AssetsLoader {
         const [
             anim,
             // offset,
-            // shadow
+            shadow
         ] =
             await Promise.all([
                 this.loadPokemonSpriteSheets(rootFolder, sources, "Anim"),
                 // this.loadPokemonSpriteSheets(rootFolder, sources, "Offsets"),
-                // this.loadPokemonSpriteSheets(rootFolder, sources, "Shadow"),
+                this.loadPokemonSpriteSheets(rootFolder, sources, "Shadow"),
             ]);
 
         const output: PokemonSpriteData = {
@@ -209,7 +209,7 @@ export class AssetsLoader {
             sprites: {
                 anim,
                 // offset,
-                // shadow
+                shadow
             }
         };
 

@@ -4,7 +4,6 @@ import { DungeonState } from "../../dungeon";
 import { DungeonItem } from "../../objects/item";
 import { ObjectType } from "../../objects/object";
 import { DungeonPokemon } from "../../objects/pokemon";
-import { DungeonPokemonMaterial } from "../../objects/sprite";
 import { DungeonTile } from "../../objects/tile";
 import { DungeonLogic } from "../logic";
 import { Turn } from "../turn";
@@ -86,7 +85,7 @@ export class WalkAction extends TurnAction {
         // Stop the animation, and set the position to the next turn position
         this.pokemon.position = this.pokemon.nextTurnPosition;
         if (this.pokemon.material) {
-            this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
+            this.pokemon.material.animCallback = () => {
                 // Quick check to see if the pokemon is still moving
                 if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
                     // Set the animation to idle
@@ -119,7 +118,7 @@ export class WalkAction extends TurnAction {
         // Stop the animation, and set the position to the next turn position
         this.pokemon.position = this.pokemon.nextTurnPosition;
         if (this.pokemon.material) {
-            this.pokemon.material.animCallback = (_material: DungeonPokemonMaterial) => {
+            this.pokemon.material.animCallback = () => {
                 // Quick check to see if the pokemon is still moving
                 if (this.pokemon.nextTurnPosition.equals(this.pokemon.position)) {
                     // Set the animation to idle

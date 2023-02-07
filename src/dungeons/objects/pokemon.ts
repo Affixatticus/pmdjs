@@ -7,7 +7,7 @@ import { V3, Vec2 } from "../../utils/vectors";
 import { DungeonFloor, RenderingGroupId } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonGrid } from "../map/grid";
-import { DungeonPokemonMaterial } from "./sprite";
+import { DungeonPokemonMaterials } from "./sprite";
 
 export const enum DungeonPokemonType {
     LEADER,
@@ -29,6 +29,12 @@ export enum Obstacle {
 const TURNING_TICKS = 10;
 
 export class DungeonPokemon {
+    static SCALING_DETERMINANT = 7;
+    static SPRITE_ROTATION = Math.PI / 3;
+    static TRANSLUCID_MESH_VISIBILITY = 0.5;
+    static SHADOW_OFFSET = V3(0.5, 0.01, -0.5);
+    static SPRITE_OFFSET = V3(0.5, 0, -0.5);
+
     private _position: Vec2;
     private _spritePosition: Vec2;
     private _direction: Direction;
@@ -47,9 +53,14 @@ export class DungeonPokemon {
     public nextTurnDirection!: Direction;
     public lastVisitedPositions: Vec2[] = [];
 
-    private opaqMesh!: Mesh;
-    private tranMesh!: Mesh;
-    public material!: DungeonPokemonMaterial;
+    /** Base of the mesh rendered below the walls with visibility = 1 */
+    private opaqueMesh!: Mesh;
+    /** Copy of the opaqueMesh rendered above the walls with visibility < 1 */
+    private translucentMesh!: Mesh;
+    /** Mesh for the sprite's shadow */
+    private shadowMesh!: Mesh;
+    /** Material that takes care of animations */
+    public material!: DungeonPokemonMaterials;
 
     constructor(pos: Vec2, type: DungeonPokemonType, id: PokemonFormIdentifier) {
         this.type = type;
@@ -57,7 +68,6 @@ export class DungeonPokemon {
         this.isPartner = type === DungeonPokemonType.PARTNER;
         this.inFormation = this.isLeader || this.isPartner;
         this.id = id;
-        /** Create the AI */
         this._position = pos;
         this._spritePosition = pos;
         this._direction = Direction.SOUTH;
@@ -66,35 +76,50 @@ export class DungeonPokemon {
         this.nextTurnDirection = this._direction;
     }
 
-    public async addToScene(scene: Scene) {
+    /** Adds all of the meshes to the scene */
+    public async render(scene: Scene) {
         // Create the material
         const data = await AssetsLoader.loadPokemon(...this.id);
 
-        if (data === undefined) {
+        if (data === undefined)
             throw new Error(`Pokemon ${this.id} not found`);
-        }
 
+        // Create the materials
+        const materials = new DungeonPokemonMaterials(data, scene, DungeonPokemonMaterials.getShadowColor(this.type));
+        materials.init("Idle", this.direction);
+        this.material = materials;
+
+        // Create the meshes
+        /* Shadow */
+        const shadowMesh = MeshBuilder.CreateGround("shadow", {
+            width: 1,
+            height: 1,
+        }, scene);
+
+        shadowMesh.position = this._position.gameFormat.add(DungeonPokemon.SHADOW_OFFSET);
+        shadowMesh.scalingDeterminant = DungeonPokemon.SCALING_DETERMINANT;
+        shadowMesh.renderingGroupId = RenderingGroupId.FLOOR;
+        shadowMesh.material = this.material.shadowMaterial;
+        this.shadowMesh = shadowMesh;
+
+        /* Sprite */
         const opaqMesh = MeshBuilder.CreatePlane("pokemon", {
             width: 1,
             height: 1,
         }, scene);
 
-        opaqMesh.position = this._position.gameFormat.add(V3(0.5, 0, -0.5));
-
-        opaqMesh.scalingDeterminant = 7;
+        opaqMesh.position = this._position.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
+        opaqMesh.scalingDeterminant = DungeonPokemon.SCALING_DETERMINANT;
         opaqMesh.renderingGroupId = RenderingGroupId.WALL;
-        opaqMesh.rotate(Vector3.Right(), Math.PI / 3);
+        opaqMesh.rotate(Vector3.Right(), DungeonPokemon.SPRITE_ROTATION);
 
-        const material = new DungeonPokemonMaterial(data, scene);
-        material.init("Idle", this._direction);
-        this.material = material;
-        this.opaqMesh = opaqMesh;
-        opaqMesh.material = this.material;
+        this.opaqueMesh = opaqMesh;
+        opaqMesh.material = this.material.spriteMaterial;
 
         const tranMesh = opaqMesh.clone("pokemon-tran");
         tranMesh.renderingGroupId = RenderingGroupId.ALWAYS_VISIBLE;
-        tranMesh.visibility = 0.5;
-        this.tranMesh = tranMesh;
+        tranMesh.visibility = DungeonPokemon.TRANSLUCID_MESH_VISIBILITY;
+        this.translucentMesh = tranMesh;
     }
 
     public animate(goFast: boolean) {
@@ -102,9 +127,10 @@ export class DungeonPokemon {
         this.material.animate(goFast);
     }
 
-    public dispose = () => {
-        this.opaqMesh.dispose();
-        this.tranMesh.dispose();
+    public dispose() {
+        this.opaqueMesh.dispose();
+        this.translucentMesh.dispose();
+        this.shadowMesh.dispose();
         this.material.dispose();
     };
 
@@ -119,8 +145,9 @@ export class DungeonPokemon {
 
     public set spritePosition(pos: Vec2) {
         this._spritePosition = pos;
-        this.opaqMesh.position = this._spritePosition.gameFormat.add(V3(0.5, 0, -0.5));
-        this.tranMesh.position = this._spritePosition.gameFormat.add(V3(0.5, 0, -0.5));
+        this.opaqueMesh.position = this._spritePosition.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
+        this.translucentMesh.position = this._spritePosition.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
+        this.shadowMesh.position = this._spritePosition.gameFormat.add(DungeonPokemon.SHADOW_OFFSET);
     }
 
     public set position(pos: Vec2) {
@@ -244,7 +271,7 @@ export class DungeonPokemonList {
 
     public render(scene: Scene) {
         for (const obj of this.objects) {
-            obj.addToScene(scene);
+            obj.render(scene);
         }
     }
 

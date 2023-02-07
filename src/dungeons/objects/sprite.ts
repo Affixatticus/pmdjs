@@ -1,6 +1,8 @@
-import { AbstractMesh, Constants, DynamicTexture, Scene, StandardMaterial } from "@babylonjs/core";
+import { AbstractMesh, Constants, DynamicTexture, Effect, Scene, ShaderMaterial, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { Direction } from "../../utils/direction";
 import { fillOutStandardOptions } from "../../utils/material";
+import { V3, Vec3 } from "../../utils/vectors";
+import { DungeonPokemonType } from "./pokemon";
 
 export interface PokemonSpriteAnimationData {
     /** Name of the animation */
@@ -28,9 +30,9 @@ export interface PokemonSpriteSheets {
     /** Sprites for the animation */
     anim: Record<string, HTMLImageElement>;
     /** Shadows for the animation */
-    shadow?: Record<string, HTMLImageElement>;
+    shadow: Record<string, HTMLImageElement>;
     /** Offsets for the animation */
-    offset?: Record<string, HTMLImageElement>;
+    // offset: Record<string, HTMLImageElement>;
 };
 
 export interface PokemonSpriteData {
@@ -44,42 +46,145 @@ export interface PokemonSpriteData {
 
 const SHEET_SIZE = 24 * 8;
 const FRAME_DURATION = 144 / 52;
-export class DungeonPokemonMaterial extends StandardMaterial {
-    private data: PokemonSpriteData;
-    public texture: DynamicTexture;
 
-    public animation: string;
-    public direction: Direction;
+const SHADOW_VERTEX_SOURCE = `
+    precision highp float;
 
-    /** Value that is set to true if the animation has looped completely */
-    public isAnimationDone = false;
+    // Attributes
+    attribute vec3 position;
+    attribute vec2 uv;
 
-    /** The currently displayed frame */
-    private _currentFrame: number = 0;
-    /** The time of animation ticks the current frame should remain onscreen */
-    private _currentFrameDuration: number = 0;
+    // Uniforms
+    uniform mat4 worldViewProjection;
 
+    // Varying
+    varying vec2 vUV;
 
-    public animCallback: ((material: DungeonPokemonMaterial) => void) | null = null;
+    void main(void) {
+        gl_Position = worldViewProjection * vec4(position, 1.0);
 
-    constructor(data: PokemonSpriteData, scene: Scene) {
-        super("dungeon_pokemon_sprite", scene);
-        this.data = data;
-        this.texture = this.createTexture(scene);
-        fillOutStandardOptions(this, this.texture);
-        this.animation = "Idle";
-        this.direction = Direction.SOUTH;
+        vUV = uv;
     }
+`;
+const SHADOW_FRAGMENT_SOURCE = `
+    precision highp float;
 
-    public _shouldTurnAlphaTestOn(_mesh: AbstractMesh): boolean {
+    varying vec2 vUV;
+    
+    uniform vec3 color;
+    uniform sampler2D tex;
+
+    void main(void) {
+        vec4 texel = texture2D(tex, vUV);
+
+        // Replace the white color
+        if (texel.r == 1.0 && texel.g == 1.0 && texel.b == 1.0) {
+            texel.rgb = color.rgb * 0.75;
+        }
+        // Replace the green color
+        else if (texel.g == 1.0) {
+            texel.rgb = color.rgb * 0.75;
+        }
+        // Replace the red color
+        else if (texel.r == 1.0) {
+            texel.rgb = color.rgb * 0.75;
+        }
+        // Replace the blue color
+        else if (texel.b == 1.0) {
+            texel.rgb = color.rgb * 1.0;
+        }
+        if (texel.a != 0.0) {
+            texel.a = 0.88;
+        }
+
+        gl_FragColor = texel;
+    }
+`;
+
+Effect.ShadersStore["spriteShadowsVertexShader"] = SHADOW_VERTEX_SOURCE;
+Effect.ShadersStore["spriteShadowsFragmentShader"] = SHADOW_FRAGMENT_SOURCE;
+
+export class SpriteMaterial extends StandardMaterial {
+    constructor(scene: Scene, texture: DynamicTexture) {
+        super("", scene);
+        this.diffuseTexture = texture;
+        fillOutStandardOptions(this, texture);
+    }
+    protected _shouldTurnAlphaTestOn(_mesh: AbstractMesh): boolean {
         return this.needAlphaTesting();
     };
+}
+export class ShadowMaterial extends ShaderMaterial {
+    constructor(scene: Scene, texture: DynamicTexture, color: Vec3) {
+        super("", scene, {
+            vertex: "spriteShadows",
+            fragment: "spriteShadows"
+        },
+            {
+                attributes: ["position", "normal", "uv", "color"],
+                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "tex"],
+                needAlphaBlending: true
+            }
+        );
+        this.setTexture("tex", texture);
+        this.setVector3("color", color);
+    }
+}
 
+export class DungeonPokemonMaterials {
+    static getShadowColor(type: DungeonPokemonType): Vec3 {
+        switch (type) {
+            case DungeonPokemonType.LEADER:
+                return V3(0, 1, 0);
+            case DungeonPokemonType.PARTNER:
+                return V3(1, 1, 0);
+            case DungeonPokemonType.ENEMY:
+                return V3(1, 0, 0);
+            case DungeonPokemonType.BOSS:
+                return V3(0.8, 0, 0);
+            default:
+                return V3(1, 0, 1);
+        }
+    }
 
-    private draw() {
-        const ctx = this.texture.getContext();
+    /** Data */
+    public data: PokemonSpriteData;
+    public spriteTexture: DynamicTexture;
+    public shadowTexture: DynamicTexture;
+    public spriteMaterial: SpriteMaterial;
+    public shadowMaterial: ShadowMaterial;
+
+    /** Animation */
+    public animation = "Idle";
+    public direction = Direction.SOUTH;
+    private currentFrame = 0;
+    private currentFrameDuration = 0;
+    public isAnimationDone: boolean = false;
+    public animCallback: ((material: DungeonPokemonMaterials) => void) | null = null;
+
+    public get animations() {
+        return this.data.animations;
+    }
+
+    /** Returns the current animation */
+    public get anim() {
+        return this.animations[this.animation];
+    }
+
+    constructor(data: PokemonSpriteData, scene: Scene, shadowColor: Vec3) {
+        this.data = data;
+        this.spriteTexture = new DynamicTexture("dungeon_pokemon_texture", SHEET_SIZE, scene, true, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+        this.shadowTexture = new DynamicTexture("dungeon_pokemon_texture", SHEET_SIZE, scene, true, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+
+        this.spriteMaterial = new SpriteMaterial(scene, this.spriteTexture);
+        this.shadowMaterial = new ShadowMaterial(scene, this.shadowTexture, shadowColor);
+    }
+
+    /** Updates one of the textures */
+    protected _draw(texture: DynamicTexture, spriteSheet: keyof PokemonSpriteSheets) {
+        const ctx = texture.getContext();
         const anim = this.data.animations[this.animation];
-        const sheet = this.data.sprites.anim[anim.source];
+        const sheet = this.data.sprites[spriteSheet][anim.source];
 
         ctx.clearRect(0, 0, SHEET_SIZE, SHEET_SIZE);
 
@@ -92,7 +197,7 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         ctx.clearRect(0, 0, SHEET_SIZE, SHEET_SIZE);
 
         // Draw the sprite on top
-        const sx = anim.frameWidth * this._currentFrame;
+        const sx = anim.frameWidth * this.currentFrame;
         const sy = anim.frameHeight * sourceY;
         const dx = Math.floor((SHEET_SIZE - anim.frameWidth) / 2);
         const dy = Math.floor((SHEET_SIZE - anim.frameHeight) / 2);
@@ -106,7 +211,13 @@ export class DungeonPokemonMaterial extends StandardMaterial {
             anim.frameWidth, anim.frameHeight
         );
 
-        this.texture.update();
+        texture.update();
+    }
+
+    /** Draws the current frame of the current animation at the correct direction */
+    public draw() {
+        this._draw(this.spriteTexture, "anim");
+        this._draw(this.shadowTexture, "shadow");
     }
 
     /** Updates the frame of the animation */
@@ -114,29 +225,29 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         this.isAnimationDone = false;
 
         // Update the frame
-        this._currentFrameDuration--;
-        if (this._currentFrameDuration <= 0) {
-            this._currentFrame++;
-            const anim = this.data.animations[this.animation];
-            if (this._currentFrame >= anim.durations.length) {
+        this.currentFrameDuration--;
+        if (this.currentFrameDuration <= 0) {
+            this.currentFrame++;
+            if (this.currentFrame >= this.anim.durations.length) {
                 this.isAnimationDone = true;
-                this._currentFrame = 0;
+                this.currentFrame = 0;
                 this.runCallback();
             }
 
-            this._currentFrameDuration = this.getDuration(this._currentFrame, goFast);
+            this.currentFrameDuration = this.getDuration(this.currentFrame, goFast);
             this.draw();
         }
     }
 
-    public isDone() {
-        // Slow down the player
-        return this.isAnimationDone;
+    public dispose() {
+        this.spriteTexture.dispose();
+        this.shadowTexture.dispose();
+        this.spriteMaterial.dispose();
+        this.shadowMaterial.dispose();
     }
 
-    private getDuration(currentFrame: number = this._currentFrame, goFast: boolean = false) {
-        const anim = this.data.animations[this.animation];
-        return anim.durations[currentFrame] * (goFast ? 0.25 : 1) * FRAME_DURATION;
+    private getDuration(currentFrame: number = this.currentFrame, goFast: boolean = false) {
+        return this.anim.durations[currentFrame] * (goFast ? 0.125 : 1) * FRAME_DURATION;
     }
 
     private runCallback() {
@@ -146,28 +257,15 @@ export class DungeonPokemonMaterial extends StandardMaterial {
     }
 
     public init(animation: string, direction: Direction) {
-        this.diffuseTexture = this.texture;
-        this.texture.hasAlpha = true;
-        this.texture.wrapU = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-        this.texture.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-
         this.setAnimation(animation, false);
         this.setDirection(direction);
         return this;
     }
 
-    /** Creates the dynamic texture */
-    private createTexture(scene: Scene): DynamicTexture {
-        const texture = new DynamicTexture("dungeon_pokemon_texture",
-            SHEET_SIZE, scene, true, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
-
-        return texture;
-    }
-
     public setAnimation(name: string, draw: boolean = true) {
         this.animation = name;
-        this._currentFrame = 0;
-        this._currentFrameDuration = this.getDuration();
+        this.currentFrame = 0;
+        this.currentFrameDuration = this.getDuration();
 
         if (draw)
             this.draw();
@@ -178,5 +276,4 @@ export class DungeonPokemonMaterial extends StandardMaterial {
         if (draw)
             this.draw();
     }
-
 }
