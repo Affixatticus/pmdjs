@@ -162,9 +162,9 @@ export class DungeonGenerator {
         // Generate water features
         this.drawWaterFeatures();
         // Place keckleon shop
-        this.placeKecleonShopRoom(rooms);
-        // Place items and traps
-        this.placeItemsAndTraps(rooms);
+        const chosenRoom = this.placeKecleonShopRoom(rooms);
+        // Place items and traps, skip the room with the kecleon shop
+        this.placeItemsAndTraps(this.getRooms(rooms).filter(r => r !== chosenRoom));
 
 
         return this.grid;
@@ -877,28 +877,28 @@ export class DungeonGenerator {
         this.grid.set(point, tile);
     }
 
-    private placeMarkersInRooms(spaces: Room[][], amount: number, tile: Tile) {
-        const rooms = Random.shuffle(this.getRooms(spaces));
+    private placeMarkersInRooms(rooms: Rect[], amount: number, tile: Tile) {
+        const shuffledRooms = Random.shuffle(rooms);
 
         for (let i = 0; i < amount; i++) {
-            const roomIndex = i % rooms.length;
-            this.placeMarkerInRoom(rooms[roomIndex], tile);
+            const roomIndex = i % shuffledRooms.length;
+            this.placeMarkerInRoom(shuffledRooms[roomIndex], tile);
         }
     }
 
-    private placeItems(spaces: Room[][]) {
+    private placeItems(rooms: Rect[]) {
         if (!this.generateItems) return;
         const amount = (this.getItemDensity()) + Random.int(-2, 2);
-        this.placeMarkersInRooms(spaces, amount, Tile.MARKER_ITEM);
+        this.placeMarkersInRooms(rooms, amount, Tile.MARKER_ITEM);
     }
 
-    private placeTraps(rooms: Room[][]) {
+    private placeTraps(rooms: Rect[]) {
         if (!this.generateTraps) return;
         const amount = Random.int(this.getTrapDensity() / 2 | 0, this.getTrapDensity() + 2);
         this.placeMarkersInRooms(rooms, amount, Tile.MARKER_TRAP);
     }
 
-    private placeStairs(rooms: Room[][]) {
+    private placeStairs(rooms: Rect[]) {
         this.placeMarkersInRooms(rooms, 1, Tile.MARKER_STAIRS);
     }
 
@@ -906,28 +906,31 @@ export class DungeonGenerator {
     //     const amount = (this.getItemDensity()) + Random.int(-2, 2);
     // }
 
-    private placeItemsAndTraps(rooms: Room[][]) {
-        this.placeStairs(rooms);
+    private placeItemsAndTraps(rooms: Rect[]) {
         // this.placeBuriedItems(rooms);
         this.placeItems(rooms);
         this.placeTraps(rooms);
+        this.placeStairs(rooms);
     }
 
     // ANCHOR Special rooms
-    private placeKecleonShopRoom(rooms: Room[][]) {
+    private placeKecleonShopRoom(rooms: Room[][]): Room | null {
         const room = Random.choose(this.getRooms(rooms));
-        if (!room || !Random.chance(1)) return;
+        if (!room || !Random.chance(1)) return null;
         const carpetArea = room;
         let itemArea = carpetArea.centralRect(V2(2, 2));
         if (itemArea.height <= 1 || itemArea.width <= 1)
             itemArea = itemArea.inflate(1);
 
         for (const pos of carpetArea.iter()) {
+            if (this.grid.get(pos) === Tile.MARKER_STAIRS) continue;
             this.grid.set(pos, Tile.KECLEON_CARPET);
         }
         for (const pos of itemArea.iter()) {
+            if (this.grid.get(pos) === Tile.MARKER_STAIRS) continue;
             this.grid.set(pos, Tile.KECLEON_ITEM);
         }
         this.grid.set(carpetArea.getRandomPoint(), Tile.KECLEON_MARKER);
+        return room;
     }
 }
