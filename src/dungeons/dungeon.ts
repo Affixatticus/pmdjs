@@ -63,7 +63,7 @@ export class DungeonState {
         return this._animationSpeed === DungeonState._walkingAnimationSpeed;
     }
     public setRunning(running: boolean) {
-        this.motionBlur.motionStrength = running ? 400000 : 4;
+        this.motionBlur.motionStrength = running ? 400000 : 0;
         this._animationSpeed = running ? DungeonState._runningAnimationSpeed : DungeonState._walkingAnimationSpeed;
     }
 
