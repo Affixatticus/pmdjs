@@ -126,7 +126,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 mapSize: V2(2, 2),
                 // generateWater: false,
                 generateWater: false,
-                layoutType: GeneratorLayouts.ALL_ROOMS,
+                layoutType: GeneratorLayouts.HALF_ROOMS,
                 roomDensity: .75,
                 terrainDensity: 40,
                 groundItemDensity: 4,

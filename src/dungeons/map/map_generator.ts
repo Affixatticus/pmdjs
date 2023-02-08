@@ -212,16 +212,13 @@ export class DungeonGenerator {
     private *iterRooms(rooms: Room[][]) {
         for (const row of rooms)
             for (const room of row) {
-                if (room !== undefined && room !== null && room.width > 1)
+                if (room !== null && room.width > 1)
                     yield room;
             }
     }
 
     private getRooms(rooms: Room[][]) {
-        const list: Rect[] = [];
-        for (const room of this.iterRooms(rooms))
-            list.push(room);
-        return list;
+        return [...this.iterRooms(rooms)];
     }
 
     // Map generation Methods

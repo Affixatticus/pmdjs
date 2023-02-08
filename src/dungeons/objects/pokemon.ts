@@ -32,7 +32,7 @@ export class DungeonPokemon {
     static SCALING_DETERMINANT = 7;
     static SPRITE_ROTATION = Math.PI / 3;
     static TRANSLUCID_MESH_VISIBILITY = 0.5;
-    static SHADOW_OFFSET = V3(0.5, 0.01, -0.5);
+    static SHADOW_OFFSET = V3(0.5 - this.SCALING_DETERMINANT / 512, 0.01, -0.5);
     static SPRITE_OFFSET = V3(0.5, 0, -0.5);
 
     private _position: Vec2;
