@@ -189,16 +189,16 @@ export class ItemAction extends WalkAction {
         // If it is a wild pokemon
         if (this.pokemon.inFormation) {
             // Remove the item from the floor
-            // TODO Add the item to the pokemon's inventory
             if (this.pokemon.isLeader || this.pokemon.isPartner) {
-                console.log("Adding item to inventory");
-                const stack = this.state.inventory.addStack(this.item.stack);
+                if (this.item.isWanted) {
+                    const stack = this.state.inventory.addStack(this.item.stack);
 
-                if (stack === null) {
-                    this.state.floor.objects.removeObject(this.item);
-                    this.state.floor.grid.set(this.item.position, Tile.FLOOR);
+                    if (stack === null) {
+                        this.state.floor.objects.removeObject(this.item);
+                        this.state.floor.grid.set(this.item.position, Tile.FLOOR);
+                    }
+                    else (<DungeonItem>this.state.floor.objects.get(this.item.position)!).stack = stack;
                 }
-                else (<DungeonItem>this.state.floor.objects.get(this.item.position)!).stack = stack;
             }
         }
         // If it the player pokemon

@@ -1,3 +1,4 @@
+import { GUIReturnType } from "../../common/menu/inventory/common";
 import { Inventory } from "../../common/menu/inventory/inventory";
 import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
@@ -15,9 +16,10 @@ const MAX_DISTANCE_FOR_INLINE_CHECK = 5;
 export const enum InputAction {
     WALK,
     TALK,
+    DROP_ITEM,
 };
 
-export type InputType = null | [InputAction.WALK, Direction] | [InputAction.TALK, DungeonPokemon];
+export type InputType = null | [InputAction.WALK, Direction] | [InputAction.TALK, DungeonPokemon] | [InputAction.DROP_ITEM, number];
 
 abstract class InputState {
     public player!: Player;
@@ -40,7 +42,7 @@ abstract class InputState {
 
     // Automatically goes to the idle state without returning a value
     public exit(): null {
-        Controls.B.resetLastPressed();
+        Controls.B.lockReleased();
         this.changeState(new IdleState());
         return null;
     }
@@ -149,9 +151,9 @@ class WalkingState extends InputState {
     }
 
     // Sets the item you just walked on to discarded so that you don't open the gui when you walk on it
-    private handleDiscardingItem(input: Direction) {
+    private handleDiscardingItem(input: Direction, wanted: boolean) {
         const item = this.player.itemInFront(input)!;
-        item.discard(false);
+        item.discard(!wanted);
         return null;
     }
 
@@ -195,8 +197,7 @@ class WalkingState extends InputState {
                 // Push the partner
                 return this.handlePushing(input);
             case Obstacle.ITEM:
-                if (Controls.B.isDown)
-                    this.handleDiscardingItem(input);
+                this.handleDiscardingItem(input, Controls.B.isDown);
                 break;
             case Obstacle.ENEMY:
                 this.leader.direction = input;
@@ -293,9 +294,18 @@ class InventoryState extends InputState {
     }
 
     public update(): InputType {
+        const guiResult = this.inventory.navigate();
+
         // Exit if the return state was true
-        if (this.inventory.navigate() === true)
-            return this.exit();
+        switch (guiResult) {
+            case GUIReturnType.CLOSED:
+                return this.exit();
+            case GUIReturnType.INVENTORY_EAT:
+                return this.exit();
+            case GUIReturnType.INVENTORY_DROP:
+                this.exit();
+                return [InputAction.DROP_ITEM, this.inventory.cursor];
+        }
         return null;
     }
 }

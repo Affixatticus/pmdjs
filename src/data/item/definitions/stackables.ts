@@ -8,6 +8,7 @@ export const SilverThornItem: Throwable & Stackable = {
     texCoords: [4, 2, 1, 1],
     imageUrl: "Item_image_ARROW_SILVER",
     maxStackSize: 99,
+    throw() { },
 };
 
 export const StackItems: Partial<Record<ItemId, Stackable>> = {

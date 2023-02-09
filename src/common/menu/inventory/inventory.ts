@@ -1,8 +1,14 @@
 import { ItemStack } from "../../../data/item/item_stack";
-import { AssetsLoader } from "../../../utils/assets_loader";
-import Canvas from "../../../utils/canvas";
-import { Controls } from "../../../utils/controls";
-import { InventoryGUI } from "./gui";
+import { DungeonState } from "../../../dungeons/dungeon";
+import { GUIReturnType } from "./common";
+import { InventoryGUI } from "./inventory_gui";
+
+
+export const enum ButtonVisibility {
+    HIDDEN,
+    VISIBLE,
+    DISABLED,
+};
 
 export class Inventory {
     public static PAGE_SIZE = 8;
@@ -12,25 +18,24 @@ export class Inventory {
     public capacity: number = 32;
     public gui: InventoryGUI;
 
+    // TODO This will be a more generic state
+    public state!: DungeonState;
+
     /** The position of the cursor in the inventory */
     public cursor: number = 0;
 
     public get isEmpty(): boolean {
         return this.items.length === 0;
     }
-
     public get selectedItem(): ItemStack | null {
         return this.items[this.cursor];
     }
-
     public get currentPage(): number {
         return Math.floor(this.cursor / Inventory.PAGE_SIZE);
     }
-
     public get lastPage(): number {
         return Math.max(0, Math.floor((this.items.length - 1) / Inventory.PAGE_SIZE));
     }
-
     public get pageStart(): number {
         return this.currentPage * 8;
     }
@@ -105,15 +110,51 @@ export class Inventory {
         return this.items.length < this.capacity;
     }
 
+    public get(index: number): ItemStack {
+        return this.items[index];
+    }
+    public extractStack(index: number): ItemStack {
+        const stack = this.items[index];
+        this.items.splice(index, 1);
+        if (this.cursor > 0)
+            this.cursor--;
+        this.gui.update();
+        return stack;
+    }
+
     public sort() {
         this.items = this.items.sort((a, b) => a.name > b.name ? 1 : -1);
         this.gui.update();
     }
 
+    // ANCHOR State Querying
+    public inDungeonState(): boolean {
+        return this.state instanceof DungeonState;
+    }
+    public showEatOption(): ButtonVisibility {
+        return this.selectedItem!.isEdible ? ButtonVisibility.VISIBLE : ButtonVisibility.HIDDEN;
+    }
+    public showThrowOption(): ButtonVisibility {
+        if (this.inDungeonState()) {
+            return this.selectedItem!.isThrowable ? ButtonVisibility.VISIBLE : ButtonVisibility.DISABLED;
+        }
+        return ButtonVisibility.HIDDEN;
+    }
+    public showDropOption(): ButtonVisibility {
+        if (this.inDungeonState()) {
+            // Check if there is room to drop the item
+            if (this.state.logic.canDropItem())
+                return ButtonVisibility.VISIBLE;
+            return ButtonVisibility.DISABLED;
+        }
+        return ButtonVisibility.HIDDEN;
+    }
+    public showTossOption(): ButtonVisibility {
+        return ButtonVisibility.VISIBLE;
+    }
+
     // ANCHOR UI
-    public navigate(): boolean {
-        const output = this.gui.navigate();
-        if (output) return true;
-        return false;
+    public navigate(): GUIReturnType {
+        return this.gui.navigate();
     }
 }

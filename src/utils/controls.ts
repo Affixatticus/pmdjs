@@ -53,7 +53,8 @@ export class Button {
     public ticksUp: number = 0;
     private lastTicksDown: number = 0;
     private lastTicksUp: number = 0;
-    private isReset = false;
+    private isReleaseLocked = false;
+    private isPressedLocked = false;
 
     constructor(button: string, keyboardKey: string) {
         this.isPressed = false;
@@ -66,7 +67,8 @@ export class Button {
         this.ticksUp = 0;
         this.lastTicksDown = 0;
         this.lastTicksUp = 0;
-        this.isReset = false;
+        this.isReleaseLocked = false;
+        this.isPressedLocked = false;
     }
 
     public Keyboard_update(isDown: boolean) {
@@ -75,8 +77,11 @@ export class Button {
     }
 
     public Tick_update() {
-        if (this.isDown)
+        if (this.isDown) {
             this.ticksDown++;
+            if (this.isPressedLocked && this.ticksUp >= 1)
+                this.isPressedLocked = false;
+        }
         else {
             this.lastTicksDown = this.ticksDown;
             this.ticksDown = 0;
@@ -84,8 +89,8 @@ export class Button {
 
         if (this.isUp) {
             this.ticksUp++;
-            if (this.isReset && this.ticksUp >= 4)
-                this.isReset = false;
+            if (this.isReleaseLocked && this.ticksUp >= 4)
+                this.isReleaseLocked = false;
         }
         else {
             this.lastTicksUp = this.ticksUp;
@@ -96,30 +101,34 @@ export class Button {
     }
 
     public onReleased(ticks: number) {
-        if (this.isReset) {
+        if (this.isReleaseLocked) {
             return false;
         }
         if (this.isUp && this.lastTicksDown >= ticks) {
-            this.isReset = true;
+            this.isReleaseLocked = true;
             return true;
         }
         return false;
     }
 
     public onPressed(ticks: number) {
-        if (this.isReset) {
+        if (this.isPressedLocked) {
             return false;
         }
-        if (this.isDown && this.ticksDown >= ticks) {
-            this.isReset = true;
+        if (this.isDown && this.lastTicksUp >= ticks) {
+            this.isPressedLocked = true;
             return true;
         }
         return false;
     }
 
-    public resetLastPressed() {
+    public lockReleased() {
         this.lastTicksDown = 0;
-        this.isReset = true;
+        this.isReleaseLocked = true;
+    }
+    public lockPressed() {
+        this.lastTicksUp = 0;
+        this.isPressedLocked = true;
     }
 };
 

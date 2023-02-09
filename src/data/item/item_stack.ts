@@ -29,6 +29,9 @@ export class ItemStack {
     public get isEdible(): boolean {
         return this.definition?.eat !== undefined;
     }
+    public get isThrowable(): boolean {
+        return this.definition?.throw !== undefined;
+    }
 
     public get itemAmount(): [ItemId, number] {
         return [this.item, this.amount];

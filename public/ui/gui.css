@@ -1,0 +1,70 @@
+#menu {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unfocused {
+    filter: blur(2px);
+    pointer-events: none;
+}
+
+.hidden {
+    display: none;
+}
+
+.menu-container {
+    border-image: url(./custom_border.png) 32 fill stretch;
+    padding: 0 2em;
+    image-rendering: crisp-edges;
+    border-image-width: 24px;
+    border-image-outset: 16px;
+    position: absolute;
+
+    transition: filter 200ms ease-out;
+}
+
+.menu-text {
+    color: #f8f8f8;
+    text-shadow: #888 2px 2px 0;
+    font-family: WonderMail;
+    font-weight: lighter;
+    font-size: 32pt;
+    user-select: none;
+}
+
+.menu-option {
+    position: relative;
+    padding: 0.15em 0.25em;
+    background-color: transparent;
+    border-radius: 0.25em;
+}
+
+.menu-option:hover:not(.menu-option-selected):not([disabled]) {
+    background-color: #8888;
+}
+
+.menu-option:active:not([disabled]) {
+    background-color: #8888;
+    color: #ffe836;
+}
+
+.menu-option-selected:not([disabled]) {
+    background-color: #fff8;
+    color: #ffe836;
+}
+
+.menu-option[disabled] {
+    background-color: #0000;
+    color: #888;
+    text-shadow: #444 2px 2px 0;
+}
+
+
+
+
+.context-menu-container {
+    z-index: 100000;
+}

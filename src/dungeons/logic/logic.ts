@@ -10,6 +10,7 @@ import { InputAction, InputType, Player } from "./player";
 import { TurnAction } from "./actions/action";
 import { DungeonPokemonEnemyAI as DungeonPokemonEnemyAI } from "./ai/enemy_ai";
 import { Controls } from "../../utils/controls";
+import { DropItemAction } from "./actions/items";
 
 export class DungeonLogic {
     public state: DungeonState;
@@ -34,8 +35,8 @@ export class DungeonLogic {
     /** Initializes the logic with all parameters that are created after its instancing */
     public init() {
         // Reset the B button
-        Controls.B.resetLastPressed();
-        
+        Controls.B.lockReleased();
+
         for (const pokemon of this.state.floor.pokemon.getAll()) {
             // Assign the ai to the pokemon
             switch (pokemon.type) {
@@ -79,12 +80,15 @@ export class DungeonLogic {
                     break;
                 case InputAction.TALK:
                     // Do player talk
-                    console.log("HEY, How are you doing?");
                     const partner = this.inputResult[1];
                     const newDirection = leader.direction.getOpposite();
                     if (!partner.animateTurning(newDirection)) return;
                     this.inputResult = null;
                     return;
+                case InputAction.DROP_ITEM:
+                    // Create the drop item action
+                    playerAction = new DropItemAction(leader, this.inputResult[1], this);
+                    break;
             }
 
             this.turn = new Turn();
@@ -115,5 +119,12 @@ export class DungeonLogic {
             this.currentTurn++;
             this.inputResult = null;
         }
+    }
+
+
+    // ANCHOR State getters
+    public canDropItem(): boolean {
+        const floor = this.state.floor;
+        return !floor.objects.getItems().some(p => p.position.equals(this.player.leader.position));
     }
 }

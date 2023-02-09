@@ -45,7 +45,7 @@ export class DungeonState {
     public isLoaded: boolean;
     public data: DungeonStateData;
     public info: DungeonFloorInfo;
-    private logic: DungeonLogic;
+    public logic: DungeonLogic;
     private motionBlur: MotionBlurPostProcess;
 
     // Common UI
@@ -92,6 +92,7 @@ export class DungeonState {
         this.motionBlur = new MotionBlurPostProcess("motionBlur", this.scene, 1.0, this.camera);
 
         this.inventory = inventory;
+        this.inventory.state = this;
 
         // Add optimizations
         const options = new SceneOptimizerOptions(144);

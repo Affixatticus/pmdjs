@@ -15,7 +15,7 @@ export interface Edible extends BaseItem {
     eat(pokemon: DungeonPokemon): void;
 };
 export interface Throwable extends BaseItem {
-    // throw(): void;
+    throw(): void;
 };
 export interface Stackable extends BaseItem {
     readonly maxStackSize: number;
