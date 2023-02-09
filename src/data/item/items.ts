@@ -8,6 +8,7 @@ export interface BaseItem {
     readonly description: string;
     readonly price: number;
     readonly texCoords: [x: number, y: number, w: number, h: number];
+    readonly imageUrl: string;
 };
 
 export interface Edible extends BaseItem {

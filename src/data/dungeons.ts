@@ -107,7 +107,8 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
             items: [
                 { id: ItemId.ORAN_BERRY, chance: 20 },
                 // { id: ItemId.COIN, chance: 30 },
-                { id: ItemId.APPLE, chance: 10 },
+                { id: ItemId.APPLE, chance: 20 },
+                { id: ItemId.BIG_APPLE, chance: 5 },
                 // { id: ItemId.BIG_APPLE, chance: 1 },
             ],
             traps: [

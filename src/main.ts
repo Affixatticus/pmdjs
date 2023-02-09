@@ -150,14 +150,6 @@ class App {
         this.controls = new Controls();
         // Global components
         this.inventory = new Inventory();
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
-        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
-        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
-        this.inventory.addStack(new ItemStack(ItemId.APPLE, 1));
         // State
         this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;
@@ -223,7 +215,7 @@ class App {
     private createState(state: GameState = this.gameState) {
         switch (state) {
             case GameState.DUNGEONS:
-                return new DungeonState(this.engine, this.data.dungeon);
+                return new DungeonState(this.engine, this.data.dungeon, this.inventory);
         }
         throw Error(`No id correlated to that GameState (${state})`);
     }

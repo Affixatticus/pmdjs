@@ -1,4 +1,5 @@
 import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MotionBlurPostProcess, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { Inventory } from "../common/menu/inventory";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
@@ -47,6 +48,9 @@ export class DungeonState {
     private logic: DungeonLogic;
     private motionBlur: MotionBlurPostProcess;
 
+    // Common UI
+    public inventory: Inventory;
+
     // Pokemon Movement
     public static readonly WALKING_TICKS: number = 40;
     public static readonly _walkingAnimationSpeed: number = 1;
@@ -67,7 +71,7 @@ export class DungeonState {
         this._animationSpeed = running ? DungeonState._runningAnimationSpeed : DungeonState._walkingAnimationSpeed;
     }
 
-    constructor(engine: Engine, data: DungeonStateData) {
+    constructor(engine: Engine, data: DungeonStateData, inventory: Inventory) {
         // Definition
         this.engine = engine;
         this.scene = new Scene(this.engine);
@@ -86,6 +90,8 @@ export class DungeonState {
 
         // Add the post-processing
         this.motionBlur = new MotionBlurPostProcess("motionBlur", this.scene, 1.0, this.camera);
+
+        this.inventory = inventory;
 
         // Add optimizations
         const options = new SceneOptimizerOptions(144);

@@ -1,0 +1,155 @@
+@font-face {
+    font-family: WonderMail;
+    src: url(wondermail.ttf);
+
+}
+
+#menu {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.inventory,
+.inventory button {
+    color: #f8f8f8;
+    text-shadow: #888 2px 2px 0;
+    font-family: WonderMail;
+    font-weight: lighter;
+    font-size: 32pt;
+    user-select: none;
+}
+
+#inventory-container {
+    border-image: url(./custom_border.png) 32 fill stretch;
+    padding: 0 2em;
+    image-rendering: crisp-edges;
+    border-image-width: 24px;
+    border-image-outset: 16px;
+
+    position: absolute;
+    z-index: 100;
+
+    display: grid;
+    grid-template-columns: 400px 300px;
+    grid-template-rows: 5em 200px 200px 3em;
+    grid-template-areas:
+        "t m"
+        "o i"
+        "o d"
+        "f f";
+    column-gap: 1em;
+}
+
+#inventory-title {
+    grid-area: t;
+
+    text-align: center;
+    padding: 0.15em 0.5em;
+}
+
+img#inventory-title-arrow-left {
+    float: left;
+}
+
+img#inventory-title-arrow-right {
+    float: right;
+}
+
+.inventory-title-arrow {
+    cursor: pointer;
+}
+
+#inventory-title hr {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+#inventory-money {
+    grid-area: m;
+
+    padding: 0.15em 0.5em;
+}
+
+#inventory-items {
+    grid-area: o;
+    background-color: #0002;
+    border-radius: 0.30em;
+    height: fit-content;
+    height: calc(47.78px * 8);
+    padding: 4px;
+    box-shadow: 0 0 1px 1px #ccc3 inset;
+}
+
+.inventory-item {
+    position: relative;
+    padding: 0.15em 0.15em 0.15em 1em;
+    border-radius: 0.25em;
+}
+
+.inventory-item:hover:not(.inventory-item-selected) {
+    background-color: #8888;
+}
+
+.inventory-item:active,
+.inventory-item-selected {
+    background-color: #fff8;
+    color: #ffe836;
+}
+
+
+.inventory-item-name {
+    position: relative;
+    padding-left: 0.1em;
+}
+
+.inventory-item-icon {
+    position: absolute;
+    left: -4px;
+    top: 0;
+    pointer-events: none;
+}
+
+#inventory-icon {
+    grid-area: i;
+}
+
+#inventory-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+#inventory-description {
+    grid-area: d;
+}
+
+#inventory-footbar {
+    grid-area: f;
+}
+
+#inventory-footbar img {
+    align-items: center;
+    padding-right: 4px;
+    pointer-events: none;
+}
+
+#inventory-footbar button {
+    display: flex;
+    float: right;
+    border: none;
+    background-color: transparent;
+    border-radius: 0.25em;
+    padding: 0.15em;
+}
+
+#inventory-footbar button:hover {
+    background-color: #8888;
+}
+#inventory-footbar button:active {
+    background-color: #fff8;
+    color: #ffe836;
+}

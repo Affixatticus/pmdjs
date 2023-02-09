@@ -13,6 +13,8 @@ dist-ssr
 *.local
 
 public/assets/textures/pokemon
+public/assets/textures/ui/item_images
+public/assets/textures/ui/buttons
 vite.config.js
 
 # Editor directories and files

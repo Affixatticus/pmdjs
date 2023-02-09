@@ -1,3 +1,4 @@
+import { Inventory } from "../../common/menu/inventory";
 import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
 import { Direction } from "../../utils/direction";
@@ -39,6 +40,7 @@ abstract class InputState {
 
     // Automatically goes to the idle state without returning a value
     public exit(): null {
+        Controls.B.resetLastPressed();
         this.changeState(new IdleState());
         return null;
     }
@@ -62,6 +64,9 @@ class IdleState extends InputState {
             this.changeState(new TurningState());
         if (this.getInputDirection() !== Direction.NONE)
             this.changeState(new WalkingState());
+        if (Controls.B.onReleased(1)) {
+            this.changeState(new InventoryState());
+        }
 
         return null;
     }
@@ -278,6 +283,19 @@ class TurningState extends InputState {
         // Show the guide when the timer is up
         this.handleGuide();
 
+        return null;
+    }
+}
+
+class InventoryState extends InputState {
+    public get inventory(): Inventory {
+        return this.player.logic.state.inventory;
+    }
+
+    public update(): InputType {
+        // Exit if the return state was true
+        if (this.inventory.navigate() === true)
+            return this.exit();
         return null;
     }
 }

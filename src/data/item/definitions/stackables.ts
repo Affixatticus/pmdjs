@@ -6,6 +6,7 @@ export const SilverThornItem: Throwable & Stackable = {
     description: "When thrown deals damage to all foes in the same line until it hits a wall.",
     price: 100,
     texCoords: [4, 2, 1, 1],
+    imageUrl: "Item_image_ARROW_SILVER",
     maxStackSize: 99,
 };
 

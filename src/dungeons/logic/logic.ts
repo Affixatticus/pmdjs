@@ -9,6 +9,7 @@ import { V3 } from "../../utils/vectors";
 import { InputAction, InputType, Player } from "./player";
 import { TurnAction } from "./actions/action";
 import { DungeonPokemonEnemyAI as DungeonPokemonEnemyAI } from "./ai/enemy_ai";
+import { Controls } from "../../utils/controls";
 
 export class DungeonLogic {
     public state: DungeonState;
@@ -32,6 +33,9 @@ export class DungeonLogic {
 
     /** Initializes the logic with all parameters that are created after its instancing */
     public init() {
+        // Reset the B button
+        Controls.B.resetLastPressed();
+        
         for (const pokemon of this.state.floor.pokemon.getAll()) {
             // Assign the ai to the pokemon
             switch (pokemon.type) {

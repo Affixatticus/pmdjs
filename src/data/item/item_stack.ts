@@ -42,4 +42,7 @@ export class ItemStack {
     public getTextureCoords(): [x: number, y: number, w: number, h: number] {
         return getItemCrop(this.item);
     }
+    public getImageUrl(): string {
+        return "assets/textures/ui/item_images/" + this.definition.imageUrl + ".png";
+    }
 }
