@@ -1,5 +1,5 @@
 import { Engine } from '@babylonjs/core';
-import { Inventory } from './common/menu/inventory';
+import { Inventory } from './common/menu/inventory/inventory';
 import { ItemId } from './data/item/ids';
 import { ItemStack } from './data/item/item_stack';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';

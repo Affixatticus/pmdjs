@@ -1,4 +1,4 @@
-import { Inventory } from "../../common/menu/inventory";
+import { Inventory } from "../../common/menu/inventory/inventory";
 import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
 import { Direction } from "../../utils/direction";

@@ -1,5 +1,5 @@
 import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MotionBlurPostProcess, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
-import { Inventory } from "../common/menu/inventory";
+import { Inventory } from "../common/menu/inventory/inventory";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
