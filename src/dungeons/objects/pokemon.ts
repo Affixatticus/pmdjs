@@ -4,7 +4,7 @@ import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { Direction } from "../../utils/direction";
 import { V3, Vec2 } from "../../utils/vectors";
-import { DungeonFloor, RenderingGroupId } from "../floor";
+import { DungeonFloor, FloorRenderingLevels } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonGrid } from "../map/grid";
 import { DungeonPokemonMaterials } from "./sprite";
@@ -98,7 +98,7 @@ export class DungeonPokemon {
 
         shadowMesh.position = this._position.gameFormat.add(DungeonPokemon.SHADOW_OFFSET);
         shadowMesh.scalingDeterminant = DungeonPokemon.SCALING_DETERMINANT;
-        shadowMesh.renderingGroupId = RenderingGroupId.FLOOR;
+        shadowMesh.renderingGroupId = FloorRenderingLevels.INBETWEEN;
         shadowMesh.material = this.material.shadowMaterial;
         this.shadowMesh = shadowMesh;
 
@@ -110,14 +110,14 @@ export class DungeonPokemon {
 
         opaqMesh.position = this._position.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
         opaqMesh.scalingDeterminant = DungeonPokemon.SCALING_DETERMINANT;
-        opaqMesh.renderingGroupId = RenderingGroupId.WALL;
+        opaqMesh.renderingGroupId = FloorRenderingLevels.WALLS;
         opaqMesh.rotate(Vector3.Right(), DungeonPokemon.SPRITE_ROTATION);
 
         this.opaqueMesh = opaqMesh;
         opaqMesh.material = this.material.spriteMaterial;
 
         const tranMesh = opaqMesh.clone("pokemon-tran");
-        tranMesh.renderingGroupId = RenderingGroupId.ALWAYS_VISIBLE;
+        tranMesh.renderingGroupId = FloorRenderingLevels.HIGHEST;
         tranMesh.visibility = DungeonPokemon.TRANSLUCID_MESH_VISIBILITY;
         this.translucentMesh = tranMesh;
     }

@@ -1,6 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
-import { RenderingGroupId } from "../floor";
+import { FloorRenderingLevels } from "../floor";
 import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
@@ -70,7 +70,7 @@ export class DungeonItem extends DungeonObject {
 
         plane.position = V3(this.position.x + .5, 0.001, this.position.y + .5).gameFormat;
         plane.rotate(Vector3.Right(), Math.PI / 2);
-        plane.renderingGroupId = RenderingGroupId.FLOOR;
+        plane.renderingGroupId = FloorRenderingLevels.GROUND;
 
         plane.material = material;
 

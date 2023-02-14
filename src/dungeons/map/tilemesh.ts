@@ -3,7 +3,7 @@ import { Tile } from "../../data/tiles";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { fillOutStandardOptions } from "../../utils/material";
 import { Vec2, V3 } from "../../utils/vectors";
-import { RenderingGroupId } from "../floor";
+import { FloorRenderingLevels } from "../floor";
 import { ByteGrid } from "./grid";
 import { Tiling, DungeonTiling, TilingTextureMode } from "./tiling";
 
@@ -245,7 +245,7 @@ export class WallTileMesh extends TileMesh {
             maxHeight: options.height ?? 1,
         }, scene);
         this.mesh.isVisible = true;
-        this.mesh.renderingGroupId = RenderingGroupId.WALL;
+        this.mesh.renderingGroupId = FloorRenderingLevels.WALLS;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
         // Create the material
@@ -311,7 +311,7 @@ export class WaterTileMesh extends TileMesh {
         this.mesh.isVisible = true;
         this.mesh.alwaysSelectAsActiveMesh = true;
 
-        this.mesh.renderingGroupId = RenderingGroupId.FLOOR;
+        this.mesh.renderingGroupId = FloorRenderingLevels.GROUND;
         this.material = new WaterTileMaterial("material_" + this.getId(), textures, this.waterSpeed, this.getTextureCrop(), scene);
         this.mesh.material = this.material;
     }

@@ -3,7 +3,7 @@ import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { fillOutStandardOptions } from "../../utils/material";
 import { V2, Vec2 } from "../../utils/vectors";
-import { RenderingGroupId } from "../floor";
+import { FloorRenderingLevels } from "../floor";
 import { OffsetGrid, DungeonGrid } from "./grid";
 import { Tiling, DungeonTiling, TilingTextureMode } from "./tiling";
 
@@ -44,7 +44,7 @@ export class FloorMesh {
         mesh.position.set(...V2(this.width / 2, this.height / 2).toVec3().gameFormat.spread());
 
         // Resolve z-fighting
-        mesh.renderingGroupId = RenderingGroupId.FLOOR;
+        mesh.renderingGroupId = FloorRenderingLevels.GROUND;
 
         // Loads the material
         this.material = this.createMaterial(scene);
@@ -94,7 +94,7 @@ export class FloorMesh {
             }
 
             if (tiling === Tiling.BLANK) {
-                const tile = grid.get(...pos.spread());
+                const tile = grid.get(pos);
                 // If the tile should be clear, use the CENTER_FULL (transparent)
                 if (tile !== Tile.WATER && tile !== Tile.CLEAR_TILE)
                     variant = Tiling.CENTER_FULL;

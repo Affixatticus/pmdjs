@@ -1,6 +1,6 @@
 import { Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
-import { RenderingGroupId } from "../floor";
+import { FloorRenderingLevels } from "../floor";
 import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
@@ -63,7 +63,7 @@ export class DungeonTile extends DungeonObject {
         );
 
         mesh.position = V3(this.position.x + .5, -0.25, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupId.FLOOR;
+        mesh.renderingGroupId = FloorRenderingLevels.GROUND;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("stairs", source, scene, ...getTileCrop(this.id));
@@ -86,7 +86,7 @@ export class DungeonTile extends DungeonObject {
         );
 
         mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupId.FLOOR;
+        mesh.renderingGroupId = FloorRenderingLevels.GROUND;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("trap", source, scene, ...getTileCrop(this.id));

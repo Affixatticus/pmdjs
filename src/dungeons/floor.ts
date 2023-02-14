@@ -14,11 +14,15 @@ import { AssetsLoader } from "../utils/assets_loader";
 import { DungeonTile } from "./objects/tile";
 import { DungeonEnemyGenerator } from "./objects/enemy_generator";
 
-export enum RenderingGroupId {
-    WATER,
-    FLOOR,
-    WALL,
-    ALWAYS_VISIBLE
+export enum FloorRenderingLevels {
+    /** The level that has the floor and water, the tiles and the items */
+    GROUND,
+    /** The level that displays above the floor, but below the entities and walls */
+    INBETWEEN,
+    /** The level that has entities and walls */
+    WALLS,
+    /** The level that is displayed above everything else */
+    HIGHEST,
 };
 
 /** 

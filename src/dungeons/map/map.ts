@@ -7,6 +7,7 @@ import { ByteGrid, DungeonGrid } from "./grid";
 import { TileMeshContainer, WaterTileMaterial } from "./tilemesh";
 import { FloorMesh } from "./floormesh";
 import { Tiling } from "./tiling";
+import { FloorRenderingLevels } from "../floor";
 
 export const TILE_VIEWPORT = V2(22, 14);
 export const TILE_VIEWPORT_HALF = V2(11, 7);
@@ -133,6 +134,7 @@ export class DungeonMap {
             -2,
             -this.grid.height / 2
         );
+        underplane.renderingGroupId = FloorRenderingLevels.GROUND;
         const underPlaneMaterial = new StandardMaterial("underfloor_material", this.scene);
         underPlaneMaterial.diffuseColor = background;
         underPlaneMaterial.specularColor = Color3.Black();

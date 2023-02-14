@@ -4,7 +4,7 @@ import { DungeonObject, ObjectType } from "./object";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { getTileCrop, TileObject } from "../../data/tiles";
 import { TileMaterial } from "./tile";
-import { RenderingGroupId } from "../floor";
+import { FloorRenderingLevels } from "../floor";
 
 export class DungeonCarpet extends DungeonObject {
     private mesh!: Mesh;
@@ -29,7 +29,7 @@ export class DungeonCarpet extends DungeonObject {
         }, scene);
 
         mesh.position = V3(this.position.x + .5, 0, this.position.y + .5).gameFormat;
-        mesh.renderingGroupId = RenderingGroupId.WATER;
+        mesh.renderingGroupId = FloorRenderingLevels.GROUND;
 
         const source = await AssetsLoader.loadTileSheet();
         const material = new TileMaterial("stairs", source, scene, ...getTileCrop(this.id));
