@@ -1,4 +1,5 @@
-import { GUIReturnType } from "../../common/menu/inventory/common";
+import { GuiOutput } from "../../common/menu/gui/gui";
+import { GuiManager } from "../../common/menu/gui/gui_manager";
 import { Inventory } from "../../common/menu/inventory/inventory";
 import { Tile } from "../../data/tiles";
 import { Controls } from "../../utils/controls";
@@ -40,9 +41,11 @@ abstract class InputState {
         return Direction.fromVector(Controls.LEFT_STICK.position).flipY();
     }
 
+    public init(): void { };
+
     // Automatically goes to the idle state without returning a value
     public exit(): null {
-        Controls.B.lockReleased();
+        if (Controls.B.isDown) Controls.B.lockReleased();
         this.changeState(new IdleState());
         return null;
     }
@@ -50,6 +53,7 @@ abstract class InputState {
     public changeState(state: InputState) {
         this.player.state = state;
         state.player = this.player;
+        state.init();
         return null;
     }
 
@@ -293,19 +297,45 @@ class InventoryState extends InputState {
         return this.player.logic.state.inventory;
     }
 
-    public update(): InputType {
-        const guiResult = this.inventory.navigate();
+    public init() {
+        // Open the inventory gui
+        GuiManager.openGui(this.inventory.gui);
+    }
 
-        // Exit if the return state was true
+    public update(): InputType {
+        const guiResult = GuiManager.awaitGuiResult();
+        const guiClose = GuiManager.shouldClose;
+        let output: InputType = null;
+
         switch (guiResult) {
-            case GUIReturnType.CLOSED:
-                return this.exit();
-            case GUIReturnType.INVENTORY_EAT:
-                return this.exit();
-            case GUIReturnType.INVENTORY_DROP:
-                this.exit();
-                return [InputAction.DROP_ITEM, this.inventory.cursor];
+            case GuiOutput.UNASSIGNED:
+                output = null;
+                break;
+            case GuiOutput.INVENTORY_DROP:
+                output = [InputAction.DROP_ITEM, this.inventory.cursor];
+                break;
+            default:
+                console.log(GuiOutput[guiResult]);
         }
+
+        if (guiClose) {
+            this.exit();
+            return output;
+        }
+        return null;
+
+        // const guiResult = this.inventory.navigate();
+
+        // // Exit if the return state was true
+        // switch (guiResult) {
+        //     case GUIReturnType.CLOSED:
+        //         return this.exit();
+        //     case GUIReturnType.INVENTORY_EAT:
+        //         return this.exit();
+        //     case GUIReturnType.INVENTORY_DROP:
+        //         this.exit();
+        //         return [InputAction.DROP_ITEM, this.inventory.cursor];
+        // }
         return null;
     }
 }

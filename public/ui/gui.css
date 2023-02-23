@@ -13,6 +13,7 @@
 
 .hidden {
     display: none;
+    pointer-events: none;
 }
 
 .menu-container {

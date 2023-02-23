@@ -1,10 +1,10 @@
 import { ItemStack } from "../../../data/item/item_stack";
 import { AssetsLoader } from "../../../utils/assets_loader";
-import Canvas from "../../../utils/canvas";
 import { Controls } from "../../../utils/controls";
 import { ContextMenuGUI, ContextMenuOption } from "./context_menu_gui";
 import { ButtonVisibility, Inventory } from "./inventory";
-import { GUIReturnType } from "./common";
+import { Gui, GuiClose, GuiOutput } from "../gui/gui";
+import { GuiManager } from "../gui/gui_manager";
 
 type InventoryElements = {
     container: HTMLDivElement;
@@ -16,34 +16,20 @@ type InventoryElements = {
     description: HTMLDivElement;
 }
 
-type FocusedMenu = "inventory" | "context-menu";
-
-export class InventoryGUI {
+export class InventoryGUI extends Gui {
     public elements: InventoryElements = {} as InventoryElements;
-
     /** The GUI for when you open a menu, owned by this gui */
     public ctxMenu: ContextMenuGUI;
-    public focus: FocusedMenu = "inventory";
-    public setFocus(focus: FocusedMenu) {
-        this.focus = focus;
-        this.elements.container.classList.toggle("unfocused", focus !== "inventory");
-    }
-    public get isFocused(): boolean {
-        return this.focus === "inventory";
-    }
-
-    private closeNextTick: boolean = false;
-    public visible: boolean = false;
 
     // ANCHOR HTML Elements
     constructor(public inventory: Inventory) {
+        super();
         AssetsLoader.loadItemsSheet();
         // Create all the elements
         this.createElements();
+        this.isVisible = false;
         // Create the context menu
         this.ctxMenu = new ContextMenuGUI();
-        // Set the focus to the inventory
-        this.setFocus("inventory");
     }
 
     // ANCHOR Navigation
@@ -94,54 +80,66 @@ export class InventoryGUI {
 
     /** Generates the context menu options based on the item's type */
     public generateContextOptions(): ContextMenuOption[] {
-        const eat = this.inventory.showEatOption();
-        const thro = this.inventory.showThrowOption();
-        const drop = this.inventory.showDropOption();
-        const toss = this.inventory.showTossOption();
+        const eatOptVisibility = this.inventory.showsEatOption();
+        const throwOptVisibility = this.inventory.showsThrowOption();
+        const dropOptVisibility = this.inventory.showsDropOption();
+        const tossOptVisibility = this.inventory.showsTossOption();
 
         const options: ContextMenuOption[] = [];
 
-        if (eat > ButtonVisibility.HIDDEN) {
-            const option = { text: "Eat", callback: () => GUIReturnType.INVENTORY_EAT, disabled: false };
-            if (eat === ButtonVisibility.DISABLED)
+        if (eatOptVisibility > ButtonVisibility.HIDDEN) {
+            const option = {
+                text: "Eat", callback: () => {
+                    return GuiOutput.IGNORED
+                }, disabled: false
+            };
+            if (eatOptVisibility === ButtonVisibility.DISABLED)
                 option.disabled = true;
             options.push(option);
         }
-        if (thro > ButtonVisibility.HIDDEN) {
-            const option = { text: "Throw", callback: () => GUIReturnType.INVENTORY_THROW, disabled: false };
-            if (thro === ButtonVisibility.DISABLED)
+        if (throwOptVisibility > ButtonVisibility.HIDDEN) {
+            const option = { text: "Throw", callback: () => GuiOutput.INVENTORY_THROW, disabled: false };
+            if (throwOptVisibility === ButtonVisibility.DISABLED)
                 option.disabled = true;
             options.push(option);
         }
-        if (drop > ButtonVisibility.HIDDEN) {
-            const option = { text: "Drop", callback: () => GUIReturnType.INVENTORY_DROP, disabled: false };
-            if (drop === ButtonVisibility.DISABLED)
+        if (dropOptVisibility > ButtonVisibility.HIDDEN) {
+            const option = {
+                text: "Drop", callback: () => {
+                    this.close(GuiOutput.INVENTORY_DROP);
+                    return GuiOutput.IGNORED
+                }, disabled: false
+            };
+            if (dropOptVisibility === ButtonVisibility.DISABLED)
                 option.disabled = true;
             options.push(option);
         }
-        if (toss > ButtonVisibility.HIDDEN) {
-            const option = { text: "Toss", callback: () => GUIReturnType.INVENTORY_TOSS, disabled: false };
-            if (toss === ButtonVisibility.DISABLED)
+        if (tossOptVisibility > ButtonVisibility.HIDDEN) {
+            const option = {
+                text: "Toss", callback: () => {
+                    this.inventory.extractStack(this.inventory.cursor);
+                    // Close the inventory if it's empty
+                    if (this.inventory.isEmpty) this.close();
+                    return GuiOutput.IGNORED
+                }, disabled: false
+            };
+            if (tossOptVisibility === ButtonVisibility.DISABLED)
                 option.disabled = true;
             options.push(option);
         }
-
-
 
         return options;
     }
 
-    public openContextMenu() {
-        // TODO Set all the correct options
+    public openContextMenu(): void {
         // If no item was seltected, return
-        if (this.inventory.isEmpty) return GUIReturnType.NOTHING;
-        this.setFocus("context-menu");
+        if (this.inventory.isEmpty) return;
         this.ctxMenu.update(this.generateContextOptions());
-        this.ctxMenu.isVisible = true;
-        return GUIReturnType.NOTHING;
+        GuiManager.openGui(this.ctxMenu);
     }
 
-    public navigateInventory() {
+    /** Code run by the state */
+    public handleInput(): GuiClose {
         this.isVisible = true;
         if (Controls.LEFT_STICK.BUTTON_UP.onPressed(0))
             this.goUp();
@@ -155,66 +153,15 @@ export class InventoryGUI {
         if (Controls.Y.onPressed(0))
             this.inventory.sort();
         if (Controls.A.onPressed(0))
-            return this.openContextMenu();
+            this.openContextMenu();
 
         // If you exit the inventory
-        if (this.closeNextTick || Controls.B.onPressed(0)) {
+        if (Controls.B.onPressed(0)) {
             this.isVisible = false;
             // Close the gui
-            return GUIReturnType.CLOSED;
+            return true;
         }
-        return GUIReturnType.NOTHING;
-    }
-
-    /** Returns true if it should close the inventory gui, false otherwise */
-    public dispatchContextResult(result: GUIReturnType): GUIReturnType {
-        switch (result) {
-            case GUIReturnType.CLOSED:
-                return GUIReturnType.NOTHING;
-            case GUIReturnType.INVENTORY_EAT:
-                // TODO Open the gui for choosing who should eat
-                return GUIReturnType.NOTHING;
-            case GUIReturnType.INVENTORY_THROW:
-                // TODO Create the throw action
-                this.closeNextTick = true;
-                break;
-            case GUIReturnType.INVENTORY_DROP:
-                // TODO Create a drop action, the exit the gui
-                this.isVisible = false;
-                break;
-            case GUIReturnType.INVENTORY_TOSS:
-                // Consume the stack but don't close the gui
-                this.inventory.extractStack(this.inventory.cursor);
-                break;
-        }
-        return result;
-    }
-
-    public navigate(): GUIReturnType {
-        switch (this.focus) {
-            case "inventory":
-                return this.navigateInventory();
-            case "context-menu":
-                // Navigating the context menu
-                const output = this.ctxMenu.navigate();
-                // If the result was not nothing, close the ctx menu whatever the result
-                if (output !== GUIReturnType.NOTHING) {
-                    this.setFocus("inventory");
-                    this.ctxMenu.isVisible = false;
-                }
-                // If the result was closed, close the inventory
-                return this.dispatchContextResult(output);
-        }
-    }
-
-    // ANCHOR Visibility
-    public set isVisible(value: boolean) {
-        this.visible = value;
-        if (!value) this.closeNextTick = false;
-        this.elements.container.style.display = value ? "grid" : "none";
-    }
-    public get isVisible() {
-        return this.visible;
+        return false;
     }
 
     // ANCHOR Element Creation
@@ -269,9 +216,9 @@ export class InventoryGUI {
         this.elements.footbar = footbar;
 
         // Interact Button
-        const interactButton = document.createElement("button");
+        const interactButton = document.createElement("div");
         interactButton.id = "inventory-footbar-interact";
-        interactButton.classList.add("menu-option");
+        interactButton.classList.add("menu-option", "button");
         const AButton = new Image();
         AButton.src = "assets/textures/ui/buttons/Ui_Button_Guide_A.png";
         interactButton.appendChild(AButton);
@@ -280,20 +227,20 @@ export class InventoryGUI {
         footbar.appendChild(interactButton);
 
         // Close Button
-        const closeButton = document.createElement("button");
+        const closeButton = document.createElement("div");
         closeButton.id = "inventory-footbar-close";
-        closeButton.classList.add("menu-option");
+        closeButton.classList.add("menu-option", "button");
         const BButton = new Image();
         BButton.src = "assets/textures/ui/buttons/Ui_Button_Guide_B.png";
         closeButton.appendChild(BButton);
         closeButton.append("Close");
-        closeButton.onclick = () => { this.closeNextTick = true; };
+        closeButton.onclick = () => { this.close() };
         footbar.appendChild(closeButton);
 
         // Sort Button
-        const sortButton = document.createElement("button");
+        const sortButton = document.createElement("div");
         sortButton.id = "inventory-footbar-sort";
-        sortButton.classList.add("menu-option");
+        sortButton.classList.add("menu-option", "button");
         const YButton = new Image();
         YButton.src = "assets/textures/ui/buttons/Ui_Button_Guide_Y.png";
         sortButton.appendChild(YButton);
@@ -357,11 +304,8 @@ export class InventoryGUI {
         nameSpan.innerText = item.name;
         const iconSpan = document.createElement("span");
         iconSpan.classList.add("inventory-item-icon");
-        const image = new Image();
-        new Promise(async () => {
-            image.src = Canvas.createURL(await AssetsLoader.loadItemsSheet(), ...item.getTextureCoords());
-        });
-        iconSpan.appendChild(image);
+        iconSpan.style.background = "url(assets/textures/objects/items.png) "
+            + `-${item.definition.texCoords![0] * 48}px -${item.definition.texCoords![1] * 48}px`;
         itemElement.appendChild(nameSpan);
         itemElement.appendChild(iconSpan);
         this.elements.items.appendChild(itemElement);
@@ -426,7 +370,6 @@ export class InventoryGUI {
         image.src = this.inventory.selectedItem?.getImageUrl() ?? "";
         this.elements.icon.appendChild(image);
     }
-
     public update() {
         this.updateTitle();
         this.updateIcon();

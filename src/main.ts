@@ -1,7 +1,6 @@
 import { Engine } from '@babylonjs/core';
+import { GuiManager } from './common/menu/gui/gui_manager';
 import { Inventory } from './common/menu/inventory/inventory';
-import { ItemId } from './data/item/ids';
-import { ItemStack } from './data/item/item_stack';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
 
@@ -148,6 +147,8 @@ class App {
         this.canvas = <HTMLCanvasElement>document.getElementById("scene");
         this.engine = new Engine(this.canvas);
         this.controls = new Controls();
+        // Create the gui manager
+        new GuiManager();
         // Global components
         this.inventory = new Inventory();
         // State
@@ -156,9 +157,6 @@ class App {
         this.state = this.createState(this.gameState);
         // Resize listener
         window.addEventListener("resize", this.onResize);
-
-        // @ts-ignore
-        window.controls = this.controls;
 
         // Add FPS counter
         this.addFPSCounter();

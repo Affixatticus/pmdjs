@@ -131,16 +131,16 @@ export class Inventory {
     public inDungeonState(): boolean {
         return this.state instanceof DungeonState;
     }
-    public showEatOption(): ButtonVisibility {
+    public showsEatOption(): ButtonVisibility {
         return this.selectedItem!.isEdible ? ButtonVisibility.VISIBLE : ButtonVisibility.HIDDEN;
     }
-    public showThrowOption(): ButtonVisibility {
+    public showsThrowOption(): ButtonVisibility {
         if (this.inDungeonState()) {
             return this.selectedItem!.isThrowable ? ButtonVisibility.VISIBLE : ButtonVisibility.DISABLED;
         }
         return ButtonVisibility.HIDDEN;
     }
-    public showDropOption(): ButtonVisibility {
+    public showsDropOption(): ButtonVisibility {
         if (this.inDungeonState()) {
             // Check if there is room to drop the item
             if (this.state.logic.canDropItem())
@@ -149,12 +149,12 @@ export class Inventory {
         }
         return ButtonVisibility.HIDDEN;
     }
-    public showTossOption(): ButtonVisibility {
+    public showsTossOption(): ButtonVisibility {
         return ButtonVisibility.VISIBLE;
     }
 
     // ANCHOR UI
     public navigate(): GUIReturnType {
-        return this.gui.navigate();
+        return this.gui.handleInput();
     }
 }

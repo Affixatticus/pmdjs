@@ -78,6 +78,8 @@ img#inventory-title-arrow-right {
 
 .inventory-item-icon {
     position: absolute;
+    width: 48px;
+    height: 48px;
     left: -4px;
     top: 0;
     pointer-events: none;
@@ -108,7 +110,7 @@ img#inventory-title-arrow-right {
     pointer-events: none;
 }
 
-#inventory-footbar button {
+#inventory-footbar .button {
     display: flex;
     float: right;
     border: none;

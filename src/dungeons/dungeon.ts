@@ -1,4 +1,5 @@
 import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MotionBlurPostProcess, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { GuiManager } from "../common/menu/gui/gui_manager";
 import { Inventory } from "../common/menu/inventory/inventory";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
 import { PokemonData } from "../data/pokemon";
@@ -295,9 +296,11 @@ export class DungeonState {
     private tick = 0;
     public update() {
         this.floor.animate(this.tick, this.isRunning);
-        this.logic.update();
-        // this.controlCamera();
         this.lightOverlay.update(this.animationSpeed);
         this.tick++;
+        // Update the GUI
+        if (GuiManager.handleInput()) return;
+        // Update the logic
+        this.logic.update();
     }
 }

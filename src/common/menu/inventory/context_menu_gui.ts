@@ -1,50 +1,32 @@
 import { Controls } from "../../../utils/controls";
-import { GUIReturnType } from "./common";
+import { Gui, GuiClose, GuiOutput } from "../gui/gui";
 
 export interface ContextMenuOption {
     /** The text that will be displayed on the option */
     text: string;
     /** The function that will be called when the option is selected */
-    callback: () => GUIReturnType;
+    callback: () => GuiOutput;
     /** Whether the button is disabled or not */
     disabled?: boolean;
 };
 
 /** A customizable list menu that can be created to returns the selected option */
-export class ContextMenuGUI {
+export class ContextMenuGUI extends Gui {
     /** The list of elements owned by this class */
     public elements: Record<string, HTMLElement> = {};
     /** The list of visible options */
     private options!: ContextMenuOption[];
     /** The currently selected option */
     private cursor: number = 0;
-    /** Whether the menu should close on the next tick */
-    private closeNextTick: boolean = false;
-    /** The value that will be returned on the next tick */
-    private nextTurnValue: GUIReturnType = GUIReturnType.NOTHING;
-    // ANCHOR Visibility
-    private visible: boolean = false;
-
-    public set isVisible(value: boolean) {
-        this.visible = value;
-        if (this.visible) {
-            this.closeNextTick = false;
-            this.nextTurnValue = GUIReturnType.NOTHING;
-        }
-        this.elements.container.classList.toggle("hidden", !value);
-    }
-    public get isVisible() {
-        return this.visible;
-    }
 
     constructor() {
+        super();
         // Create the elements
         this.createElements();
         // Hide the menu
         this.isVisible = false;
         this.elements.container.addEventListener("contextmenu", (e) => {
             e.preventDefault();
-            this.closeNextTick = true;
         });
     }
 
@@ -68,10 +50,7 @@ export class ContextMenuGUI {
             this.updateSelection(index);
     }
 
-    public navigate(): GUIReturnType {
-        if (this.nextTurnValue !== GUIReturnType.NOTHING) {
-            return this.nextTurnValue;
-        }
+    public handleInput(): GuiClose {
         if (Controls.LEFT_STICK.BUTTON_UP.onPressed(0)) {
             this.goUp();
         }
@@ -80,13 +59,13 @@ export class ContextMenuGUI {
         }
         if (Controls.A.onPressed(1)) {
             // Always close this gui
-            this.closeNextTick = true;
-            return this.options[this.cursor].callback();
+            this.lastOutput = this.options[this.cursor].callback();
+            return true;
         }
-        if (this.closeNextTick || Controls.B.onPressed(1)) {
-            return GUIReturnType.CLOSED;
+        if (Controls.B.onPressed(1)) {
+            return true;
         }
-        return GUIReturnType.NOTHING;
+        return false;
     }
 
     // ANCHOR Element creation
@@ -97,7 +76,7 @@ export class ContextMenuGUI {
         return container;
     }
     /** Creates all the element objects of this gui */
-    private createElements() {
+    public createElements() {
         const container = this.createContainer();
         document.getElementById("menu")!.appendChild(container);
         this.elements.container = container;
@@ -130,7 +109,8 @@ export class ContextMenuGUI {
         option.addEventListener("click", () => {
             if (buttonInfo.disabled) return;
             this.updateSelection(index);
-            this.nextTurnValue = buttonInfo.callback();
+            this.lastOutput = buttonInfo.callback();
+            this.close();
         });
         option.addEventListener("mousedown", () => {
             if (buttonInfo.disabled) return;
