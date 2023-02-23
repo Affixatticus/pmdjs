@@ -1,6 +1,5 @@
 import { ItemStack } from "../../../data/item/item_stack";
 import { DungeonState } from "../../../dungeons/dungeon";
-import { GUIReturnType } from "./common";
 import { InventoryGUI } from "./inventory_gui";
 
 
@@ -24,8 +23,14 @@ export class Inventory {
     /** The position of the cursor in the inventory */
     public cursor: number = 0;
 
+    public get storedItems(): number {
+        return this.items.length;
+    }
     public get isEmpty(): boolean {
         return this.items.length === 0;
+    }
+    public get isFull(): boolean {
+        return this.storedItems >= this.capacity;
     }
     public get selectedItem(): ItemStack | null {
         return this.items[this.cursor];
@@ -151,10 +156,5 @@ export class Inventory {
     }
     public showsTossOption(): ButtonVisibility {
         return ButtonVisibility.VISIBLE;
-    }
-
-    // ANCHOR UI
-    public navigate(): GUIReturnType {
-        return this.gui.handleInput();
     }
 }

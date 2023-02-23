@@ -1,6 +1,8 @@
 import { Engine } from '@babylonjs/core';
 import { GuiManager } from './common/menu/gui/gui_manager';
 import { Inventory } from './common/menu/inventory/inventory';
+import { ItemId } from './data/item/ids';
+import { ItemStack } from './data/item/item_stack';
 import { DungeonStateData, DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
 
@@ -151,6 +153,16 @@ class App {
         new GuiManager();
         // Global components
         this.inventory = new Inventory();
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
         // State
         this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;
@@ -164,7 +176,6 @@ class App {
         // Render loop
         this.engine.runRenderLoop(() => {
             this.updateFPSCounter();
-            this.state.render();
         });
 
         this.createUpdateLoop();
@@ -175,6 +186,7 @@ class App {
 
         this.updateLoop = setInterval(() => {
             const now = performance.now();
+            this.state.render();
             this.controls.tickUpdate();
             this.state.update();
             this.deltaTime = performance.now() - now;

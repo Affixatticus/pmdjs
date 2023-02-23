@@ -37,6 +37,10 @@ abstract class InputState {
         return this.player.floor;
     }
 
+    public get state() {
+        return this.player.logic.state
+    }
+
     public getInputDirection(): Direction {
         return Direction.fromVector(Controls.LEFT_STICK.position).flipY();
     }
@@ -298,6 +302,8 @@ class InventoryState extends InputState {
     }
 
     public init() {
+        // Set the gui's tile as the tile under the player
+        this.inventory.gui.setGround(this.floor.objects.get(this.leader.position));
         // Open the inventory gui
         GuiManager.openGui(this.inventory.gui);
     }

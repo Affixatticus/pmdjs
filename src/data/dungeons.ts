@@ -3,7 +3,7 @@ import { V2, Vec2 } from "../utils/vectors";
 import { ItemId } from "./item/ids";
 import { ItemChance } from "./item/items";
 import { Pokedex, PokemonChance } from "./pokemon";
-import { TileObject, TrapChance } from "./tiles";
+import { TileObjectId, TrapChance } from "./tiles";
 import { WeatherChance, Weather } from "./weather";
 
 export enum Dungeon {
@@ -112,9 +112,9 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 // { id: ItemId.BIG_APPLE, chance: 1 },
             ],
             traps: [
-                { id: TileObject.TRAP_01, chance: 100 },
-                { id: TileObject.FAN_TRAP, chance: 50 },
-                { id: TileObject.VOLTORB_TRAP, chance: 25 },
+                { id: TileObjectId.SLEEP_TRAP, chance: 100 },
+                { id: TileObjectId.FAN_TRAP, chance: 50 },
+                { id: TileObjectId.VOLTORB_TRAP, chance: 25 },
             ],
             weathers: [{
                 id: Weather.CLEAR,
@@ -146,9 +146,9 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 // { id: Item.COIN, chance: 50 },
             ],
             traps: [
-                { id: TileObject.TRAP_01, chance: 100 },
-                { id: TileObject.FAN_TRAP, chance: 50 },
-                { id: TileObject.VOLTORB_TRAP, chance: 25 },
+                { id: TileObjectId.SLEEP_TRAP, chance: 100 },
+                { id: TileObjectId.FAN_TRAP, chance: 50 },
+                { id: TileObjectId.VOLTORB_TRAP, chance: 25 },
             ],
             weathers: [{
                 id: Weather.CLEAR,
@@ -181,9 +181,9 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 // { id: ItemId.COIN, chance: 50 },
             ],
             traps: [
-                { id: TileObject.TRAP_01, chance: 100 },
-                { id: TileObject.FAN_TRAP, chance: 50 },
-                { id: TileObject.VOLTORB_TRAP, chance: 25 },
+                { id: TileObjectId.SLEEP_TRAP, chance: 100 },
+                { id: TileObjectId.FAN_TRAP, chance: 50 },
+                { id: TileObjectId.VOLTORB_TRAP, chance: 25 },
             ],
             weathers: [{
                 id: Weather.CLEAR,

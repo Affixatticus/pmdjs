@@ -14,6 +14,13 @@ export enum GuiOutput {
     INVENTORY_TOSS,
     /** On throw */
     INVENTORY_THROW,
+    /** When you pick up an item off the ground */
+    INVENTORY_GROUND_PICKUP,
+    /** When you swap the item on the ground with one from your inventory */
+    INVENTORY_GROUND_SWAP,
+
+    /** When you choose to go down the stairs in the ground menu */
+    INVENTORY_GO_DOWN,
 };
 
 export type GuiClose = boolean;
@@ -36,12 +43,12 @@ export abstract class Gui {
     public setOutput(output: GuiOutput): void {
         this.lastOutput = output;
     }
-    
+
     public set isVisible(visible: boolean) {
         this.forceClose = false;
         this.elements.container.classList.toggle("hidden", !visible);
     }
-    
+
     public get isVisible(): boolean {
         return this.visible;
     }

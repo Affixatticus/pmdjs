@@ -1,4 +1,3 @@
-import { Controls } from "../../../utils/controls";
 import { Gui, GuiOutput } from "./gui";
 
 /** This class is accessible to all components.

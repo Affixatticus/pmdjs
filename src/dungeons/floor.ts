@@ -6,7 +6,7 @@ import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
 import { DungeonGrid, OffsetGrid } from "./map/grid";
 import { DungeonMap } from "./map/map";
-import { DungeonObjectContainer } from "./objects/object";
+import { DungeonObject, DungeonObjectContainer } from "./objects/object";
 import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./objects/pokemon";
 import { DungeonStartup } from "./logic/startup";
 import { Tile } from "../data/tiles";
@@ -57,7 +57,7 @@ export class DungeonFloor {
         this.info = info;
     }
 
-    // Generating and loading
+    // ANCHOR Generating and loading
 
     /** Function that fills out the `grid`, `object` attributes */
     public generate() {
@@ -119,7 +119,7 @@ export class DungeonFloor {
         );
     }
 
-    // Rendering
+    // ANCHOR Rendering
 
     public build(position: Vec2) {
         // Build the first screen of the map
@@ -138,6 +138,12 @@ export class DungeonFloor {
         this.map.buildView(position);
     }
 
+    /** Real-time updates all its subcomponents */
+    public animate(tick: number, isRunning: boolean) {
+        this.map.animateTiles(tick / 5 | 0);
+        this.pokemon.animate(isRunning);
+    }
+
     /** Called by DungeonState every time it changes the floor */
     public onMapUpdate() {
         // Clear the cache
@@ -145,6 +151,8 @@ export class DungeonFloor {
         this.actionAreas = {};
     }
 
+    // ANCHOR Getters
+    
     /** Returns an offsetgrid that marks with 1 all the positions that a
      * pokemon in the given position can see or act upon
      */
@@ -166,12 +174,6 @@ export class DungeonFloor {
 
         // Return a copy of the retrieved actionArea
         return actionArea.copy();
-    }
-
-    /** Real-time updates all its subcomponents */
-    public animate(tick: number, isRunning: boolean) {
-        this.map.animateTiles(tick / 5 | 0);
-        this.pokemon.animate(isRunning);
     }
 
     // Utility

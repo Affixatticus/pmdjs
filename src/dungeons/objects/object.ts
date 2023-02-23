@@ -50,7 +50,7 @@ export class DungeonObjectContainer {
     }
 
     public get(pos: Vec2) {
-        return this.objects.find(obj => obj.position.equals(pos));
+        return this.objects.find(obj => obj.position.equals(pos)) ?? null;
     }
 
     public getItems(): DungeonItem[] {

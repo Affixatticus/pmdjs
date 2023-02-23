@@ -4,7 +4,7 @@ import { FloorRenderingLevels } from "../floor";
 import { DungeonObject, ObjectType } from "./object";
 import Canvas, { CropParams } from "../../utils/canvas";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { getTileCrop, TileObject } from "../../data/tiles";
+import { getTileCrop, TileObjectId } from "../../data/tiles";
 import { fillOutStandardOptions } from "../../utils/material";
 
 export class TileMaterial extends StandardMaterial {
@@ -18,13 +18,13 @@ export class TileMaterial extends StandardMaterial {
 };
 
 export class DungeonTile extends DungeonObject {
-    private id: TileObject;
+    public id: TileObjectId;
     public isHidden: boolean;
     public isStairs: boolean;
     private mesh!: Mesh;
     private material!: TileMaterial;
 
-    constructor(pos: Vec2, id: TileObject, isHidden?: boolean, isStairs?: boolean) {
+    constructor(pos: Vec2, id: TileObjectId, isHidden?: boolean, isStairs?: boolean) {
         super(pos, isStairs ? ObjectType.STAIRS : ObjectType.TRAP);
         this.id = id;
         this.isStairs = isStairs ?? false;
@@ -38,7 +38,7 @@ export class DungeonTile extends DungeonObject {
     }
 
     public isKeckleonCarpet(): boolean {
-        return this.id === TileObject.KECLEON_CARPET;
+        return this.id === TileObjectId.KECLEON_CARPET;
     }
 
     // ANCHOR Render

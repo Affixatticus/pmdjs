@@ -1,5 +1,5 @@
 import { GroundMesh, InstancedMesh, MeshBuilder, Scene } from "@babylonjs/core";
-import { getTileCrop, TileObject } from "../../data/tiles";
+import { getTileCrop, TileObjectId } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
 import { DungeonPokemon } from "../objects/pokemon";
 import { TileMaterial } from "../objects/tile";
@@ -36,7 +36,7 @@ export class FloorGuide {
                 width: 1, height: 1, subdivisions: 1
             }, this.scene);
             const whiteMaterial = new TileMaterial("trap", this.texture,
-                this.scene, ...getTileCrop(TileObject.WHITE_GUIDE));
+                this.scene, ...getTileCrop(TileObjectId.WHITE_GUIDE));
             this.whiteGuide.material = whiteMaterial;
             this.whiteGuide.renderingGroupId = FloorRenderingLevels.INBETWEEN;
         }
@@ -49,7 +49,7 @@ export class FloorGuide {
                 subdivisions: 1
             }, this.scene);
             const blackMaterial = new TileMaterial("trap", this.texture,
-                this.scene, ...getTileCrop(TileObject.BLACK_GUIDE));
+                this.scene, ...getTileCrop(TileObjectId.BLACK_GUIDE));
             this.blackGuide.material = blackMaterial;
             this.blackGuide.renderingGroupId = FloorRenderingLevels.INBETWEEN;
         }

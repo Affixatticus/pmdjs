@@ -2,16 +2,16 @@ import { Mesh, MeshBuilder, Scene } from "@babylonjs/core";
 import { V3, Vec2 } from "../../utils/vectors";
 import { DungeonObject, ObjectType } from "./object";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { getTileCrop, TileObject } from "../../data/tiles";
+import { getTileCrop, TileObjectId } from "../../data/tiles";
 import { TileMaterial } from "./tile";
 import { FloorRenderingLevels } from "../floor";
 
 export class DungeonCarpet extends DungeonObject {
     private mesh!: Mesh;
     private material!: TileMaterial;
-    private id: TileObject;
+    private id: TileObjectId;
 
-    constructor(pos: Vec2, id: TileObject) {
+    constructor(pos: Vec2, id: TileObjectId) {
         super(pos, ObjectType.ITEM);
         this.id = id;
     }

@@ -1,6 +1,6 @@
 import { DungeonFloorInfo } from "../../data/dungeons";
 import { ItemChance } from "../../data/item/items";
-import { TileObject, Tile, TrapChance } from "../../data/tiles";
+import { TileObjectId, Tile, TrapChance } from "../../data/tiles";
 import Random from "../../utils/random";
 import { Vec2 } from "../../utils/vectors";
 import { DungeonGrid } from "../map/grid";
@@ -116,7 +116,7 @@ export class DungeonObjectGenerator {
 
     // ANCHOR Create x functions
     private createStairs(pos: Vec2) {
-        const object = new DungeonTile(pos, TileObject.STAIRS_DOWN, true, true);
+        const object = new DungeonTile(pos, TileObjectId.STAIRS_DOWN, true, true);
         this.clearTile(pos, Tile.CLEAR_TILE);
         return object;
     }
@@ -134,7 +134,7 @@ export class DungeonObjectGenerator {
         return object;
     }
     private createKecleonCarpet(pos: Vec2) {
-        const object = new DungeonCarpet(pos, TileObject.KECLEON_CARPET);
+        const object = new DungeonCarpet(pos, TileObjectId.KECLEON_CARPET);
         this.clearTile(pos, Tile.CLEAR_TILE);
         return object;
     }

@@ -98,6 +98,7 @@ img#inventory-title-arrow-right {
 
 #inventory-description {
     grid-area: d;
+    font-size: 26pt;
 }
 
 #inventory-footbar {

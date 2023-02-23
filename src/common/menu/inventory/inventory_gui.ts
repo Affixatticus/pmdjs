@@ -5,6 +5,10 @@ import { ContextMenuGUI, ContextMenuOption } from "./context_menu_gui";
 import { ButtonVisibility, Inventory } from "./inventory";
 import { Gui, GuiClose, GuiOutput } from "../gui/gui";
 import { GuiManager } from "../gui/gui_manager";
+import { DungeonObject, ObjectType } from "../../../dungeons/objects/object";
+import { DungeonItem } from "../../../dungeons/objects/item";
+import { DungeonTile } from "../../../dungeons/objects/tile";
+import { TileObjectId, TileObjects, TILE_WIDTH } from "../../../data/tiles";
 
 type InventoryElements = {
     container: HTMLDivElement;
@@ -16,15 +20,27 @@ type InventoryElements = {
     description: HTMLDivElement;
 }
 
+type InventoryGround = DungeonObject | null;
+
 export class InventoryGUI extends Gui {
     public elements: InventoryElements = {} as InventoryElements;
     /** The GUI for when you open a menu, owned by this gui */
     public ctxMenu: ContextMenuGUI;
+    public ground: InventoryGround;
+
+    public get groundPage(): number {
+        return this.inventory.storedItems === 0 ? 0 : this.inventory.lastPage + 1;
+    }
+    public get inGroundPage(): boolean {
+        return this.ground !== null && this.inventory.currentPage === this.groundPage;
+    }
 
     // ANCHOR HTML Elements
     constructor(public inventory: Inventory) {
         super();
         AssetsLoader.loadItemsSheet();
+        // Set the ground to none
+        this.ground = null;
         // Create all the elements
         this.createElements();
         this.isVisible = false;
@@ -34,7 +50,7 @@ export class InventoryGUI extends Gui {
 
     // ANCHOR Navigation
     public goUp() {
-        if (this.inventory.isEmpty) return;
+        if (this.inventory.isEmpty || this.inGroundPage) return;
 
         if (this.inventory.cursor > this.inventory.pageStart)
             this.updateItemCursor(--this.inventory.cursor);
@@ -42,7 +58,7 @@ export class InventoryGUI extends Gui {
             this.updateItemCursor(this.inventory.cursor = this.inventory.pageEnd - 1);
     }
     public goDown() {
-        if (this.inventory.isEmpty) return;
+        if (this.inventory.isEmpty || this.inGroundPage) return;
 
         if (this.inventory.cursor < this.inventory.pageEnd - 1)
             this.updateItemCursor(++this.inventory.cursor);
@@ -52,9 +68,21 @@ export class InventoryGUI extends Gui {
     public goLeft() {
         if (this.inventory.isEmpty) return;
 
+        // You're at the leftmost page, and you press left
         if (this.inventory.cursor < Inventory.PAGE_SIZE) {
-            this.inventory.cursor = 0;
-            return this.updateItemCursor(this.inventory.cursor);
+            // Go to the ground page if there's something there
+            if (this.ground !== null) {
+                this.inventory.cursor = this.groundPage * Inventory.PAGE_SIZE;
+                return this.update();
+            }
+            // If you are in the first page
+            if (this.inventory.currentPage === 0 && this.inventory.lastPage === 0) {
+                this.inventory.cursor = 0;
+            } else {
+                this.inventory.cursor = Math.min(this.inventory.storedItems - 1,
+                    this.inventory.lastPage * 8 + this.inventory.cursor);
+            }
+            return this.update();
         }
         this.inventory.cursor -= 8;
         if (this.inventory.cursor < 0)
@@ -65,9 +93,24 @@ export class InventoryGUI extends Gui {
     public goRight() {
         if (this.inventory.isEmpty) return;
 
+        // If you are at the rightmost page, and you press right
         if (this.inventory.cursor >= this.inventory.lastPage * 8) {
-            this.inventory.cursor = this.inventory.items.length - 1;
-            return this.updateItemCursor(this.inventory.cursor);
+            if (this.ground !== null) {
+                // If you are at the ground page, and you press right
+                if (this.inventory.currentPage === this.groundPage) {
+                    this.inventory.cursor = 0;
+                    return this.update();
+                }
+                this.inventory.cursor = this.groundPage * Inventory.PAGE_SIZE;
+                return this.update();
+            }
+            // If there is only one page
+            if (this.inventory.lastPage === 0 && this.inventory.currentPage === this.inventory.lastPage) {
+                this.inventory.cursor = this.inventory.items.length - 1;
+            } else {
+                this.inventory.cursor = this.inventory.cursor - this.inventory.lastPage * 8;
+            }
+            return this.update();
         }
 
         this.inventory.cursor += 8;
@@ -130,14 +173,65 @@ export class InventoryGUI extends Gui {
 
         return options;
     }
-
+    public generateGroundItemCtxOpts(stack: ItemStack): ContextMenuOption[] {
+        const options: ContextMenuOption[] = [];
+        const option = {
+            text: "Pick up", callback: () => {
+                this.inventory.addStack(stack);
+                this.close(GuiOutput.INVENTORY_GROUND_PICKUP);
+                return GuiOutput.IGNORED
+            }, disabled: this.inventory.isFull
+        };
+        options.push(option);
+        return options;
+    }
+    public generateStairsCtxOpts(): ContextMenuOption[] {
+        const options: ContextMenuOption[] = [];
+        options.push({
+            text: "Go down", callback: () => {
+                this.close(GuiOutput.INVENTORY_GO_DOWN);
+                return GuiOutput.IGNORED;
+            }
+        });
+        return options;
+    }
+    public generateTrapCtxOpts(trap: DungeonTile): ContextMenuOption[] {
+        const options: ContextMenuOption[] = [];
+        options.push({
+            text: "Set off", callback: () => {
+                this.close(GuiOutput.IGNORED);
+                return GuiOutput.IGNORED;
+            }
+        })
+        options.push({
+            text: "Disarm", callback: () => {
+                this.close(GuiOutput.IGNORED);
+                return GuiOutput.IGNORED;
+            }
+        });
+        return options;
+    }
     public openContextMenu(): void {
         // If no item was seltected, return
         if (this.inventory.isEmpty) return;
-        this.ctxMenu.update(this.generateContextOptions());
+        if (this.inGroundPage) {
+            switch (this.ground!.type) {
+                case ObjectType.ITEM:
+                    const stack = (<DungeonItem>this.ground).stack;
+                    this.ctxMenu.update(this.generateGroundItemCtxOpts(stack));
+                    break;
+                case ObjectType.TRAP:
+                    this.ctxMenu.update(this.generateTrapCtxOpts(<DungeonTile>this.ground));
+                    break;
+                case ObjectType.STAIRS:
+                    this.ctxMenu.update(this.generateStairsCtxOpts());
+                    break;
+            }
+        } else {
+            this.ctxMenu.update(this.generateContextOptions());
+        }
         GuiManager.openGui(this.ctxMenu);
     }
-
     /** Code run by the state */
     public handleInput(): GuiClose {
         this.isVisible = true;
@@ -326,6 +420,38 @@ export class InventoryGUI extends Gui {
 
         return itemElement;
     }
+    public createTileElement(id: number, trap: DungeonTile) {
+        const itemElement = document.createElement("div");
+        itemElement.classList.add("inventory-item", "menu-option");
+        const nameSpan = document.createElement("span");
+        nameSpan.classList.add("inventory-item-name");
+        nameSpan.innerText = TileObjects[trap.id].name;
+        const iconSpan = document.createElement("span");
+        iconSpan.style.transform = "scale(0.75)";
+        const [trapCropX, trapCropY] = TileObjects[trap.id].texCoords;
+        iconSpan.classList.add("inventory-item-icon");
+        iconSpan.style.background = "url(assets/textures/objects/tiles.png) " +
+            `-${trapCropX * TILE_WIDTH}px -${trapCropY * TILE_WIDTH}px`;
+        itemElement.appendChild(nameSpan);
+        itemElement.appendChild(iconSpan);
+        this.elements.items.appendChild(itemElement);
+
+        if (id === this.inventory.cursor)
+            itemElement.classList.add("menu-option-selected");
+
+        // Add an onclick event that selects the item
+        itemElement.onclick = (e) => {
+            e.preventDefault();
+            this.updateItemCursor(id);
+            this.openContextMenu();
+        }
+        itemElement.onmousedown = (e) => {
+            e.preventDefault();
+            this.updateItemCursor(id);
+        }
+
+        return itemElement;
+    }
     public updateTitle() {
         this.elements.title.innerHTML = "";
 
@@ -343,15 +469,22 @@ export class InventoryGUI extends Gui {
 
         this.elements.title.innerHTML = `Inventory<hr/>`;
         this.elements.title.appendChild(arrowLeft);
-        this.elements.title.append(`${this.inventory.currentPage + 1}/${this.inventory.lastPage + 1}`);
+        if (this.inGroundPage)
+            this.elements.title.append(`Floor`);
+        else
+            this.elements.title.append(`${this.inventory.currentPage + 1}/${this.inventory.lastPage + 1}${this.ground !== null ? "*" : ""}`);
         this.elements.title.appendChild(arrowRight);
     }
-    public async updateItems() {
+    public updateItems() {
         // Clears the old options and adds the new ones
         this.elements.items.innerHTML = "";
-        // Loop through the items eight at a time
+
+        if (this.inGroundPage)
+            return this.updateGroundItems();
+
+        // Loop through the 8 items on the page
         const itemStart = this.inventory.currentPage * 8;
-        const itemEnd = Math.min(itemStart + 8, this.inventory.items.length);
+        const itemEnd = Math.min(itemStart + 8, this.inventory.storedItems);
 
         if (this.inventory.isEmpty) return;
 
@@ -361,19 +494,68 @@ export class InventoryGUI extends Gui {
         }
     }
     public updateDescription() {
-        this.elements.description.innerText = this.inventory.selectedItem?.description?.toString() ?? "No item selected.";
+        if (this.inGroundPage) {
+            switch (this.ground!.type) {
+                case ObjectType.ITEM:
+                    this.elements.description.innerText = (<DungeonItem>this.ground).stack.description;
+                    break;
+                case ObjectType.TRAP:
+                case ObjectType.STAIRS:
+                    this.elements.description.innerText = TileObjects[(<DungeonTile>this.ground).id].description;
+            }
+        }
+        else
+            this.elements.description.innerText = this.inventory.selectedItem?.description?.toString() ?? "No item selected.";
     }
     public updateIcon() {
         this.elements.icon.innerHTML = "";
-        if (!this.inventory.selectedItem) return;
         const image = new Image();
-        image.src = this.inventory.selectedItem?.getImageUrl() ?? "";
-        this.elements.icon.appendChild(image);
+        if (this.inGroundPage) {
+            switch (this.ground!.type) {
+                case ObjectType.ITEM:
+                    const item = (<DungeonItem>this.ground).stack;
+                    image.src = item.getImageUrl();
+                    this.elements.icon.appendChild(image);
+                    break;
+                case ObjectType.TRAP:
+                case ObjectType.STAIRS:
+                    const src = TileObjects[(<DungeonTile>this.ground).id].imageLocation;
+                    if (src === "") return;
+                    image.src = src;
+                    this.elements.icon.appendChild(image);
+            }
+        } else {
+            if (!this.inventory.selectedItem) return;
+            image.src = this.inventory.selectedItem.getImageUrl();
+            this.elements.icon.appendChild(image);
+        }
+
     }
+    public updateGroundItems() {
+        switch (this.ground!.type) {
+            case ObjectType.ITEM:
+                const item = (<DungeonItem>this.ground).stack;
+                this.createItemElement(this.groundPage * 8, item);
+                break;
+            case ObjectType.TRAP:
+            case ObjectType.STAIRS:
+                const trap = <DungeonTile>this.ground;
+                this.createTileElement(this.groundPage * 8, trap);
+        }
+    }
+
     public update() {
         this.updateTitle();
         this.updateIcon();
         this.updateDescription();
         this.updateItems();
+    }
+    /** Sets the ground item to be displayed */
+    public setGround(ground: InventoryGround = null) {
+        this.ground = ground;
+        if (this.inventory.cursor >= this.inventory.storedItems) {
+            this.inventory.cursor = 0;
+        }
+        this.update();
     }
 }
