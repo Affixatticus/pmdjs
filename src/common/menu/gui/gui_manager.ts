@@ -34,8 +34,8 @@ export class GuiManager {
     static handleInput(): boolean {
         if (this.stack.length === 0) return false;
         // Update the current gui
-        this.guiOutput = this.currentGui.lastOutput;
         this.shouldClose = this.currentGui.forceClose ? true : this.currentGui.handleInput();
+        this.guiOutput = this.currentGui.lastOutput;
         if (this.shouldClose) this.closeGui();
 
         return true;

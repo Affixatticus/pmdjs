@@ -18,9 +18,10 @@ export const enum InputAction {
     WALK,
     TALK,
     DROP_ITEM,
+    PROCEED
 };
 
-export type InputType = null | [InputAction.WALK, Direction] | [InputAction.TALK, DungeonPokemon] | [InputAction.DROP_ITEM, number];
+export type InputType = null | [InputAction.WALK, Direction] | [InputAction.TALK, DungeonPokemon] | [InputAction.DROP_ITEM, number] | [InputAction.PROCEED];
 
 abstract class InputState {
     public player!: Player;
@@ -319,6 +320,9 @@ class InventoryState extends InputState {
                 break;
             case GuiOutput.INVENTORY_DROP:
                 output = [InputAction.DROP_ITEM, this.inventory.cursor];
+                break;
+            case GuiOutput.PROCEED:
+                output = [InputAction.PROCEED];
                 break;
             default:
                 console.log(GuiOutput[guiResult]);

@@ -4,7 +4,7 @@ import { TurnAction } from "./actions/action";
 import { WalkAction, MoveActionGroup } from "./actions/walk";
 
 export const enum TurnFlags {
-    GO_UP_STAIRS = 1,
+    PROCEED = 1,
 }
 
 export class Turn {
@@ -81,7 +81,7 @@ export class Turn {
     public executeSpecialFlags(state: DungeonState): void {
         for (const flag of this.specialFlags) {
             switch (flag) {
-                case TurnFlags.GO_UP_STAIRS:
+                case TurnFlags.PROCEED:
                     state.goUpAFloor();
                     state.changeFloor();
                     break;

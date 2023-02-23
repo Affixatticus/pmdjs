@@ -1,3 +1,5 @@
+import { GuiOutput } from "../../../common/menu/gui/gui";
+import { GuiManager } from "../../../common/menu/gui/gui_manager";
 import { DungeonPokemon } from "../../objects/pokemon";
 import { DungeonLogic } from "../logic";
 import { TurnFlags as TurnFlag } from "../turn";
@@ -16,13 +18,36 @@ export class GoDownStairsAction extends TurnAction {
         this.generator = this.run();
     }
 
+    public get inventory() {
+        return this.logic.state.inventory;
+    }
+
+    public get ctxMenu() {
+        return this.inventory.gui.ctxMenu;
+    }
+
     public *run(): Generator {
         this.logic.state.setRunning(false);
         // Skip until the animation is done
         while (this.pokemon.material.isAnimationDone) yield;
         // Wait 20 ticks
         yield* this.repeat(20);
+
+        // Await for the player's response
+        this.ctxMenu.update([{
+            text: "Proceed", callback: () => {
+                return GuiOutput.PROCEED;
+            }
+        }, {
+            text: "Info", callback: () => {
+                return GuiOutput.IGNORED;
+            }
+        }]);
+        yield GuiManager.openGui(this.ctxMenu);
+        const result = GuiManager.awaitGuiResult();
+
         // Tell the logic to go down the stairs at the end of the turn
-        this.logic.turn?.setSpecialFlag(TurnFlag.GO_UP_STAIRS);
+        if (result === GuiOutput.PROCEED)
+            this.logic.turn?.setSpecialFlag(TurnFlag.PROCEED);
     }
 }

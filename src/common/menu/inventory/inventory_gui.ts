@@ -8,7 +8,7 @@ import { GuiManager } from "../gui/gui_manager";
 import { DungeonObject, ObjectType } from "../../../dungeons/objects/object";
 import { DungeonItem } from "../../../dungeons/objects/item";
 import { DungeonTile } from "../../../dungeons/objects/tile";
-import { TileObjectId, TileObjects, TILE_WIDTH } from "../../../data/tiles";
+import { TileObjects, TILE_WIDTH } from "../../../data/tiles";
 
 type InventoryElements = {
     container: HTMLDivElement;
@@ -188,9 +188,9 @@ export class InventoryGUI extends Gui {
     public generateStairsCtxOpts(): ContextMenuOption[] {
         const options: ContextMenuOption[] = [];
         options.push({
-            text: "Go down", callback: () => {
-                this.close(GuiOutput.INVENTORY_GO_DOWN);
-                return GuiOutput.IGNORED;
+            text: "Proceed", callback: () => {
+                this.close(GuiOutput.PROCEED);
+                return GuiOutput.PROCEED;
             }
         });
         return options;

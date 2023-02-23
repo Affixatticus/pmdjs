@@ -201,27 +201,6 @@ export class ItemAction extends WalkAction {
                 }
             }
         }
-        // If it the player pokemon
-        // if (this.pokemon.inFormation) {
-        //     // Try to add the item to the inventory
-        //     const leftoverStack = this.state.menu.inventory.addStack(this.item.stack);
-        //     // If there is a leftover stack
-        //     if (leftoverStack) {
-        //         // TODO Decide what to do with the leftover stack
-        //         if (this.pokemon.isLeader) {
-
-        //         } else {
-        //             // Change the stack
-        //             this.item.stack = leftoverStack;
-        //             // Set the item to not wanted
-        //             this.item.setWanted(false);
-        //         }
-        //     } else {
-        //         // Remove the item from the floor
-        //         this.state.floor.objects.removeObject(this.item);
-        //         this.state.floor.grid.set(this.item.position, Tile.FLOOR);
-        //     }
-        // }
     }
 }
 

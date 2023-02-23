@@ -1,7 +1,7 @@
 import { DungeonState } from "../dungeon";
 import { WalkAction } from "./actions/walk";
 import { NilAction } from "./actions/nil";
-import { Turn } from "./turn";
+import { Turn, TurnFlags } from "./turn";
 import { DungeonPokemonType } from "../objects/pokemon";
 import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
@@ -85,6 +85,14 @@ export class DungeonLogic {
                     // Create the drop item action
                     playerAction = new DropItemAction(leader, this.inputResult[1], this);
                     break;
+                case InputAction.PROCEED:
+                    this.turn = new Turn();
+                    this.turn.setSpecialFlag(TurnFlags.PROCEED);
+                    this.turn.executeSpecialFlags(this.state);
+                    this.turn = null;
+                    this.currentTurn++;
+                    this.inputResult = null;
+                    return;
             }
 
             this.turn = new Turn();

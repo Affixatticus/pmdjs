@@ -124,7 +124,7 @@ export const TileObjects: Record<TileObjectId, TileObject> = {
     },
     [TileObjectId.STAIRS_DOWN]: {
         name: "Stairs",
-        description: "",
+        description: "Stairs leading to the next floor. If you are on the final floor, you will escape from the dungeon.",
         texCoords: [0, 1, 1, 1],
         imageLocation: ""
     },

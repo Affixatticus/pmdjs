@@ -57,7 +57,7 @@ export class ContextMenuGUI extends Gui {
         if (Controls.LEFT_STICK.BUTTON_DOWN.onPressed(0)) {
             this.goDown();
         }
-        if (Controls.A.onPressed(1)) {
+        if (Controls.A.onPressed(0)) {
             // Always close this gui
             this.lastOutput = this.options[this.cursor].callback();
             return true;
@@ -109,8 +109,7 @@ export class ContextMenuGUI extends Gui {
         option.addEventListener("click", () => {
             if (buttonInfo.disabled) return;
             this.updateSelection(index);
-            this.lastOutput = buttonInfo.callback();
-            this.close();
+            this.close(buttonInfo.callback());
         });
         option.addEventListener("mousedown", () => {
             if (buttonInfo.disabled) return;

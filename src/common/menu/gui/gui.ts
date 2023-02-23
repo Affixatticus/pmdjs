@@ -20,7 +20,7 @@ export enum GuiOutput {
     INVENTORY_GROUND_SWAP,
 
     /** When you choose to go down the stairs in the ground menu */
-    INVENTORY_GO_DOWN,
+    PROCEED,
 };
 
 export type GuiClose = boolean;
