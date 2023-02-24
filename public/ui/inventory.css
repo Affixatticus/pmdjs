@@ -64,6 +64,7 @@ img#inventory-title-arrow-right {
     position: relative;
     padding-right: 0.1em;
     font-size: 42pt;
+    letter-spacing: 2px;
 }
 .inventory-money-icon {
     position: relative;

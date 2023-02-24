@@ -1,7 +1,7 @@
 import { ItemStack } from "../../../data/item/item_stack";
 import { AssetsLoader } from "../../../utils/assets_loader";
 import { Controls } from "../../../utils/controls";
-import { ContextMenuGUI, ContextMenuOption } from "./context_menu_gui";
+import { ContextMenuGUI as ContextMenuGui, ContextMenuOption } from "./context_menu_gui";
 import { ButtonVisibility, Inventory } from "./inventory";
 import { Gui, GuiClose, GuiOutput } from "../gui/gui";
 import { GuiManager } from "../gui/gui_manager";
@@ -23,10 +23,10 @@ type InventoryElements = {
 
 type InventoryGround = DungeonObject | null;
 
-export class InventoryGUI extends Gui {
+export class InventoryGui extends Gui {
     public elements: InventoryElements = {} as InventoryElements;
     /** The GUI for when you open a menu, owned by this gui */
-    public ctxMenu: ContextMenuGUI;
+    public ctxMenu: ContextMenuGui;
     public ground: InventoryGround;
     private itemSelectionMode: boolean = false;
     private multiSelectionMode: boolean = false;
@@ -103,7 +103,7 @@ export class InventoryGUI extends Gui {
         this.createElements();
         this.isVisible = false;
         // Create the context menu
-        this.ctxMenu = new ContextMenuGUI();
+        this.ctxMenu = new ContextMenuGui();
     }
 
     // ANCHOR Navigation

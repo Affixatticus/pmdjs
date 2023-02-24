@@ -1,7 +1,7 @@
 import { ItemStack } from "../../../data/item/item_stack";
 import { DungeonState } from "../../../dungeons/dungeon";
 import { DungeonItem } from "../../../dungeons/objects/item";
-import { InventoryGUI } from "./inventory_gui";
+import { InventoryGui } from "./inventory_gui";
 
 
 export const enum ButtonVisibility {
@@ -16,7 +16,7 @@ export class Inventory {
     public items: ItemStack[];
     public money: number;
     public capacity: number = 16;
-    public gui: InventoryGUI;
+    public gui: InventoryGui;
 
     // TODO This will be a more generic state
     public state!: DungeonState;
@@ -52,7 +52,7 @@ export class Inventory {
     constructor() {
         this.items = [];
         this.money = 0;
-        this.gui = new InventoryGUI(this);
+        this.gui = new InventoryGui(this);
     }
 
     // ANCHOR Storage

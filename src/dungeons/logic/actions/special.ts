@@ -1,5 +1,6 @@
 import { GuiOutput } from "../../../common/menu/gui/gui";
 import { GuiManager } from "../../../common/menu/gui/gui_manager";
+import { DungeonItem } from "../../objects/item";
 import { DungeonPokemon } from "../../objects/pokemon";
 import { DungeonLogic } from "../logic";
 import { TurnFlags as TurnFlag } from "../turn";
@@ -46,4 +47,39 @@ export class GoDownStairsAction extends TurnAction {
         if (result === GuiOutput.PROCEED)
             this.logic.turn?.setSpecialFlag(TurnFlag.PROCEED);
     }
+}
+
+export class OpenItemMenuAction extends TurnAction {
+    public item: DungeonItem;
+    public logic: DungeonLogic;
+    public doLogging = true;
+    public logMessage = `You picked up an item!`;
+
+    constructor(item: DungeonItem, logic: DungeonLogic) {
+        super();
+        this.item = item;
+        this.logic = logic;
+        this.generator = this.run();
+    }
+
+    private get state() {
+        return this.logic.state;
+    }
+
+    public *run() {
+        GuiManager.openGui(this.state.inventory.gui);
+        this.state.inventory.gui.setGround(this.item);
+        this.state.inventory.gui.moveToGroundPage();
+        yield this.state.inventory.gui.openContextMenu();
+
+        const result = GuiManager.awaitGuiResult();
+        switch (result) {
+            case GuiOutput.INVENTORY_GROUND_SWAP:
+                this.state.inventory.swapItemWithGround(this.item);
+                break;
+            default:
+                this.item.discard();
+        }
+    }
+
 }

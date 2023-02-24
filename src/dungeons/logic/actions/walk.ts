@@ -1,5 +1,3 @@
-import { GuiOutput } from "../../../common/menu/gui/gui";
-import { GuiManager } from "../../../common/menu/gui/gui_manager";
 import { Tile } from "../../../data/tiles";
 import { Direction } from "../../../utils/direction";
 import { DungeonState } from "../../dungeon";
@@ -11,7 +9,7 @@ import { DungeonLogic } from "../logic";
 import { Turn } from "../turn";
 import { TurnAction } from "./action";
 import { NilAction } from "./nil";
-import { GoDownStairsAction } from "./special";
+import { GoDownStairsAction, OpenItemMenuAction } from "./special";
 
 
 const TICK_PER_TILE = 40;
@@ -19,6 +17,7 @@ const TICK_PER_TILE = 40;
 export class WalkAction extends TurnAction {
     public readonly pokemon: DungeonPokemon;
     public readonly direction: Direction;
+    public logic: DungeonLogic;
 
     // Animation
     public static ANIMATION_LENGTH = TICK_PER_TILE;
@@ -30,6 +29,14 @@ export class WalkAction extends TurnAction {
     /** Flag set at the creation of this action, which is set when the pokemon was pushed */
     private usePushingAnimation: boolean;
 
+    protected get state(): DungeonState {
+        return this.logic.state;
+    }
+
+    protected get turn(): Turn {
+        return this.logic.turn!;
+    }
+
     static getAction(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic): TurnAction {
         // If the pokemon is not actually moving
         if (direction === Direction.NONE) return new NilAction(pokemon);
@@ -40,28 +47,29 @@ export class WalkAction extends TurnAction {
         }
         // If the next position is an item
         if (logic.state.floor.grid.get(nextPos) === Tile.ITEM) {
-            return new ItemAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonItem, logic.state);
+            return new ItemAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonItem, logic);
         }
         // If there is a trap in the next position
         if (logic.state.floor.objects.get(nextPos)?.type === ObjectType.TRAP) {
-            return new TrapAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonTile, logic.state);
+            return new TrapAction(pokemon, direction, push, logic.state.floor.objects.get(nextPos) as DungeonTile, logic);
         }
 
-        return new WalkAction(pokemon, direction, push, logic.state.animationSpeed);
+        return new WalkAction(pokemon, direction, push, logic);
     }
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, speed: number) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic) {
         super();
         this.pokemon = pokemon;
         this.direction = direction;
         this.usePushingAnimation = push;
+        this.logic = logic;
 
         // Set the next turn position of this pokemon
         this.pokemon.nextTurnPosition = pokemon.position.add(direction.toVector());
         // Set the next turn direction of this pokemon
         this.pokemon.nextTurnDirection = direction;
 
-        this.animationLength = WalkAction.ANIMATION_LENGTH / speed;
+        this.animationLength = WalkAction.ANIMATION_LENGTH / logic.state.animationSpeed;
         this.walkDelta = 1 / this.animationLength;
 
         this.generator = this.run();
@@ -144,14 +152,10 @@ export class StairsAction extends WalkAction {
     public logic: DungeonLogic;
 
     constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, logic: DungeonLogic) {
-        super(pokemon, direction, push, logic.state.animationSpeed);
+        super(pokemon, direction, push, logic);
         this.logic = logic;
         this.logMessage = `${pokemon.toString()} went up the stairs!`;
         this.generator = this.run();
-    }
-
-    private get turn(): Turn {
-        return this.logic.turn!;
     }
 
     public *run(): Generator {
@@ -165,27 +169,44 @@ export class StairsAction extends WalkAction {
     }
 }
 export class TrapAction extends WalkAction {
-    public state: DungeonState;
+    public logic: DungeonLogic;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, _trap: DungeonTile, state: DungeonState) {
-        super(pokemon, direction, push, state.animationSpeed);
-        this.state = state;
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, _trap: DungeonTile, logic: DungeonLogic) {
+        super(pokemon, direction, push, logic);
+        this.logic = logic;
         this.logMessage = `${pokemon.toString()} triggered a trap!`;
     }
 }
 export class ItemAction extends WalkAction {
     public item: DungeonItem;
-    public state: DungeonState;
+    public logic: DungeonLogic;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, item: DungeonItem, state: DungeonState) {
-        super(pokemon, direction, push, state.animationSpeed);
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, item: DungeonItem, logic: DungeonLogic) {
+        super(pokemon, direction, push, logic);
         this.item = item;
-        this.state = state;
+        this.logic = logic;
         this.logMessage = `${pokemon.toString()} picked up an item!`;
         this.generator = this.run();
     }
 
-    public *run(): Generator {
+    public *promptUser() {
+        // See if the item fits in the inventory
+        const leftover = this.state.inventory.addStack(this.item.stack);
+        // If it's null, a stack was leftover
+        if (leftover === null)
+            // Remove the stack from the floor
+            return this.state.floor.removeItem(this.item);
+
+        // Modify the item on the ground
+        this.item.stack = leftover;
+        // If the leader picked up the item, ask the player what to do
+        if (!this.pokemon.isLeader)
+            this.item.discard();
+
+        this.turn.addAction(new OpenItemMenuAction(this.item, this.logic));
+    }
+
+    public * run(): Generator {
         yield* super.run();
 
         // If it is a wild pokemon
@@ -197,35 +218,7 @@ export class ItemAction extends WalkAction {
             }
             // If the inventory is full
             if (this.item.isWanted) {
-                // See if the item fits in the inventory
-                const leftover = this.state.inventory.addStack(this.item.stack);
-                // If it's null, a stack was leftover
-                if (leftover !== null) {
-                    // If the leader picked up the item, ask the player what to do
-                    if (this.pokemon.isLeader) {
-                        this.item.stack = leftover;
-                        GuiManager.openGui(this.state.inventory.gui);
-                        this.state.inventory.gui.setGround(this.item);
-                        this.state.inventory.gui.moveToGroundPage();
-                        yield this.state.inventory.gui.openContextMenu();
-
-                        const result = GuiManager.awaitGuiResult();
-                        switch (result) {
-                            case GuiOutput.INVENTORY_GROUND_SWAP:
-                                this.state.inventory.swapItemWithGround(this.item);
-                                break;
-                            default:
-                                this.item.discard();
-                        }
-                    } else {
-                        // If it's a partner that picked up the item, discard it
-                        this.item.discard();
-                    }
-                }
-                else {
-                    // Remove the stack from the floor
-                    this.state.floor.removeItem(this.item);
-                }
+                yield* this.promptUser();
             }
         }
     }

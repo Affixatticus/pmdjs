@@ -10,6 +10,8 @@ export const enum TurnFlags {
 export class Turn {
     public actions: TurnAction[];
     public specialFlags: TurnFlags[];
+    /** The index of the currently ticking action */
+    private tickingActionIndex: number = 0;
 
     constructor() {
         this.actions = [];
@@ -49,16 +51,14 @@ export class Turn {
         this.groupMoveActions();
     }
 
-    /** Exectues all the actions and recturns true if all actions are finished */
+    /** Exectues all the actions and returns true if all actions are finished */
     public runAllActions(): boolean {
-        let finished = true;
-        
-        for (const action of this.actions) {
-            const done = action.tick();
-            finished &&= done;
-        }
+        if (this.tickingActionIndex === this.actions.length) return true;
+        const action = this.actions[this.tickingActionIndex];
+        const isFinished = action.tick();
+        if (isFinished) this.tickingActionIndex++;
 
-        return finished;
+        return this.tickingActionIndex === this.actions.length;
     }
 
     /** Runs all the actions when the turn is ready */
