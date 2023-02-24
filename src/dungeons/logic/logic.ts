@@ -10,6 +10,7 @@ import { InputAction, InputType, Player } from "./player";
 import { TurnAction } from "./actions/action";
 import { DungeonPokemonEnemyAI as DungeonPokemonEnemyAI } from "./ai/enemy_ai";
 import { DropItemAction } from "./actions/items";
+import { Tile } from "../../data/tiles";
 
 export class DungeonLogic {
     public state: DungeonState;
@@ -93,6 +94,19 @@ export class DungeonLogic {
                     this.currentTurn++;
                     this.inputResult = null;
                     return;
+                case InputAction.SWAP_ITEM: {
+                    const item = this.inputResult[1];
+                    const invIndex = this.inputResult[2];
+                    this.state.inventory.swapItemWithGround(item, invIndex);
+                    break;
+                }
+                case InputAction.PICKUP_ITEM: {
+                    const item = this.inputResult[1];
+                    this.state.inventory.addStack(item.stack);
+                    this.state.floor.grid.set(item.position, Tile.FLOOR);
+                    this.state.floor.objects.removeObject(item);
+                    break;
+                }
             }
 
             this.turn = new Turn();

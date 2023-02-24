@@ -18,10 +18,19 @@ export const enum InputAction {
     WALK,
     TALK,
     DROP_ITEM,
-    PROCEED
+    PROCEED,
+    SWAP_ITEM,
+    PICKUP_ITEM,
 };
 
-export type InputType = null | [InputAction.WALK, Direction] | [InputAction.TALK, DungeonPokemon] | [InputAction.DROP_ITEM, number] | [InputAction.PROCEED];
+export type InputType =
+    null |
+    [InputAction.WALK, Direction] |
+    [InputAction.TALK, DungeonPokemon] |
+    [InputAction.DROP_ITEM, number] |
+    [InputAction.PROCEED] |
+    [InputAction.SWAP_ITEM, DungeonItem, number] |
+    [InputAction.PICKUP_ITEM, DungeonItem];
 
 abstract class InputState {
     public player!: Player;
@@ -101,7 +110,7 @@ class WalkingState extends InputState {
 
     private handleRunning() {
         // Until you run into something, keep running
-        if (this.player.shouldStopRunning(this.runningDirection)) {
+        if (this.player.shouldStopRunning(this.runningDirection) || !this.state.isRunning) {
             this.running = false;
             return null;
         }
@@ -161,8 +170,10 @@ class WalkingState extends InputState {
 
     // Sets the item you just walked on to discarded so that you don't open the gui when you walk on it
     private handleDiscardingItem(input: Direction, wanted: boolean) {
-        const item = this.player.itemInFront(input)!;
-        item.discard(!wanted);
+        if (!wanted) {
+            const item = this.player.itemInFront(input)!;
+            item.discard();
+        }
         return null;
     }
 
@@ -206,7 +217,7 @@ class WalkingState extends InputState {
                 // Push the partner
                 return this.handlePushing(input);
             case Obstacle.ITEM:
-                this.handleDiscardingItem(input, Controls.B.isDown);
+                this.handleDiscardingItem(input, !Controls.B.isDown);
                 break;
             case Obstacle.ENEMY:
                 this.leader.direction = input;
@@ -324,6 +335,16 @@ class InventoryState extends InputState {
             case GuiOutput.PROCEED:
                 output = [InputAction.PROCEED];
                 break;
+            case GuiOutput.INVENTORY_GROUND_SWAP: {
+                const item = this.floor.objects.get(this.leader.position) as DungeonItem;
+                output = [InputAction.SWAP_ITEM, item, this.inventory.cursor];
+                break;
+            }
+            case GuiOutput.INVENTORY_GROUND_PICKUP: {
+                const item = this.floor.objects.get(this.leader.position) as DungeonItem;
+                output = [InputAction.PICKUP_ITEM, item];
+                break;
+            }
             default:
                 console.log(GuiOutput[guiResult]);
         }

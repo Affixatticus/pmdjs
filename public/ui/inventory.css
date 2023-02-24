@@ -71,6 +71,10 @@ img#inventory-title-arrow-right {
     padding-left: 1em !important;
 }
 
+.inventory-item-selection.menu-option-selected {
+    background: rgba(113, 220, 56, 0.768) !important;
+}
+
 .inventory-item-name {
     position: relative;
     padding-left: 0.1em;

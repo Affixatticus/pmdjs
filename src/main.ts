@@ -163,6 +163,12 @@ class App {
         this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
         this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
         this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
         // State
         this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;

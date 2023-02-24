@@ -31,21 +31,29 @@ export class ItemMaterial extends StandardMaterial {
 };
 
 export class DungeonItem extends DungeonObject {
-    private itemId: ItemId;
     private mesh!: Mesh;
     private material!: ItemMaterial;
-    public stack: ItemStack;
+    private _stack: ItemStack;
     public isWanted: boolean = true;
     /** If the game should show the GUI the next time the leader walks on this */
     public noGui: boolean = false;
 
     constructor(pos: Vec2, itemId: ItemId, amount: number = 1) {
         super(pos, ObjectType.ITEM);
-        this.itemId = itemId;
-        this.stack = new ItemStack(itemId, amount);
+        this._stack = new ItemStack(itemId, amount);
     }
 
-    public discard(wanted: boolean) {
+    public get stack() {
+        return this._stack;
+    }
+    public set stack(itemStack: ItemStack) {
+        this._stack = itemStack;
+    }
+    public get itemId() {
+        return this._stack.item;
+    }
+
+    public discard(wanted: boolean = false) {
         this.material.setEnabled(wanted);
         this.noGui = !wanted;
         this.isWanted = wanted;

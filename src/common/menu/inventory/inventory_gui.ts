@@ -27,12 +27,29 @@ export class InventoryGUI extends Gui {
     /** The GUI for when you open a menu, owned by this gui */
     public ctxMenu: ContextMenuGUI;
     public ground: InventoryGround;
+    private itemSelectionMode: boolean = false;
 
     public get groundPage(): number {
         return this.inventory.storedItems === 0 ? 0 : this.inventory.lastPage + 1;
     }
+    public get groundExists(): boolean {
+        return this.itemSelectionMode ? false : this.ground !== null;
+    }
     public get inGroundPage(): boolean {
-        return this.ground !== null && this.inventory.currentPage === this.groundPage;
+        return this.groundExists && this.inventory.currentPage === this.groundPage;
+    }
+    public moveToGroundPage() {
+        this.inventory.cursor = this.groundPage * Inventory.PAGE_SIZE;
+        this.update();
+    }
+    public enterItemSelectionMode() {
+        this.itemSelectionMode = true;
+        this.inventory.cursor = 0;
+        this.update();
+    }
+    public exitItemSelectionMode() {
+        this.itemSelectionMode = false;
+        this.update();
     }
 
     // ANCHOR HTML Elements
@@ -71,7 +88,7 @@ export class InventoryGUI extends Gui {
         // You're at the leftmost page, and you press left
         if (this.inventory.cursor < Inventory.PAGE_SIZE) {
             // Go to the ground page if there's something there
-            if (this.ground !== null) {
+            if (this.groundExists) {
                 this.inventory.cursor = this.groundPage * Inventory.PAGE_SIZE;
                 return this.update();
             }
@@ -95,7 +112,7 @@ export class InventoryGUI extends Gui {
 
         // If you are at the rightmost page, and you press right
         if (this.inventory.cursor >= this.inventory.lastPage * 8) {
-            if (this.ground !== null) {
+            if (this.groundExists) {
                 // If you are at the ground page, and you press right
                 if (this.inventory.currentPage === this.groundPage) {
                     this.inventory.cursor = 0;
@@ -173,16 +190,22 @@ export class InventoryGUI extends Gui {
 
         return options;
     }
-    public generateGroundItemCtxOpts(stack: ItemStack): ContextMenuOption[] {
-        const options: ContextMenuOption[] = [];
-        const option = {
-            text: "Pick up", callback: () => {
-                this.inventory.addStack(stack);
-                this.close(GuiOutput.INVENTORY_GROUND_PICKUP);
-                return GuiOutput.IGNORED
-            }, disabled: this.inventory.isFull
-        };
-        options.push(option);
+    public generateGroundItemCtxOpts(_stack: ItemStack): ContextMenuOption[] {
+        const options: ContextMenuOption[] = [
+            {
+                text: "Pick up", callback: () => {
+                    this.close(GuiOutput.INVENTORY_GROUND_PICKUP);
+                    return GuiOutput.IGNORED
+                }, disabled: this.inventory.isFull
+            },
+            {
+                text: "Swap", callback: () => {
+                    // Enter item selection mode
+                    this.enterItemSelectionMode();
+                    return GuiOutput.IGNORED
+                }, disabled: false
+            }
+        ];
         return options;
     }
     public generateStairsCtxOpts(): ContextMenuOption[] {
@@ -230,6 +253,8 @@ export class InventoryGUI extends Gui {
         } else {
             this.ctxMenu.update(this.generateContextOptions());
         }
+        this.ctxMenu.goDown();
+        this.ctxMenu.goUp();
         GuiManager.openGui(this.ctxMenu);
     }
     /** Code run by the state */
@@ -246,14 +271,28 @@ export class InventoryGUI extends Gui {
 
         if (Controls.Y.onPressed(0))
             this.inventory.sort();
-        if (Controls.A.onPressed(0))
-            this.openContextMenu();
 
-        // If you exit the inventory
-        if (Controls.B.onPressed(0)) {
-            this.isVisible = false;
-            // Close the gui
-            return true;
+        if (!this.itemSelectionMode) {
+            if (Controls.A.onPressed(0))
+                this.openContextMenu();
+            // If you exit the inventory
+            if (Controls.B.onPressed(0)) {
+                this.isVisible = false;
+                // Close the gui
+                return true;
+            }
+        }
+        else {
+            if (Controls.A.onPressed(0)) {
+                // Select the item and return an item swap action
+                this.exitItemSelectionMode();
+                // And the item to swap is at the cursor
+                this.close(GuiOutput.INVENTORY_GROUND_SWAP);
+            }
+            if (Controls.B.onPressed(0)) {
+                // Exit item selection mode
+                this.exitItemSelectionMode();
+            }
         }
         return false;
     }
@@ -393,6 +432,7 @@ export class InventoryGUI extends Gui {
     public createItemElement(id: number, item: ItemStack) {
         const itemElement = document.createElement("div");
         itemElement.classList.add("inventory-item", "menu-option");
+        itemElement.classList.toggle("inventory-item-selection", this.itemSelectionMode);
         const nameSpan = document.createElement("span");
         nameSpan.classList.add("inventory-item-name");
         nameSpan.innerText = item.name;
@@ -423,6 +463,7 @@ export class InventoryGUI extends Gui {
     public createTileElement(id: number, trap: DungeonTile) {
         const itemElement = document.createElement("div");
         itemElement.classList.add("inventory-item", "menu-option");
+        itemElement.classList.toggle("inventory-item-selection", this.itemSelectionMode);
         const nameSpan = document.createElement("span");
         nameSpan.classList.add("inventory-item-name");
         nameSpan.innerText = TileObjects[trap.id].name;
@@ -472,7 +513,7 @@ export class InventoryGUI extends Gui {
         if (this.inGroundPage)
             this.elements.title.append(`Floor`);
         else
-            this.elements.title.append(`${this.inventory.currentPage + 1}/${this.inventory.lastPage + 1}${this.ground !== null ? "*" : ""}`);
+            this.elements.title.append(`${this.inventory.currentPage + 1}/${this.inventory.lastPage + 1}${this.groundExists ? "*" : ""}`);
         this.elements.title.appendChild(arrowRight);
     }
     public updateItems() {

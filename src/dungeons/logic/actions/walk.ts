@@ -1,3 +1,5 @@
+import { GuiOutput } from "../../../common/menu/gui/gui";
+import { GuiManager } from "../../../common/menu/gui/gui_manager";
 import { Tile } from "../../../data/tiles";
 import { Direction } from "../../../utils/direction";
 import { DungeonState } from "../../dungeon";
@@ -188,8 +190,27 @@ export class ItemAction extends WalkAction {
 
         // If it is a wild pokemon
         if (this.pokemon.inFormation) {
+            // If the inventory is full
+            if (this.pokemon.isLeader && this.state.inventory.isFull && this.item.isWanted) {
+                // Ask the user for confirmation
+                GuiManager.openGui(this.state.inventory.gui);
+                this.state.inventory.gui.setGround(this.item);
+                this.state.inventory.gui.moveToGroundPage();
+                yield this.state.inventory.gui.openContextMenu();
+
+                const result = GuiManager.awaitGuiResult();
+                switch (result) {
+                    case GuiOutput.INVENTORY_GROUND_SWAP: {
+                        this.state.inventory.swapItemWithGround(this.item);
+                        break;
+                    }
+                    default:
+                        this.item.discard();
+                }
+            }
             // Remove the item from the floor
             if (this.pokemon.isLeader || this.pokemon.isPartner) {
+                // If the item was not previously discarded
                 if (this.item.isWanted) {
                     const stack = this.state.inventory.addStack(this.item.stack);
 

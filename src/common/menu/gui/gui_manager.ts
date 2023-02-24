@@ -9,18 +9,28 @@ export class GuiManager {
     public static stack: Gui[] = [];
     public static shouldClose: boolean = false;
     public static guiOutput: GuiOutput = GuiOutput.UNASSIGNED;
+    private static DELAY_LENGTH: number = 10;
+    private static delay: number = this.DELAY_LENGTH;
     public static get currentGui(): Gui { return this.stack[this.stack.length - 1] }
 
     /** Opens a Gui */
     static openGui(gui: Gui) {
         this.stack.push(gui);
-        this.currentGui.isVisible = true;
         this.currentGui.lastOutput = GuiOutput.UNASSIGNED;
+        this.currentGui.isVisible = true;
+        // Set all other guis to unfocused
+        for (let i = 0; i < this.stack.length - 1; i++) {
+            this.stack[i].elements.container.classList.add("unfocused");
+        }
+        this.delay = this.DELAY_LENGTH;
     }
     /** Closes the Gui */
     static closeGui() {
         this.shouldClose = true;
         this.currentGui.isVisible = false;
+        for (let i = 0; i < this.stack.length - 1; i++) {
+            this.stack[i].elements.container.classList.remove("unfocused");
+        }
         this.stack.pop();
     }
 
@@ -33,6 +43,12 @@ export class GuiManager {
      * returns `true` if the gui is open, thus locking the logic from advancing */
     static handleInput(): boolean {
         if (this.stack.length === 0) return false;
+        if (this.delay > 0) {
+            this.delay--;
+            return true;
+        } else if (this.delay === 0) {
+            this.delay = -1;
+        }
         // Update the current gui
         this.shouldClose = this.currentGui.forceClose ? true : this.currentGui.handleInput();
         this.guiOutput = this.currentGui.lastOutput;
