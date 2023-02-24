@@ -10,7 +10,16 @@ export const SilverThornItem: Throwable & Stackable = {
     maxStackSize: 99,
     throw() { },
 };
+export const PokeItem: Stackable = {
+    name: "Poke",
+    description: "This world's currency. Used to buy goods in shops.",
+    price: 1,
+    texCoords: [7, 3, 1, 1],
+    imageUrl: "",
+    maxStackSize: 999,
+}
 
 export const StackItems: Partial<Record<ItemId, Stackable>> = {
     [ItemId.SILVER_THORN]: SilverThornItem,
+    [ItemId.POKE]: PokeItem,
 };

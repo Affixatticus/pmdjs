@@ -1,4 +1,5 @@
 import { DungeonFloorInfo } from "../../data/dungeons";
+import { ItemId } from "../../data/item/ids";
 import { ItemChance } from "../../data/item/items";
 import { TileObjectId, Tile, TrapChance } from "../../data/tiles";
 import Random from "../../utils/random";
@@ -122,7 +123,8 @@ export class DungeonObjectGenerator {
     }
     private createItem(pos: Vec2) {
         const item = this.getRandomItem();
-        const object = new DungeonItem(pos, item);
+        const amount = item === ItemId.POKE ? Random.int(2, 200) : 1;
+        const object = new DungeonItem(pos, item, amount);
         this.clearTile(pos, Tile.ITEM);
         return object;
     }

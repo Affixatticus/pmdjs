@@ -9,6 +9,7 @@ import { DungeonObject, ObjectType } from "../../../dungeons/objects/object";
 import { DungeonItem } from "../../../dungeons/objects/item";
 import { DungeonTile } from "../../../dungeons/objects/tile";
 import { TileObjects, TILE_WIDTH } from "../../../data/tiles";
+import { ItemId } from "../../../data/item/ids";
 
 type InventoryElements = {
     container: HTMLDivElement;
@@ -291,7 +292,7 @@ export class InventoryGUI extends Gui {
     }
     public openContextMenu(): void {
         // If no item was seltected, return
-        if (this.inventory.isEmpty) return;
+        if (this.inventory.isEmpty && !this.inGroundPage) return;
         if (this.multiSelectionMode) {
             this.ctxMenu.update(this.generateMultiSelectionCtxOpts());
         }
@@ -400,8 +401,8 @@ export class InventoryGUI extends Gui {
     private createMoney() {
         const money = document.createElement("div");
         money.id = "inventory-money";
-        money.innerText = "Money: " + this.inventory.money;
         this.elements.money = money;
+        this.updateMoney();
         return money;
     }
     private createItems() {
@@ -538,6 +539,14 @@ export class InventoryGUI extends Gui {
             + `-${item.definition.texCoords![0] * 48}px -${item.definition.texCoords![1] * 48}px`;
         itemElement.appendChild(nameSpan);
         itemElement.appendChild(iconSpan);
+
+        // Add the amount if it is more than 1
+        if (item.amount !== 1) {
+            const amountSpan = document.createElement("span");
+            amountSpan.classList.add("inventory-item-amount");
+            amountSpan.innerText = item.amount.toString();
+            itemElement.appendChild(amountSpan);
+        }
         this.elements.items.appendChild(itemElement);
 
         if (id === this.inventory.cursor)
@@ -611,6 +620,19 @@ export class InventoryGUI extends Gui {
         else
             this.elements.title.append(`${this.inventory.currentPage + 1}/${this.inventory.lastPage + 1}${this.groundExists ? "*" : ""}`);
         this.elements.title.appendChild(arrowRight);
+    }
+    public updateMoney() {
+        const money = this.elements.money;
+        const moneyText = document.createElement("span");
+        moneyText.classList.add("inventory-money-text");
+        moneyText.innerText = this.inventory.formatMoney();
+        const iconSpan = document.createElement("span");
+        iconSpan.classList.add("inventory-money-icon");
+        iconSpan.style.background = "url(assets/textures/objects/items.png) "
+            + `-${new ItemStack(ItemId.POKE).definition.texCoords![0] * 48}px -${new ItemStack(ItemId.POKE).definition.texCoords![1] * 48}px`;
+        money.innerHTML = "";
+        money.appendChild(iconSpan);
+        money.appendChild(moneyText);
     }
     public updateItems() {
         // Clears the old options and adds the new ones

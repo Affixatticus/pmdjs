@@ -52,6 +52,9 @@ export class DungeonItem extends DungeonObject {
     public get itemId() {
         return this._stack.item;
     }
+    public get isMoney() {
+        return this.itemId === ItemId.POKE;
+    }
 
     public discard(wanted: boolean = false) {
         this.material.setEnabled(wanted);

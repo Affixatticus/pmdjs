@@ -125,6 +125,7 @@ export class ContextMenuGUI extends Gui {
         // Reset the cursor
         this.cursor = 0;
         this.options = buttonInfo;
+        this.options.push({ text: "Cancel", callback: () => { return GuiOutput.UNASSIGNED } });
         // Clear the container
         this.elements.container.innerHTML = "";
         // Create the buttons

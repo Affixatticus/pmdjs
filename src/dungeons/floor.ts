@@ -13,6 +13,7 @@ import { Tile } from "../data/tiles";
 import { AssetsLoader } from "../utils/assets_loader";
 import { DungeonTile } from "./objects/tile";
 import { DungeonEnemyGenerator } from "./objects/enemy_generator";
+import { DungeonItem } from "./objects/item";
 
 export enum FloorRenderingLevels {
     /** The level that has the floor and water, the tiles and the items */
@@ -151,8 +152,14 @@ export class DungeonFloor {
         this.actionAreas = {};
     }
 
+    // ANCHOR Modifier functions
+    public removeItem(item: DungeonItem) {
+        this.objects.removeObject(item);
+        this.grid.set(item.position, Tile.FLOOR);
+    }
+
     // ANCHOR Getters
-    
+
     /** Returns an offsetgrid that marks with 1 all the positions that a
      * pokemon in the given position can see or act upon
      */

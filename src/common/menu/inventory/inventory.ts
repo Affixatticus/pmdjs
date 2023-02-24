@@ -160,6 +160,16 @@ export class Inventory {
         this.gui.update();
     }
 
+    // ANCHOR Money
+    public addMoney(amount: number) {
+        this.money += amount;
+        this.gui.updateMoney();
+    }
+    public formatMoney(): string {
+        // Add commas to the number
+        return this.money.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     // ANCHOR State Querying
     public inDungeonState(): boolean {
         return this.state instanceof DungeonState;

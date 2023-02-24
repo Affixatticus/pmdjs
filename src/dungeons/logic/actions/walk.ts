@@ -190,35 +190,41 @@ export class ItemAction extends WalkAction {
 
         // If it is a wild pokemon
         if (this.pokemon.inFormation) {
-            // If the inventory is full
-            if (this.pokemon.isLeader && this.state.inventory.isFull && this.item.isWanted) {
-                // Ask the user for confirmation
-                GuiManager.openGui(this.state.inventory.gui);
-                this.state.inventory.gui.setGround(this.item);
-                this.state.inventory.gui.moveToGroundPage();
-                yield this.state.inventory.gui.openContextMenu();
-
-                const result = GuiManager.awaitGuiResult();
-                switch (result) {
-                    case GuiOutput.INVENTORY_GROUND_SWAP: {
-                        this.state.inventory.swapItemWithGround(this.item);
-                        break;
-                    }
-                    default:
-                        this.item.discard();
-                }
+            if (this.item.isMoney) {
+                this.state.inventory.addMoney(this.item.stack.amount);
+                this.state.floor.removeItem(this.item);
+                return;
             }
-            // Remove the item from the floor
-            if (this.pokemon.isLeader || this.pokemon.isPartner) {
-                // If the item was not previously discarded
-                if (this.item.isWanted) {
-                    const stack = this.state.inventory.addStack(this.item.stack);
+            // If the inventory is full
+            if (this.item.isWanted) {
+                // See if the item fits in the inventory
+                const leftover = this.state.inventory.addStack(this.item.stack);
+                // If it's null, a stack was leftover
+                if (leftover !== null) {
+                    // If the leader picked up the item, ask the player what to do
+                    if (this.pokemon.isLeader) {
+                        this.item.stack = leftover;
+                        GuiManager.openGui(this.state.inventory.gui);
+                        this.state.inventory.gui.setGround(this.item);
+                        this.state.inventory.gui.moveToGroundPage();
+                        yield this.state.inventory.gui.openContextMenu();
 
-                    if (stack === null) {
-                        this.state.floor.objects.removeObject(this.item);
-                        this.state.floor.grid.set(this.item.position, Tile.FLOOR);
+                        const result = GuiManager.awaitGuiResult();
+                        switch (result) {
+                            case GuiOutput.INVENTORY_GROUND_SWAP:
+                                this.state.inventory.swapItemWithGround(this.item);
+                                break;
+                            default:
+                                this.item.discard();
+                        }
+                    } else {
+                        // If it's a partner that picked up the item, discard it
+                        this.item.discard();
                     }
-                    else (<DungeonItem>this.state.floor.objects.get(this.item.position)!).stack = stack;
+                }
+                else {
+                    // Remove the stack from the floor
+                    this.state.floor.removeItem(this.item);
                 }
             }
         }

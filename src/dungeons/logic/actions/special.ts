@@ -38,10 +38,6 @@ export class GoDownStairsAction extends TurnAction {
             text: "Proceed", callback: () => {
                 return GuiOutput.PROCEED;
             }
-        }, {
-            text: "Info", callback: () => {
-                return GuiOutput.IGNORED;
-            }
         }]);
         yield GuiManager.openGui(this.ctxMenu);
         const result = GuiManager.awaitGuiResult();

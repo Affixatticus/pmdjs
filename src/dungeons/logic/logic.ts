@@ -103,8 +103,7 @@ export class DungeonLogic {
                 case InputAction.PICKUP_ITEM: {
                     const item = this.inputResult[1];
                     this.state.inventory.addStack(item.stack);
-                    this.state.floor.grid.set(item.position, Tile.FLOOR);
-                    this.state.floor.objects.removeObject(item);
+                    this.state.floor.removeItem(item);
                     break;
                 }
             }
