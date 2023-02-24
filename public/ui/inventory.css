@@ -72,7 +72,15 @@ img#inventory-title-arrow-right {
 }
 
 .inventory-item-selection.menu-option-selected {
-    background: rgba(113, 220, 56, 0.768) !important;
+    background: linear-gradient(to top, #a1e639dd 10%, #cef257dd 90%, #a1e639dd) !important;
+}
+
+.inventory-item-multi-selection {
+    background: linear-gradient(to top, #a1e639dd 10%, #cef257dd 90%, #a1e639dd) !important;
+}
+
+.inventory-item-multi-selection.menu-option-selected {
+    background: rgba(188, 248, 156, 0.768) !important;
 }
 
 .inventory-item-name {

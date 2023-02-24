@@ -28,12 +28,14 @@ export class InventoryGUI extends Gui {
     public ctxMenu: ContextMenuGUI;
     public ground: InventoryGround;
     private itemSelectionMode: boolean = false;
+    private multiSelectionMode: boolean = false;
+    private multiSelection: number[] = [];
 
     public get groundPage(): number {
         return this.inventory.storedItems === 0 ? 0 : this.inventory.lastPage + 1;
     }
     public get groundExists(): boolean {
-        return this.itemSelectionMode ? false : this.ground !== null;
+        return this.itemSelectionMode || this.multiSelectionMode ? false : this.ground !== null;
     }
     public get inGroundPage(): boolean {
         return this.groundExists && this.inventory.currentPage === this.groundPage;
@@ -42,6 +44,7 @@ export class InventoryGUI extends Gui {
         this.inventory.cursor = this.groundPage * Inventory.PAGE_SIZE;
         this.update();
     }
+    // ANCHOR Item Selection
     public enterItemSelectionMode() {
         this.itemSelectionMode = true;
         this.inventory.cursor = 0;
@@ -50,6 +53,35 @@ export class InventoryGUI extends Gui {
     public exitItemSelectionMode() {
         this.itemSelectionMode = false;
         this.update();
+    }
+    // ANCHOR Multi Selection
+    public enterMultiSelectionMode() {
+        if (this.inGroundPage) return;
+        this.multiSelectionMode = true;
+        this.multiSelection = [];
+        this.update();
+    }
+    public exitMultiSelectionMode() {
+        this.multiSelectionMode = false;
+        this.multiSelection = [];
+        this.update();
+    }
+    public invertSelection() {
+        const newSelection = Array.from({ length: this.inventory.storedItems }).map((_, i) => i).filter(i => this.multiSelection.indexOf(i) === -1);
+        this.multiSelection = newSelection;
+        this.update();
+    }
+    public toggleSelectedItem() {
+        const index = this.multiSelection.indexOf(this.inventory.cursor);
+        if (index === -1) this.multiSelection.push(this.inventory.cursor);
+        else this.multiSelection.splice(index, 1);
+        if (this.multiSelection.length === 0)
+            this.exitMultiSelectionMode();
+        this.update();
+    }
+    public isInMultiSelection(index: number): boolean {
+        if (!this.multiSelectionMode) return false;
+        return this.multiSelection.indexOf(index) !== -1;
     }
 
     // ANCHOR HTML Elements
@@ -234,10 +266,36 @@ export class InventoryGUI extends Gui {
         });
         return options;
     }
+    public generateMultiSelectionCtxOpts(): ContextMenuOption[] {
+        const options: ContextMenuOption[] = [
+            {
+                text: "Toss", callback: () => {
+                    for (const index of this.multiSelection.reverse()) {
+                        this.inventory.extractStack(index);
+                    }
+                    this.exitMultiSelectionMode();
+                    return GuiOutput.IGNORED
+                }
+            }
+        ] as ContextMenuOption[];
+        if (this.multiSelection.length === 1) {
+            options.unshift({
+                text: "Swap", callback: () => {
+                    this.inventory.swapItems(this.multiSelection[0], this.inventory.cursor);
+                    this.exitMultiSelectionMode();
+                    return GuiOutput.IGNORED
+                }, disabled: this.multiSelection[0] === this.inventory.cursor
+            });
+        }
+        return options;
+    }
     public openContextMenu(): void {
         // If no item was seltected, return
         if (this.inventory.isEmpty) return;
-        if (this.inGroundPage) {
+        if (this.multiSelectionMode) {
+            this.ctxMenu.update(this.generateMultiSelectionCtxOpts());
+        }
+        else if (this.inGroundPage) {
             switch (this.ground!.type) {
                 case ObjectType.ITEM:
                     const stack = (<DungeonItem>this.ground).stack;
@@ -250,7 +308,8 @@ export class InventoryGUI extends Gui {
                     this.ctxMenu.update(this.generateStairsCtxOpts());
                     break;
             }
-        } else {
+        }
+        else {
             this.ctxMenu.update(this.generateContextOptions());
         }
         this.ctxMenu.goDown();
@@ -269,31 +328,64 @@ export class InventoryGUI extends Gui {
         else if (Controls.LEFT_STICK.BUTTON_RIGHT.onPressed(0))
             this.goRight();
 
-        if (Controls.Y.onPressed(0))
-            this.inventory.sort();
-
-        if (!this.itemSelectionMode) {
-            if (Controls.A.onPressed(0))
-                this.openContextMenu();
-            // If you exit the inventory
-            if (Controls.B.onPressed(0)) {
-                this.isVisible = false;
-                // Close the gui
-                return true;
+        // Multi-selection mode
+        if (Controls.R.onPressed(0)) {
+            if (!this.multiSelectionMode)
+                this.enterMultiSelectionMode();
+            if (Controls.L.isDown) {
+                this.invertSelection();
+            } else
+                this.toggleSelectedItem();
+        }
+        if (Controls.L.onPressed(0)) {
+            if (this.multiSelectionMode && this.multiSelection.length === 1) {
+                this.inventory.swapItems(this.multiSelection[0], this.inventory.cursor);
+                this.exitMultiSelectionMode();
             }
         }
-        else {
+
+        // Sort the inventory
+        if (Controls.Y.onPressed(0) && !this.multiSelectionMode && !this.itemSelectionMode)
+            this.inventory.sort();
+
+        if (this.itemSelectionMode) {
+            // Select the item
             if (Controls.A.onPressed(0)) {
                 // Select the item and return an item swap action
                 this.exitItemSelectionMode();
                 // And the item to swap is at the cursor
                 this.close(GuiOutput.INVENTORY_GROUND_SWAP);
             }
+            // Exit item selection mode
             if (Controls.B.onPressed(0)) {
                 // Exit item selection mode
                 this.exitItemSelectionMode();
             }
         }
+        else if (this.multiSelectionMode) {
+            // Select the item
+            if (Controls.A.onPressed(0)) {
+                // Select the item and return an item swap action
+                this.openContextMenu();
+            }
+            // Exit item selection mode
+            if (Controls.B.onPressed(0)) {
+                // Exit item selection mode
+                this.exitMultiSelectionMode();
+            }
+        }
+        else {
+            // Open the context menu
+            if (Controls.A.onPressed(0))
+                this.openContextMenu();
+            // Exit the inventory
+            if (Controls.B.onPressed(0)) {
+                this.isVisible = false;
+                // Close the gui
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -378,7 +470,10 @@ export class InventoryGUI extends Gui {
         YButton.src = "assets/textures/ui/buttons/Ui_Button_Guide_Y.png";
         sortButton.appendChild(YButton);
         sortButton.append("Sort");
-        sortButton.onclick = () => this.inventory.sort();
+        sortButton.onclick = () => {
+            if (this.itemSelectionMode || this.multiSelectionMode) return;
+            this.inventory.sort()
+        };
 
         footbar.appendChild(sortButton);
         return footbar;
@@ -433,6 +528,7 @@ export class InventoryGUI extends Gui {
         const itemElement = document.createElement("div");
         itemElement.classList.add("inventory-item", "menu-option");
         itemElement.classList.toggle("inventory-item-selection", this.itemSelectionMode);
+        itemElement.classList.toggle("inventory-item-multi-selection", this.isInMultiSelection(id));
         const nameSpan = document.createElement("span");
         nameSpan.classList.add("inventory-item-name");
         nameSpan.innerText = item.name;

@@ -9,7 +9,7 @@ export class GuiManager {
     public static stack: Gui[] = [];
     public static shouldClose: boolean = false;
     public static guiOutput: GuiOutput = GuiOutput.UNASSIGNED;
-    private static DELAY_LENGTH: number = 10;
+    private static DELAY_LENGTH: number = 20;
     private static delay: number = this.DELAY_LENGTH;
     public static get currentGui(): Gui { return this.stack[this.stack.length - 1] }
 

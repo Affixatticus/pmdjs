@@ -141,6 +141,13 @@ export class Inventory {
         groundItem.dispose();
         groundItem.render(this.state.scene).then(() => groundItem.discard());
     }
+    public swapItems(index1: number, index2: number) {
+        const stack1 = this.get(index1);
+        const stack2 = this.get(index2);
+        this.items[index1] = stack2;
+        this.items[index2] = stack1;
+        this.gui.update();
+    }
 
     /** Sorts the inventory, and sets the cursor to the item it was on originally */
     public sort() {
