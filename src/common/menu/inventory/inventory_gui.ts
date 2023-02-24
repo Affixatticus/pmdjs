@@ -45,24 +45,32 @@ export class InventoryGUI extends Gui {
         this.inventory.cursor = this.groundPage * Inventory.PAGE_SIZE;
         this.update();
     }
+    public close(output: GuiOutput = GuiOutput.UNASSIGNED) {
+        super.close(output);
+        this.exitItemSelectionMode();
+        this.exitMultiSelectionMode();
+    }
     // ANCHOR Item Selection
     public enterItemSelectionMode() {
+        if (this.itemSelectionMode) return;
         this.itemSelectionMode = true;
         this.inventory.cursor = 0;
         this.update();
     }
     public exitItemSelectionMode() {
+        if (!this.itemSelectionMode) return;
         this.itemSelectionMode = false;
         this.update();
     }
     // ANCHOR Multi Selection
     public enterMultiSelectionMode() {
-        if (this.inGroundPage) return;
+        if (this.inGroundPage || this.multiSelectionMode) return;
         this.multiSelectionMode = true;
         this.multiSelection = [];
         this.update();
     }
     public exitMultiSelectionMode() {
+        if (!this.multiSelectionMode) return;
         this.multiSelectionMode = false;
         this.multiSelection = [];
         this.update();
