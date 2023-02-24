@@ -152,7 +152,7 @@ export class Inventory {
     /** Sorts the inventory, and sets the cursor to the item it was on originally */
     public sort() {
         const cursorItem = this.selectedItem;
-        this.items = this.items.sort((a, b) => a.name > b.name ? 1 : -1);
+        this.items = this.items.sort((a, b) => a.name >= b.name ? 1 : -1);
         // Find the cursor item in the new array
         if (cursorItem)
             this.cursor = this.items.indexOf(cursorItem);

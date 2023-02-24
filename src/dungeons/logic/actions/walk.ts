@@ -167,7 +167,7 @@ export class StairsAction extends WalkAction {
 export class TrapAction extends WalkAction {
     public state: DungeonState;
 
-    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, trap: DungeonTile, state: DungeonState) {
+    constructor(pokemon: DungeonPokemon, direction: Direction, push: boolean, _trap: DungeonTile, state: DungeonState) {
         super(pokemon, direction, push, state.animationSpeed);
         this.state = state;
         this.logMessage = `${pokemon.toString()} triggered a trap!`;

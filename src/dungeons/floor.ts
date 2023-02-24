@@ -6,7 +6,7 @@ import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
 import { DungeonGrid, OffsetGrid } from "./map/grid";
 import { DungeonMap } from "./map/map";
-import { DungeonObject, DungeonObjectContainer } from "./objects/object";
+import { DungeonObjectContainer } from "./objects/object";
 import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./objects/pokemon";
 import { DungeonStartup } from "./logic/startup";
 import { Tile } from "../data/tiles";

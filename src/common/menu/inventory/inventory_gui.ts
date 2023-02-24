@@ -251,7 +251,7 @@ export class InventoryGUI extends Gui {
         });
         return options;
     }
-    public generateTrapCtxOpts(trap: DungeonTile): ContextMenuOption[] {
+    public generateTrapCtxOpts(_trap: DungeonTile): ContextMenuOption[] {
         const options: ContextMenuOption[] = [];
         options.push({
             text: "Set off", callback: () => {

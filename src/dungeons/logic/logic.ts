@@ -10,7 +10,6 @@ import { InputAction, InputType, Player } from "./player";
 import { TurnAction } from "./actions/action";
 import { DungeonPokemonEnemyAI as DungeonPokemonEnemyAI } from "./ai/enemy_ai";
 import { DropItemAction } from "./actions/items";
-import { Tile } from "../../data/tiles";
 
 export class DungeonLogic {
     public state: DungeonState;
