@@ -23,7 +23,6 @@
     image-rendering: crisp-edges;
     border-image-width: 24px;
     border-image-outset: 16px;
-    position: absolute;
 
     transition: filter 200ms ease-out;
 }
@@ -65,7 +64,30 @@
 }
 
 
+.textbox-container {
+    position: absolute;
+    bottom: 100px;
+}
 
+.textbox-text {
+    font-size: 36pt;
+    padding: 0.25em;
+}
+
+.confirm-gui {
+    position: absolute;
+}
+
+.confirm-ctx-menu {
+    position: absolute;
+    display: block;
+    width: fit-content !important;
+}
+
+.confirm-textbox {
+    position: relative;
+    top: 100%;
+}
 
 .context-menu-container {
     z-index: 100000;

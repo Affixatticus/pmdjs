@@ -201,7 +201,7 @@ export class ItemAction extends WalkAction {
         this.item.stack = leftover;
         // If the leader picked up the item, ask the player what to do
         if (!this.pokemon.isLeader)
-            this.item.discard();
+            return this.item.discard();
 
         this.turn.addAction(new OpenItemMenuAction(this.item, this.logic));
     }

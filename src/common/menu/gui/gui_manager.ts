@@ -16,7 +16,7 @@ export class GuiManager {
     /** Opens a Gui */
     static openGui(gui: Gui) {
         this.stack.push(gui);
-        this.currentGui.lastOutput = GuiOutput.UNASSIGNED;
+        gui.onOpen();
         this.currentGui.isVisible = true;
         // Set all other guis to unfocused
         for (let i = 0; i < this.stack.length - 1; i++) {
@@ -50,8 +50,10 @@ export class GuiManager {
             this.delay = -1;
         }
         // Update the current gui
-        this.shouldClose = this.currentGui.forceClose ? true : this.currentGui.handleInput();
+        const handleInputResult = this.currentGui.handleInput();
+        this.shouldClose = this.currentGui.forceClose || handleInputResult;
         this.guiOutput = this.currentGui.lastOutput;
+        // console.log(this.currentGui.forceClose, this.shouldClose, GuiOutput[this.guiOutput]);
         if (this.shouldClose) this.closeGui();
 
         return true;

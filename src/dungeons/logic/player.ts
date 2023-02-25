@@ -316,6 +316,8 @@ class InventoryState extends InputState {
     public init() {
         // Set the gui's tile as the tile under the player
         this.inventory.gui.setGround(this.floor.objects.get(this.leader.position));
+        // Tell the inventory gui that it was opened from the menu
+        this.inventory.gui.enteredFromMenu = true;
         // Open the inventory gui
         GuiManager.openGui(this.inventory.gui);
     }

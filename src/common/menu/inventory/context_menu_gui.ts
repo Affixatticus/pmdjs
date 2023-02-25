@@ -5,17 +5,19 @@ export interface ContextMenuOption {
     /** The text that will be displayed on the option */
     text: string;
     /** The function that will be called when the option is selected */
-    callback: () => GuiOutput;
+    callback: (gui: ContextMenuGui) => GuiOutput;
     /** Whether the button is disabled or not */
     disabled?: boolean;
 };
 
 /** A customizable list menu that can be created to returns the selected option */
-export class ContextMenuGUI extends Gui {
+export class ContextMenuGui extends Gui {
     /** The list of elements owned by this class */
     public elements: Record<string, HTMLElement> = {};
     /** The list of visible options */
     private options!: ContextMenuOption[];
+    /** The special function to be executed when cacelling */
+    private cancelCallback: ((gui: ContextMenuGui) => GuiOutput) | null = null;
     /** The currently selected option */
     private cursor: number = 0;
 
@@ -59,10 +61,13 @@ export class ContextMenuGUI extends Gui {
         }
         if (Controls.A.onPressed(0)) {
             // Always close this gui
-            this.lastOutput = this.options[this.cursor].callback();
+            this.lastOutput = this.options[this.cursor].callback(this);
             return true;
         }
         if (Controls.B.onPressed(1)) {
+            // Execute the cancel callback
+            if (this.cancelCallback !== null)
+                this.lastOutput = this.cancelCallback(this);
             return true;
         }
         return false;
@@ -109,7 +114,7 @@ export class ContextMenuGUI extends Gui {
         option.addEventListener("click", () => {
             if (buttonInfo.disabled) return;
             this.updateSelection(index);
-            this.close(buttonInfo.callback());
+            this.close(buttonInfo.callback(this));
         });
         option.addEventListener("mousedown", () => {
             if (buttonInfo.disabled) return;
@@ -125,7 +130,15 @@ export class ContextMenuGUI extends Gui {
         // Reset the cursor
         this.cursor = 0;
         this.options = buttonInfo;
-        this.options.push({ text: "Cancel", callback: () => { return GuiOutput.UNASSIGNED } });
+        // Add the cancel button
+        const cancelIndex = this.options.findIndex((option) => option.text === "Cancel");
+        if (cancelIndex === -1) {
+            this.options.push({ text: "Cancel", callback: () => { return GuiOutput.UNASSIGNED } });
+        } else {
+            const cancelButton = this.options[cancelIndex];
+            this.cancelCallback = cancelButton.callback;
+        }
+
         // Clear the container
         this.elements.container.innerHTML = "";
         // Create the buttons

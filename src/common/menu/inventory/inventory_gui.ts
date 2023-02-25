@@ -1,7 +1,7 @@
 import { ItemStack } from "../../../data/item/item_stack";
 import { AssetsLoader } from "../../../utils/assets_loader";
 import { Controls } from "../../../utils/controls";
-import { ContextMenuGUI as ContextMenuGui, ContextMenuOption } from "./context_menu_gui";
+import { ContextMenuGui as ContextMenuGui, ContextMenuOption } from "./context_menu_gui";
 import { ButtonVisibility, Inventory } from "./inventory";
 import { Gui, GuiClose, GuiOutput } from "../gui/gui";
 import { GuiManager } from "../gui/gui_manager";
@@ -28,6 +28,7 @@ export class InventoryGui extends Gui {
     /** The GUI for when you open a menu, owned by this gui */
     public ctxMenu: ContextMenuGui;
     public ground: InventoryGround;
+    public enteredFromMenu: boolean = false;
     private itemSelectionMode: boolean = false;
     private multiSelectionMode: boolean = false;
     private multiSelection: number[] = [];
@@ -46,9 +47,10 @@ export class InventoryGui extends Gui {
         this.update();
     }
     public close(output: GuiOutput = GuiOutput.UNASSIGNED) {
-        super.close(output);
         this.exitItemSelectionMode();
         this.exitMultiSelectionMode();
+        super.close(output);
+        this.enteredFromMenu = false;
     }
     // ANCHOR Item Selection
     public enterItemSelectionMode() {
@@ -179,6 +181,79 @@ export class InventoryGui extends Gui {
         this.update();
     }
 
+    /** Code run by the state */
+    public handleInput(): GuiClose {
+        if (Controls.LEFT_STICK.BUTTON_UP.onPressed(0))
+            this.goUp();
+        else if (Controls.LEFT_STICK.BUTTON_DOWN.onPressed(0))
+            this.goDown();
+        else if (Controls.LEFT_STICK.BUTTON_LEFT.onPressed(0))
+            this.goLeft();
+        else if (Controls.LEFT_STICK.BUTTON_RIGHT.onPressed(0))
+            this.goRight();
+
+        // Multi-selection mode
+        if (Controls.R.onPressed(0)) {
+            if (!this.multiSelectionMode)
+                this.enterMultiSelectionMode();
+            if (Controls.L.isDown) {
+                this.invertSelection();
+            } else
+                this.toggleSelectedItem();
+        }
+        if (Controls.L.onPressed(0)) {
+            if (this.multiSelectionMode && this.multiSelection.length === 1) {
+                this.inventory.swapItems(this.multiSelection[0], this.inventory.cursor);
+                this.exitMultiSelectionMode();
+            }
+        }
+
+        // Sort the inventory
+        if (Controls.Y.onPressed(0) && !this.multiSelectionMode && !this.itemSelectionMode)
+            this.inventory.sort();
+
+        if (this.itemSelectionMode) {
+            // Select the item
+            if (Controls.A.onPressed(0)) {
+                // Select the item and return an item swap action
+                this.exitItemSelectionMode();
+                // And the item to swap is at the cursor
+                this.close(GuiOutput.INVENTORY_GROUND_SWAP);
+            }
+            // Exit item selection mode
+            if (Controls.B.onPressed(0)) {
+                // Exit item selection mode
+                this.exitItemSelectionMode();
+            }
+        }
+        else if (this.multiSelectionMode) {
+            // Select the item
+            if (Controls.A.onPressed(0)) {
+                // Select the item and return an item swap action
+                this.openContextMenu();
+            }
+            // Exit item selection mode
+            if (Controls.B.onPressed(0)) {
+                // Exit item selection mode
+                this.exitMultiSelectionMode();
+            }
+        }
+        else {
+            // Open the context menu
+            if (Controls.A.onPressed(0))
+                this.openContextMenu();
+            // Exit the inventory
+            if (Controls.B.onPressed(0)) {
+                this.isVisible = false;
+                // Close the gui
+                this.enteredFromMenu = false;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Generates the context menu options based on the item's type */
     public generateContextOptions(): ContextMenuOption[] {
         const eatOptVisibility = this.inventory.showsEatOption();
@@ -245,6 +320,14 @@ export class InventoryGui extends Gui {
                     this.enterItemSelectionMode();
                     return GuiOutput.IGNORED
                 }, disabled: false
+            },
+            {
+                text: "Cancel", callback: () => {
+                    if (!this.enteredFromMenu) {
+                        this.close(GuiOutput.UNASSIGNED);
+                    }
+                    return GuiOutput.IGNORED
+                }
             }
         ];
         return options;
@@ -263,7 +346,6 @@ export class InventoryGui extends Gui {
         const options: ContextMenuOption[] = [];
         options.push({
             text: "Set off", callback: () => {
-                this.close(GuiOutput.IGNORED);
                 return GuiOutput.IGNORED;
             }
         })
@@ -279,7 +361,7 @@ export class InventoryGui extends Gui {
         const options: ContextMenuOption[] = [
             {
                 text: "Toss", callback: () => {
-                    for (const index of this.multiSelection.reverse()) {
+                    for (const index of this.multiSelection.sort((a, b) => a - b).reverse()) {
                         this.inventory.extractStack(index);
                     }
                     this.exitMultiSelectionMode();
@@ -324,78 +406,6 @@ export class InventoryGui extends Gui {
         this.ctxMenu.goDown();
         this.ctxMenu.goUp();
         GuiManager.openGui(this.ctxMenu);
-    }
-    /** Code run by the state */
-    public handleInput(): GuiClose {
-        this.isVisible = true;
-        if (Controls.LEFT_STICK.BUTTON_UP.onPressed(0))
-            this.goUp();
-        else if (Controls.LEFT_STICK.BUTTON_DOWN.onPressed(0))
-            this.goDown();
-        else if (Controls.LEFT_STICK.BUTTON_LEFT.onPressed(0))
-            this.goLeft();
-        else if (Controls.LEFT_STICK.BUTTON_RIGHT.onPressed(0))
-            this.goRight();
-
-        // Multi-selection mode
-        if (Controls.R.onPressed(0)) {
-            if (!this.multiSelectionMode)
-                this.enterMultiSelectionMode();
-            if (Controls.L.isDown) {
-                this.invertSelection();
-            } else
-                this.toggleSelectedItem();
-        }
-        if (Controls.L.onPressed(0)) {
-            if (this.multiSelectionMode && this.multiSelection.length === 1) {
-                this.inventory.swapItems(this.multiSelection[0], this.inventory.cursor);
-                this.exitMultiSelectionMode();
-            }
-        }
-
-        // Sort the inventory
-        if (Controls.Y.onPressed(0) && !this.multiSelectionMode && !this.itemSelectionMode)
-            this.inventory.sort();
-
-        if (this.itemSelectionMode) {
-            // Select the item
-            if (Controls.A.onPressed(0)) {
-                // Select the item and return an item swap action
-                this.exitItemSelectionMode();
-                // And the item to swap is at the cursor
-                this.close(GuiOutput.INVENTORY_GROUND_SWAP);
-            }
-            // Exit item selection mode
-            if (Controls.B.onPressed(0)) {
-                // Exit item selection mode
-                this.exitItemSelectionMode();
-            }
-        }
-        else if (this.multiSelectionMode) {
-            // Select the item
-            if (Controls.A.onPressed(0)) {
-                // Select the item and return an item swap action
-                this.openContextMenu();
-            }
-            // Exit item selection mode
-            if (Controls.B.onPressed(0)) {
-                // Exit item selection mode
-                this.exitMultiSelectionMode();
-            }
-        }
-        else {
-            // Open the context menu
-            if (Controls.A.onPressed(0))
-                this.openContextMenu();
-            // Exit the inventory
-            if (Controls.B.onPressed(0)) {
-                this.isVisible = false;
-                // Close the gui
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // ANCHOR Element Creation
@@ -564,8 +574,23 @@ export class InventoryGui extends Gui {
         itemElement.onclick = (e) => {
             e.preventDefault();
             this.updateItemCursor(id);
-            this.openContextMenu();
+
+            if (this.itemSelectionMode) {
+                // Select the item and return an item swap action
+                this.exitItemSelectionMode();
+                // And the item to swap is at the cursor
+                this.close(GuiOutput.INVENTORY_GROUND_SWAP);
+            } else {
+                if (e.button === 0)
+                    this.openContextMenu();
+            }
         }
+        itemElement.oncontextmenu = (e) => {
+            e.preventDefault();
+            this.enterMultiSelectionMode();
+            this.toggleSelectedItem();
+        }
+
         itemElement.onmousedown = (e) => {
             e.preventDefault();
             this.updateItemCursor(id);

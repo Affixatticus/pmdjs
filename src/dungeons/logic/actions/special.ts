@@ -1,3 +1,4 @@
+import { confirmGui } from "../../../common/menu/gui/confirm_gui";
 import { GuiOutput } from "../../../common/menu/gui/gui";
 import { GuiManager } from "../../../common/menu/gui/gui_manager";
 import { DungeonItem } from "../../objects/item";
@@ -35,17 +36,17 @@ export class GoDownStairsAction extends TurnAction {
         yield* this.repeat(20);
 
         // Await for the player's response
-        this.ctxMenu.update([{
+        confirmGui.update("Do you want to go down the stairs?", [{
             text: "Proceed", callback: () => {
                 return GuiOutput.PROCEED;
             }
         }]);
-        yield GuiManager.openGui(this.ctxMenu);
+        yield GuiManager.openGui(confirmGui);
         const result = GuiManager.awaitGuiResult();
 
         // Tell the logic to go down the stairs at the end of the turn
         if (result === GuiOutput.PROCEED)
-            this.logic.turn?.setSpecialFlag(TurnFlag.PROCEED);
+            this.logic.turn!.setSpecialFlag(TurnFlag.PROCEED);
     }
 }
 

@@ -40,8 +40,19 @@ export abstract class Gui {
         this.forceClose = true;
         this.setOutput(output);
     }
+    public onOpen() {
+        this.forceClose = false;
+        this.lastOutput = GuiOutput.UNASSIGNED;
+    }
     public setOutput(output: GuiOutput): void {
         this.lastOutput = output;
+    }
+
+    public get menuDiv(): HTMLElement {
+        return document.getElementById("menu")!;
+    }
+    public addToMenu() {
+        this.menuDiv.appendChild(this.elements.container);
     }
 
     public set isVisible(visible: boolean) {
