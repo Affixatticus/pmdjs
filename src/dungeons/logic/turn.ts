@@ -1,5 +1,5 @@
 import { DungeonState } from "../dungeon";
-import { DungeonPokemonType } from "../objects/pokemon";
+import { DungeonPokemonType } from "../objects/dungeon_pokemon";
 import { TurnAction } from "./actions/action";
 import { WalkAction, MoveActionGroup } from "./actions/walk";
 

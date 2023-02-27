@@ -1,7 +1,7 @@
 import { GroundMesh, InstancedMesh, MeshBuilder, Scene } from "@babylonjs/core";
 import { getTileCrop, TileObjectId } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
-import { DungeonPokemon } from "../objects/pokemon";
+import { DungeonPokemon } from "../objects/dungeon_pokemon";
 import { TileMaterial } from "../objects/tile";
 import { DungeonFloor, FloorRenderingLevels } from "../floor";
 import { Direction } from "../../utils/direction";

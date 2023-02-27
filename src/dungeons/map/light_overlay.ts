@@ -5,7 +5,7 @@ import { CropParams } from "../../utils/canvas";
 import { V2, V3, Vec3 } from "../../utils/vectors";
 import { DungeonState } from "../dungeon";
 import { DungeonFloor } from "../floor";
-import { DungeonPokemon } from "../objects/pokemon";
+import { DungeonPokemon } from "../objects/dungeon_pokemon";
 import { DungeonGrid, OffsetGrid } from "./grid";
 import { DungeonTiling, TilingTextureMode } from "./tiling";
 

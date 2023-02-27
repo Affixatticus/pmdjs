@@ -1,4 +1,5 @@
 import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
+import { Pokemon } from "../../common/menu/formation/pokemon";
 import { PokemonFormIdentifier } from "../../data/pokemon";
 import { Tile } from "../../data/tiles";
 import { AssetsLoader } from "../../utils/assets_loader";
@@ -7,7 +8,7 @@ import { V3, Vec2 } from "../../utils/vectors";
 import { DungeonFloor, FloorRenderingLevels } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonGrid } from "../map/grid";
-import { DungeonPokemonMaterials } from "./sprite";
+import { PokemonMaterials } from "./pokemon_materials";
 
 export const enum DungeonPokemonType {
     LEADER,
@@ -26,10 +27,9 @@ export enum Obstacle {
 };
 
 
-const TURNING_TICKS = 10;
-
 export class DungeonPokemon {
     static SCALING_DETERMINANT = 7;
+    static TURNING_TICKS = 10;
     static SPRITE_ROTATION = Math.PI / 3;
     static TRANSLUCID_MESH_VISIBILITY = 0.5;
     static SHADOW_OFFSET = V3(0.5 - this.SCALING_DETERMINANT / 512, 0.01, -0.5);
@@ -40,6 +40,7 @@ export class DungeonPokemon {
     private _direction: Direction;
     public type: DungeonPokemonType;
     public id: PokemonFormIdentifier;
+    public data: Pokemon;
     public ai!: DungeonPokemonAI;
 
     public isLeader: boolean;
@@ -60,14 +61,15 @@ export class DungeonPokemon {
     /** Mesh for the sprite's shadow */
     private shadowMesh!: Mesh;
     /** Material that takes care of animations */
-    public material!: DungeonPokemonMaterials;
+    public material!: PokemonMaterials;
 
-    constructor(pos: Vec2, type: DungeonPokemonType, id: PokemonFormIdentifier) {
+    constructor(pos: Vec2, type: DungeonPokemonType, pokemon: Pokemon) {
         this.type = type;
         this.isLeader = type === DungeonPokemonType.LEADER;
         this.isPartner = type === DungeonPokemonType.PARTNER;
         this.inFormation = this.isLeader || this.isPartner;
-        this.id = id;
+        this.data = pokemon;
+        this.id = pokemon.id;
         this._position = pos;
         this._spritePosition = pos;
         this._direction = Direction.SOUTH;
@@ -85,7 +87,7 @@ export class DungeonPokemon {
             throw new Error(`Pokemon ${this.id} not found`);
 
         // Create the materials
-        const materials = new DungeonPokemonMaterials(data, scene, DungeonPokemonMaterials.getShadowColor(this.type));
+        const materials = new PokemonMaterials(data, scene, PokemonMaterials.getShadowColor(this.type));
         materials.init("Idle", this.direction);
         this.material = materials;
 
@@ -189,7 +191,7 @@ export class DungeonPokemon {
      * Returns true if the pokemon is facing the final direction
      */
     public animateTurning(finalDirection: Direction): boolean {
-        if (this.turningTick < TURNING_TICKS) {
+        if (this.turningTick < DungeonPokemon.TURNING_TICKS) {
             this.turningTick++;
             return false;
         }

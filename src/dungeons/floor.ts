@@ -1,19 +1,20 @@
 import { Scene } from "@babylonjs/core";
 import { DungeonFloorInfo } from "../data/dungeons";
-import { PokemonData, PokemonFormIdentifier } from "../data/pokemon";
+import { PokemonFormIdentifier } from "../data/pokemon";
 import { Vec2 } from "../utils/vectors";
 import { DungeonGenerator } from "./map/map_generator";
 import { DungeonObjectGenerator } from "./objects/object_generator";
 import { DungeonGrid, OffsetGrid } from "./map/grid";
 import { DungeonMap } from "./map/map";
 import { DungeonObjectContainer } from "./objects/object";
-import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./objects/pokemon";
+import { DungeonPokemon, DungeonPokemonList, DungeonPokemonType } from "./objects/dungeon_pokemon";
 import { DungeonStartup } from "./logic/startup";
 import { Tile } from "../data/tiles";
 import { AssetsLoader } from "../utils/assets_loader";
 import { DungeonTile } from "./objects/tile";
 import { DungeonEnemyGenerator } from "./objects/enemy_generator";
 import { DungeonItem } from "./objects/item";
+import { FormationTeam } from "../common/menu/formation/formation";
 
 export enum FloorRenderingLevels {
     /** The level that has the floor and water, the tiles and the items */
@@ -73,21 +74,21 @@ export class DungeonFloor {
     }
 
     /** Function that places the party onto the dungeon floor */
-    public generatePokemon(party: PokemonData[]) {
+    public generatePokemon(party: FormationTeam) {
         // Gets all the party species
-        this.partySpecies = party.map(p => p.id);
+        this.partySpecies = party.pokemon.map(p => p.id);
         // Generate the pokemon
         this.pokemon = new DungeonPokemonList();
         // Place the leader
         const leader = new DungeonPokemon(
-            DungeonStartup.placeLeader(this), DungeonPokemonType.LEADER, party[0].id
+            DungeonStartup.placeLeader(this), DungeonPokemonType.LEADER, party.leader
         );
         this.pokemon.add(leader);
         // Place the partners
-        party.forEach((p, i) => {
+        party.pokemon.forEach((pokemon, i) => {
             if (i === 0) return;
             const partner = new DungeonPokemon(
-                DungeonStartup.placePartner(this), DungeonPokemonType.PARTNER, p.id);
+                DungeonStartup.placePartner(this), DungeonPokemonType.PARTNER, pokemon);
             this.pokemon.add(partner);
         });
         // Place the enemies

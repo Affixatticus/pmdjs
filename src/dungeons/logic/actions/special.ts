@@ -2,7 +2,7 @@ import { confirmGui } from "../../../common/menu/gui/confirm_gui";
 import { GuiOutput } from "../../../common/menu/gui/gui";
 import { GuiManager } from "../../../common/menu/gui/gui_manager";
 import { DungeonItem } from "../../objects/item";
-import { DungeonPokemon } from "../../objects/pokemon";
+import { DungeonPokemon } from "../../objects/dungeon_pokemon";
 import { DungeonLogic } from "../logic";
 import { TurnFlags as TurnFlag } from "../turn";
 import { TurnAction } from "./action";

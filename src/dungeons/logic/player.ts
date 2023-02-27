@@ -7,7 +7,7 @@ import { Direction } from "../../utils/direction";
 import Random from "../../utils/random";
 import { Vec2 } from "../../utils/vectors";
 import { DungeonItem } from "../objects/item";
-import { DungeonPokemon, Obstacle } from "../objects/pokemon";
+import { DungeonPokemon, Obstacle } from "../objects/dungeon_pokemon";
 import { WalkAction } from "./actions/walk";
 import { DungeonLogic } from "./logic";
 

@@ -1,7 +1,7 @@
 import { Tile } from "../../../data/tiles";
 import { V2 } from "../../../utils/vectors";
 import { DungeonItem } from "../../objects/item";
-import { DungeonPokemon } from "../../objects/pokemon";
+import { DungeonPokemon } from "../../objects/dungeon_pokemon";
 import { DungeonLogic } from "../logic";
 import { TurnAction } from "./action";
 

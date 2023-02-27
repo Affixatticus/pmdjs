@@ -1,9 +1,9 @@
 import { Engine } from '@babylonjs/core';
+import { Formation, FormationTeam } from './common/menu/formation/formation';
+import { Pokemon } from './common/menu/formation/pokemon';
 import { GuiManager } from './common/menu/gui/gui_manager';
 import { Inventory } from './common/menu/inventory/inventory';
-import { ItemId } from './data/item/ids';
-import { ItemStack } from './data/item/item_stack';
-import { DungeonStateData, DungeonState } from './dungeons/dungeon';
+import { DungeonState } from './dungeons/dungeon';
 import { Controls } from './utils/controls';
 
 enum GameState {
@@ -12,132 +12,16 @@ enum GameState {
     DUNGEONS,
 };
 
-interface Data {
-    dungeon: DungeonStateData;
-};
-
-const INITIAL_GAME_DATA: Data = {
-    dungeon: {
-        id: 0,
-        floor: 0,
-        party: [
-            {
-                id: [495, 0, false, 0],
-                stats: {
-                    hp: 0,
-                    attack: 0,
-                    defense: 0,
-                    spatk: 0,
-                    spdef: 0,
-                    speed: 0,
-                },
-                moves: [
-                    {
-                        id: 0,
-                        ppLost: 0
-                    }
-                ]
-            },
-            {
-                id: [501, 0, false, 0],
-                stats: {
-                    hp: 0,
-                    attack: 0,
-                    defense: 0,
-                    spatk: 0,
-                    spdef: 0,
-                    speed: 0,
-                },
-                moves: [
-                    {
-                        id: 0,
-                        ppLost: 0
-                    }
-                ]
-            },
-            // {
-            //     id: [135, 0, false, 0],
-            //     stats: {
-            //         hp: 0,
-            //         attack: 0,
-            //         defense: 0,
-            //         spatk: 0,
-            //         spdef: 0,
-            //         speed: 0,
-            //     },
-            //     moves: [
-            //         {
-            //             id: 0,
-            //             ppLost: 0
-            //         }
-            //     ]
-            // },
-            // {
-            //     id: [136, 0, false, 0],
-            //     stats: {
-            //         hp: 0,
-            //         attack: 0,
-            //         defense: 0,
-            //         spatk: 0,
-            //         spdef: 0,
-            //         speed: 0,
-            //     },
-            //     moves: [
-            //         {
-            //             id: 0,
-            //             ppLost: 0
-            //         }
-            //     ]
-            // },
-            // {
-            //     id: [495, 0, false, 0],
-            //     stats: {
-            //         hp: 0,
-            //         attack: 0,
-            //         defense: 0,
-            //         spatk: 0,
-            //         spdef: 0,
-            //         speed: 0,
-            //     },
-            //     moves: [
-            //         {
-            //             id: 0,
-            //             ppLost: 0
-            //         }
-            //     ]
-            // },
-            // {
-            //     id: [134, 0, false, 0],
-            //     stats: {
-            //         hp: 0,
-            //         attack: 0,
-            //         defense: 0,
-            //         spatk: 0,
-            //         spdef: 0,
-            //         speed: 0,
-            //     },
-            //     moves: [
-            //         {
-            //             id: 0,
-            //             ppLost: 0
-            //         }
-            //     ]
-            // },
-        ]
-    }
-};
-
-
 class App {
     private canvas: HTMLCanvasElement;
     private engine: Engine;
     private gameState: GameState;
     private state: DungeonState;
     private onResize = () => this.engine.resize();
-    private data: Data;
     private controls: Controls;
 
     private inventory: Inventory;
+    private formation: Formation;
 
     public deltaTime: number = 0;
     public clockSpeed: number = 7;
@@ -153,24 +37,11 @@ class App {
         new GuiManager();
         // Global components
         this.inventory = new Inventory();
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
-        this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        // this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
+        this.formation = new Formation();
+        this.formation.teams[0] = new FormationTeam(new Pokemon([495, 0, false, 0]));
+        console.log(this.formation);
         // State
-        this.data = INITIAL_GAME_DATA;
         this.gameState = GameState.DUNGEONS;
         this.state = this.createState(this.gameState);
         // Resize listener
@@ -224,14 +95,14 @@ class App {
             fpsCounter.innerHTML += "<br/>" + this.state.scene.getActiveMeshes().length + " active meshes";
             fpsCounter.innerHTML += "<br/>" + this.state.scene.meshes.length + " total meshes";
             fpsCounter.innerHTML += "<br/>" + this.deltaTime.toFixed(4) + "ms (Δ time)";
-            fpsCounter.innerHTML += "<br/><span style='font-size: 16pt'>Floor " + (this.state.data.floor + 1) + "</span>";
+            fpsCounter.innerHTML += "<br/><span style='font-size: 16pt'>Floor " + (this.state.floorNumber + 1) + "</span>";
         }
     }
 
     private createState(state: GameState = this.gameState) {
         switch (state) {
             case GameState.DUNGEONS:
-                return new DungeonState(this.engine, this.data.dungeon, this.inventory);
+                return new DungeonState(this.engine, 0, 0, this.formation, this.inventory);
         }
         throw Error(`No id correlated to that GameState (${state})`);
     }

@@ -1,8 +1,8 @@
-import { AbstractMesh, Constants, DynamicTexture, Effect, Scene, ShaderMaterial, StandardMaterial, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, Constants, DynamicTexture, Effect, Scene, ShaderMaterial, StandardMaterial } from "@babylonjs/core";
 import { Direction } from "../../utils/direction";
 import { fillOutStandardOptions } from "../../utils/material";
 import { V3, Vec3 } from "../../utils/vectors";
-import { DungeonPokemonType } from "./pokemon";
+import { DungeonPokemonType } from "./dungeon_pokemon";
 
 export interface PokemonSpriteAnimationData {
     /** Name of the animation */
@@ -131,7 +131,7 @@ export class ShadowMaterial extends ShaderMaterial {
     }
 }
 
-export class DungeonPokemonMaterials {
+export class PokemonMaterials {
     static getShadowColor(type: DungeonPokemonType): Vec3 {
         switch (type) {
             case DungeonPokemonType.LEADER:
@@ -160,7 +160,7 @@ export class DungeonPokemonMaterials {
     private currentFrame = 0;
     private currentFrameDuration = 0;
     public isAnimationDone: boolean = false;
-    public animCallback: ((material: DungeonPokemonMaterials) => void) | null = null;
+    public animCallback: ((material: PokemonMaterials) => void) | null = null;
 
     public get animations() {
         return this.data.animations;

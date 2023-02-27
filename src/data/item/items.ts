@@ -1,4 +1,4 @@
-import { DungeonPokemon } from "../../dungeons/objects/pokemon";
+import { DungeonPokemon } from "../../dungeons/objects/dungeon_pokemon";
 import FoodItems from "./definitions/edibles";
 import { StackItems } from "./definitions/stackables";
 import { ItemId } from "./ids";

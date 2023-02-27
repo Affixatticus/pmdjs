@@ -3,7 +3,7 @@ import { Direction } from "../../../utils/direction";
 import { DungeonState } from "../../dungeon";
 import { DungeonItem } from "../../objects/item";
 import { ObjectType } from "../../objects/object";
-import { DungeonPokemon } from "../../objects/pokemon";
+import { DungeonPokemon } from "../../objects/dungeon_pokemon";
 import { DungeonTile } from "../../objects/tile";
 import { DungeonLogic } from "../logic";
 import { Turn } from "../turn";

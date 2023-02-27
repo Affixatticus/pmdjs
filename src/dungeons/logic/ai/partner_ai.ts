@@ -1,4 +1,4 @@
-import { DungeonPokemon } from "../../objects/pokemon";
+import { DungeonPokemon } from "../../objects/dungeon_pokemon";
 import { TurnAction } from "../actions/action";
 import { DungeonLogic } from "../logic";
 import { DungeonFollowAI, DungeonPokemonAI } from "./ai";

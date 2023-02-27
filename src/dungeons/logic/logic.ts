@@ -2,7 +2,7 @@ import { DungeonState } from "../dungeon";
 import { WalkAction } from "./actions/walk";
 import { NilAction } from "./actions/nil";
 import { Turn, TurnFlags } from "./turn";
-import { DungeonPokemonType } from "../objects/pokemon";
+import { DungeonPokemonType } from "../objects/dungeon_pokemon";
 import { DungeonPokemonPartnerAI } from "./ai/partner_ai";
 import { DungeonPokemonAI } from "./ai/ai";
 import { V3 } from "../../utils/vectors";

@@ -1,6 +1,6 @@
 import { DungeonTextures, DungeonTexturesProperties } from "../data/dungeons";
 import { PokemonFormIdentifier } from "../data/pokemon";
-import { PokemonSpriteData } from "../dungeons/objects/sprite";
+import { PokemonSpriteData } from "../dungeons/objects/pokemon_materials";
 import Canvas from "../utils/canvas";
 
 const ASSETS_URL = "assets/";

@@ -3,7 +3,7 @@ import Random from "../../utils/random";
 import { V2, Vec2 } from "../../utils/vectors";
 import { DungeonFloor } from "../floor";
 import { DungeonCarpet } from "../objects/carpet";
-import { DungeonPokemon } from "../objects/pokemon";
+import { DungeonPokemon } from "../objects/dungeon_pokemon";
 import { DungeonTiling, NeighborsLookupTable } from "./tiling";
 
 const ROOM_VIEW_RADIUS = V2(21, 21);

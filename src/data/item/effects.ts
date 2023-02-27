@@ -1,4 +1,4 @@
-import { DungeonPokemon } from "../../dungeons/objects/pokemon";
+import { DungeonPokemon } from "../../dungeons/objects/dungeon_pokemon";
 
 export function Effect_RestoreHP(restored: number): (pokemon: DungeonPokemon) => void {
     return (pokemon: DungeonPokemon) => {

@@ -1,10 +1,11 @@
+import { Pokemon } from "../../common/menu/formation/pokemon";
 import { DungeonFloorInfo } from "../../data/dungeons";
 import { PokemonChance } from "../../data/pokemon";
 import { Tile } from "../../data/tiles";
 import Random from "../../utils/random";
 import { Vec2 } from "../../utils/vectors";
 import { DungeonGrid } from "../map/grid";
-import { DungeonPokemon, DungeonPokemonType } from "./pokemon";
+import { DungeonPokemon, DungeonPokemonType } from "./dungeon_pokemon";
 
 export class DungeonEnemyGenerator {
     private grid: DungeonGrid;
@@ -42,7 +43,7 @@ export class DungeonEnemyGenerator {
         const spawns = this.findEnemySpawns();
         for (const spawn of spawns) {
             const enemy = new DungeonPokemon(
-                spawn, DungeonPokemonType.ENEMY, [this.getRandomEnemy().species, 0, false, 0]
+                spawn, DungeonPokemonType.ENEMY, new Pokemon([this.getRandomEnemy().species, 0, false, 0])
             );
             enemies.push(enemy);
         }

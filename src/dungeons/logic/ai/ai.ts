@@ -1,7 +1,7 @@
 import { Direction } from "../../../utils/direction";
 import Random from "../../../utils/random";
 import { V2, Vec2 } from "../../../utils/vectors";
-import { DungeonPokemon, Obstacle } from "../../objects/pokemon";
+import { DungeonPokemon, Obstacle } from "../../objects/dungeon_pokemon";
 import { TurnAction } from "../actions/action";
 import { NilAction } from "../actions/nil";
 import { WalkAction } from "../actions/walk";

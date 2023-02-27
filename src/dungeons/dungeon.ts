@@ -1,4 +1,5 @@
 import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MotionBlurPostProcess, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
+import { Formation } from "../common/menu/formation/formation";
 import { GuiManager } from "../common/menu/gui/gui_manager";
 import { Inventory } from "../common/menu/inventory/inventory";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
@@ -35,6 +36,8 @@ export class DungeonState {
     public camera: TargetCamera;
     public ui: DungeonUI;
     // -> Floor
+    public dungeonId: Dungeon;
+    public floorNumber: number;
     public floor!: DungeonFloor;
     // |-> Lighting
     public lightOverlay!: LightOverlay;
@@ -44,13 +47,13 @@ export class DungeonState {
     public floorGuide: FloorGuide;
     // State
     public isLoaded: boolean;
-    public data: DungeonStateData;
     public info: DungeonFloorInfo;
     public logic: DungeonLogic;
     private motionBlur: MotionBlurPostProcess;
 
     // Common UI
     public inventory: Inventory;
+    public formation: Formation;
 
     // Pokemon Movement
     public static readonly WALKING_TICKS: number = 40;
@@ -72,14 +75,15 @@ export class DungeonState {
         this._animationSpeed = running ? DungeonState._runningAnimationSpeed : DungeonState._walkingAnimationSpeed;
     }
 
-    constructor(engine: Engine, data: DungeonStateData, inventory: Inventory) {
+    constructor(engine: Engine, dungeonId: number, floorNumber: number, formation: Formation, inventory: Inventory) {
         // Definition
         this.engine = engine;
         this.scene = new Scene(this.engine);
         this.camera = this.createCamera();
         this.moveCamera(V3(0, 0, 0));
         this.scene.clearColor = new Color4(0, 0, 0, 1);
-        this.data = data;
+        this.dungeonId = dungeonId,
+            this.floorNumber = floorNumber;
         this.info = this.getFloorInfo();
 
         // Instantiate the logic
@@ -94,6 +98,7 @@ export class DungeonState {
 
         this.inventory = inventory;
         this.inventory.state = this;
+        this.formation = formation;
 
         // Add optimizations
         const options = new SceneOptimizerOptions(144);
@@ -139,8 +144,8 @@ export class DungeonState {
 
     // Loading methods
     /** Loads in this dungeons' graphics, found enemies, possible items... */
-    public getFloorInfo(id: Dungeon = this.data.id, floor: number = this.data.floor): DungeonFloorInfo {
-        const dunData = DungeonsInfo[id];
+    public getFloorInfo(): DungeonFloorInfo {
+        const dunData = DungeonsInfo[this.dungeonId];
 
         // Get all the dungeon's floor levels
         const levels = Object.keys(dunData).map(e => parseInt(e));
@@ -149,14 +154,15 @@ export class DungeonState {
             return dunData[levels[0]];
         else
             for (const level of levels)
-                if (floor <= level) return dunData[level];
+                if (this.floorNumber <= level) return dunData[level];
 
         // If no dungeon info were found, throw an error
         throw Error(`Invalid dungeon floor or id`);
     }
 
     public goUpAFloor() {
-        this.info = this.getFloorInfo(this.data.id, ++this.data.floor);
+        this.floorNumber++;
+        this.info = this.getFloorInfo();
     }
 
     private createCamera(): TargetCamera {
@@ -239,7 +245,7 @@ export class DungeonState {
         // Generate the dungeon
         this.floor.generate();
         // Generate the pokemon
-        this.floor.generatePokemon(this.data.party);
+        this.floor.generatePokemon(this.formation.team);
         // Add the lighting
         this.setLighting();
         // Load the assets for the map
