@@ -1,0 +1,163 @@
+#overlays {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.team-overlay {
+    position: absolute;
+    top: 0.2em;
+    right: 0.2em;
+    z-index: 100;
+    pointer-events: all;
+}
+
+.team-overlay-card {
+    font-size: 30pt;
+    position: relative;
+
+    display: grid;
+
+    background: #10203080;
+    box-shadow: 0 0 0.05em 0.05em #4080b080;
+    border-radius: 0.2em;
+
+    padding: 0.2em;
+}
+.team-overlay-card:hover {
+    background: #102030f0;
+    box-shadow: 0 0 0.05em 0.05em #4080b0;
+}
+
+.card-leader {
+    width: 13em;
+    height: 3em;
+    column-gap: 0.5em;
+    grid-template-columns: 3em 1fr 2em;
+    grid-template-rows: 1em 1em 1em;
+    grid-template-areas: "i l l" "i n b" "i h b";
+    border-bottom: 0.1em solid #2b2d;
+}
+.card-leader:hover {
+    border-bottom-color: #2e2e;
+}
+
+.card-partner {
+    width: 10em;
+    right: -1.76em;
+    padding-right: 1.45em;
+    height: 2em;
+    column-gap: 0.25em;
+    grid-template-columns: 2em max-content 1fr 1em;
+    grid-template-rows: 1em 1em;
+    grid-template-areas: "i l n n" "i h h b";
+    border-bottom: 0.1em solid #bb2d;
+}
+.card-partner:hover {
+    border-bottom-color: #ee2e;
+}
+
+.team-overlay-name {
+    grid-area: n;
+    transform: scaleX(0.8) translateX(-12%);
+    letter-spacing: 2px;
+    line-height: 1em;
+}
+
+.team-overlay-icon {
+    grid-area: i;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-overlay-icon img {
+    width: 100%;
+    border: 2px solid white;
+    border-radius: 0.2em;
+    -webkit-user-drag: none;
+    image-rendering: pixelated;
+}
+
+.team-overlay-level {
+    grid-area: l;
+}
+
+.team-overlay-level>.lvl {
+    font-size: 1.2em;
+    letter-spacing: 2px;
+}
+
+.team-overlay-hp {
+    position: relative;
+    grid-area: h;
+    display: flex;
+    align-items: center;
+}
+
+.hp-bar-container {
+    background: radial-gradient(#777, #000);
+    display: inline-block;
+    width: calc(100% - 1.2em);
+    height: 0.6em;
+
+    overflow: hidden;
+    border-radius: 0.6em;
+    border: 1px solid white;
+    outline: 1px solid #888;
+}
+
+.hp-bar {
+    height: 100%;
+    border-radius: 0.5em;
+    transition: width 400ms ease-out;
+}
+
+.team-overlay-hp.healthy .hp-bar {
+    background: linear-gradient(to bottom, #4f4 10%, #7f7 90%, #4f4);
+}
+
+.team-overlay-hp.hurting .hp-bar {
+    background: linear-gradient(to bottom, #ff4 10%, #ff7 90%, #ff4);
+}
+
+.team-overlay-hp.critical .hp-bar {
+    background: linear-gradient(to bottom, #f44 10%, #f77 90%, #f44);
+}
+
+
+.hp-text {
+    position: absolute;
+    right: 24px;
+    color: #2db7f8;
+    text-shadow: #001832 2px 2px 0;
+    font-weight: bold;
+    letter-spacing: 2px;
+    font-size: 1.3em;
+    bottom: 2px;
+}
+
+.team-overlay-belly {
+    --belly-bg: #000;
+    --belly-fill: #f17400;
+    grid-area: b;
+
+    background: linear-gradient(to bottom, var(--belly-bg) 50%, var(--belly-fill) 54%);
+
+    border-radius: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    text-shadow: #000 3px 3px 0;
+    border: 2px solid white;
+    box-shadow: inset 0 0 4px 4px #f5eb1a60;
+}
+
+.card-partner .team-overlay-belly {
+    transform: translateX(0.5em);
+}

@@ -1,5 +1,5 @@
 import { Engine } from '@babylonjs/core';
-import { Formation, FormationTeam } from './common/menu/formation/formation';
+import { Formation } from './common/menu/formation/formation';
 import { Pokemon } from './common/menu/formation/pokemon';
 import { GuiManager } from './common/menu/gui/gui_manager';
 import { Inventory } from './common/menu/inventory/inventory';
@@ -39,8 +39,31 @@ class App {
         this.inventory = new Inventory();
         // this.inventory.addStack(new ItemStack(ItemId.ORAN_BERRY, 1));
         this.formation = new Formation();
-        this.formation.teams[0] = new FormationTeam(new Pokemon([495, 0, false, 0]));
-        console.log(this.formation);
+        this.formation.newTeam(
+            new Pokemon([495, 0, true, 0]),
+            new Pokemon([501, 0, true, 0]),
+            new Pokemon([6, 0, false, 0]),
+        );
+        const leader = this.formation.team.leader;
+        leader.exp = 1249;
+        leader.reload();
+        leader.varData.hp = 8;
+        leader.belly = 86;
+        leader.name = "Snivy the Great";
+        const oshawott = this.formation.team.pokemon[1];
+        oshawott.exp = 1500;
+        oshawott.reload();
+        oshawott.varData.hp = 18;
+        oshawott.belly = 100;
+        oshawott.name = "Not a snivy";
+        const charzard = this.formation.team.pokemon[2];
+        charzard.exp = 10000;
+        charzard.reload();
+        charzard.varData.hp = 180;
+        charzard.belly = 12;
+        charzard.name = "Would you believe me if I said I was a snivy?";
+        
+        this.formation.overlay.update();
         // State
         this.gameState = GameState.DUNGEONS;
         this.state = this.createState(this.gameState);

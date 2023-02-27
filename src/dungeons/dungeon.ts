@@ -3,7 +3,6 @@ import { Formation } from "../common/menu/formation/formation";
 import { GuiManager } from "../common/menu/gui/gui_manager";
 import { Inventory } from "../common/menu/inventory/inventory";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
-import { PokemonData } from "../data/pokemon";
 import { Tile } from "../data/tiles";
 import { V2, V3, Vec3 } from "../utils/vectors";
 import { DungeonFloor } from "./floor";
@@ -17,17 +16,6 @@ import { DungeonUI } from "./ui/ui";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
 const CAMERA_OFFSET = V3(0.5, 8, 1);
-
-
-export interface DungeonStateData {
-    // Dungeon information
-    id: number;
-    floor: number;
-
-    // Party team information
-    party: PokemonData[];
-};
-
 export class DungeonState {
     // Engine
     private engine: Engine;
@@ -99,6 +87,7 @@ export class DungeonState {
         this.inventory = inventory;
         this.inventory.state = this;
         this.formation = formation;
+        this.formation.overlay.isVisible = true;
 
         // Add optimizations
         const options = new SceneOptimizerOptions(144);

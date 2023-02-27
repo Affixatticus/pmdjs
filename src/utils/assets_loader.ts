@@ -10,7 +10,6 @@ const OBJS_URL = TEXTURES_URL + "objects/";
 const UI_URL = TEXTURES_URL + "ui/";
 
 const POKEMON_URL = TEXTURES_URL + "pokemon/";
-const POKEMON_SPRITES_URL = POKEMON_URL + "sprite/";
 
 const TILE_WIDTH = 24;
 const WATER_GFX_START = TILE_WIDTH * 18;
@@ -161,11 +160,11 @@ export class AssetsLoader {
     }
 
     /** Generates the path to the animations folder */
-    static getPokemonFormPath(id: PokemonFormIdentifier): string {
+    static getPokemonFormPath(id: PokemonFormIdentifier, folder: "sprite" | "portrait" = "sprite"): string {
         const sub = (n: number) =>
             "0".repeat((4) - n.toString().length) + n.toString() + "/";
 
-        let path = POKEMON_SPRITES_URL +
+        let path = POKEMON_URL + folder + "/" +
             id.map(e => sub(e === false ? 0 : e === true ? 1 : e)).join("");
 
         // Find and remove trailing '0000/'
