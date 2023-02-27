@@ -1,14 +1,14 @@
-import { Mesh, MeshBuilder, Scene, Vector3 } from "@babylonjs/core";
+import { Scene } from "@babylonjs/core";
 import { Pokemon } from "../../common/menu/formation/pokemon";
 import { PokemonFormIdentifier } from "../../data/pokemon";
 import { Tile } from "../../data/tiles";
-import { AssetsLoader } from "../../utils/assets_loader";
 import { Direction } from "../../utils/direction";
-import { V3, Vec2 } from "../../utils/vectors";
-import { DungeonFloor, FloorRenderingLevels } from "../floor";
+import { Vec2 } from "../../utils/vectors";
+import { DungeonFloor } from "../floor";
 import { DungeonPokemonAI } from "../logic/ai/ai";
 import { DungeonGrid } from "../map/grid";
 import { PokemonMaterials } from "./pokemon_materials";
+import { PokemonSprite } from "./pokemon_sprite";
 
 export const enum DungeonPokemonType {
     LEADER,
@@ -28,19 +28,14 @@ export enum Obstacle {
 
 
 export class DungeonPokemon {
-    static SCALING_DETERMINANT = 7;
     static TURNING_TICKS = 10;
-    static SPRITE_ROTATION = Math.PI / 3;
-    static TRANSLUCID_MESH_VISIBILITY = 0.5;
-    static SHADOW_OFFSET = V3(0.5 - this.SCALING_DETERMINANT / 512, 0.01, -0.5);
-    static SPRITE_OFFSET = V3(0.5, 0, -0.5);
 
     private _position: Vec2;
-    private _spritePosition: Vec2;
     private _direction: Direction;
     public type: DungeonPokemonType;
     public id: PokemonFormIdentifier;
     public data: Pokemon;
+    public sprite: PokemonSprite;
     public ai!: DungeonPokemonAI;
 
     public isLeader: boolean;
@@ -54,15 +49,6 @@ export class DungeonPokemon {
     public nextTurnDirection!: Direction;
     public lastVisitedPositions: Vec2[] = [];
 
-    /** Base of the mesh rendered below the walls with visibility = 1 */
-    private opaqueMesh!: Mesh;
-    /** Copy of the opaqueMesh rendered above the walls with visibility < 1 */
-    private translucentMesh!: Mesh;
-    /** Mesh for the sprite's shadow */
-    private shadowMesh!: Mesh;
-    /** Material that takes care of animations */
-    public material!: PokemonMaterials;
-
     constructor(pos: Vec2, type: DungeonPokemonType, pokemon: Pokemon) {
         this.type = type;
         this.isLeader = type === DungeonPokemonType.LEADER;
@@ -71,57 +57,20 @@ export class DungeonPokemon {
         this.data = pokemon;
         this.id = pokemon.id;
         this._position = pos;
-        this._spritePosition = pos;
         this._direction = Direction.SOUTH;
+        this.sprite = new PokemonSprite(
+            pokemon.id,
+            PokemonMaterials.getShadowColor(this.type),
+            this._position,
+            this._direction
+        );
 
         this.nextTurnPosition = pos.clone();
         this.nextTurnDirection = this._direction;
     }
 
-    /** Adds all of the meshes to the scene */
-    public async render(scene: Scene) {
-        // Create the material
-        const data = await AssetsLoader.loadPokemon(...this.id);
-
-        if (data === undefined)
-            throw new Error(`Pokemon ${this.id} not found`);
-
-        // Create the materials
-        const materials = new PokemonMaterials(data, scene, PokemonMaterials.getShadowColor(this.type));
-        materials.init("Idle", this.direction);
-        this.material = materials;
-
-        // Create the meshes
-        /* Shadow */
-        const shadowMesh = MeshBuilder.CreateGround("shadow", {
-            width: 1,
-            height: 1,
-        }, scene);
-
-        shadowMesh.position = this._position.gameFormat.add(DungeonPokemon.SHADOW_OFFSET);
-        shadowMesh.scalingDeterminant = DungeonPokemon.SCALING_DETERMINANT;
-        shadowMesh.renderingGroupId = FloorRenderingLevels.INBETWEEN;
-        shadowMesh.material = this.material.shadowMaterial;
-        this.shadowMesh = shadowMesh;
-
-        /* Sprite */
-        const opaqMesh = MeshBuilder.CreatePlane("pokemon", {
-            width: 1,
-            height: 1,
-        }, scene);
-
-        opaqMesh.position = this._position.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
-        opaqMesh.scalingDeterminant = DungeonPokemon.SCALING_DETERMINANT;
-        opaqMesh.renderingGroupId = FloorRenderingLevels.WALLS;
-        opaqMesh.rotate(Vector3.Right(), DungeonPokemon.SPRITE_ROTATION);
-
-        this.opaqueMesh = opaqMesh;
-        opaqMesh.material = this.material.spriteMaterial;
-
-        const tranMesh = opaqMesh.clone("pokemon-tran");
-        tranMesh.renderingGroupId = FloorRenderingLevels.HIGHEST;
-        tranMesh.visibility = DungeonPokemon.TRANSLUCID_MESH_VISIBILITY;
-        this.translucentMesh = tranMesh;
+    public render(scene: Scene) {
+        this.sprite.render(scene);
     }
 
     public animate(goFast: boolean) {
@@ -130,31 +79,25 @@ export class DungeonPokemon {
     }
 
     public dispose() {
-        this.opaqueMesh.dispose();
-        this.translucentMesh.dispose();
-        this.shadowMesh.dispose();
+        this.sprite.dispose();
         this.material.dispose();
     };
 
     // Getters and setters
+    public get material() {
+        return this.sprite.material;
+    }
+    public get spritePosition() {
+        return this.sprite.position;
+    }
+
     public get position() {
         return this._position;
     }
 
-    public get spritePosition() {
-        return this._spritePosition;
-    }
-
-    public set spritePosition(pos: Vec2) {
-        this._spritePosition = pos;
-        this.opaqueMesh.position = this._spritePosition.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
-        this.translucentMesh.position = this._spritePosition.gameFormat.add(DungeonPokemon.SPRITE_OFFSET);
-        this.shadowMesh.position = this._spritePosition.gameFormat.add(DungeonPokemon.SHADOW_OFFSET);
-    }
-
     public set position(pos: Vec2) {
         this._position = pos;
-        this.spritePosition = pos;
+        this.sprite.position = pos;
         this.lastVisitedPositions.push(pos);
         if (this.lastVisitedPositions.length > 4) {
             this.lastVisitedPositions.shift();
@@ -168,7 +111,7 @@ export class DungeonPokemon {
     public set direction(dir: Direction) {
         this._direction = dir;
         this.nextTurnDirection = dir;
-        this.material?.setDirection(dir);
+        this.sprite.direction = dir;
     }
 
     /** Makes a single turn that gets the direction closer to the target */
@@ -177,14 +120,10 @@ export class DungeonPokemon {
     }
 
     public setAnimation(animName: string) {
-        if (!this.material) return;
-        if (animName === this.material.animation) return;
-        this.material.setAnimation(animName);
+        this.sprite.setAnimation(animName);
     }
-
     public resetAnimation(animName: string) {
-        if (!this.material) return;
-        this.material.setAnimation(animName);
+        this.sprite.resetAnimation(animName);
     }
 
     /** Action that slowly turns this pokemon towards the final direction
