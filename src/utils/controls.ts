@@ -59,7 +59,7 @@ export class Button {
     constructor(button: string, keyboardKey: string) {
         this.isPressed = false;
         this.isDown = false;
-        this.isUp = false;
+        this.isUp = true;
         this.button = button;
         this.keyCode = keyboardKey;
 
