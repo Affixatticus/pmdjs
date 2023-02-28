@@ -1,5 +1,6 @@
 import { Color3, Color4, DirectionalLight, Engine, HardwareScalingOptimization, HemisphericLight, MotionBlurPostProcess, Scene, SceneOptimizer, SceneOptimizerOptions, TargetCamera, Vector3 } from "@babylonjs/core";
 import { Formation } from "../common/menu/formation/formation";
+import { gameMenuGui, GameMenuGui } from "../common/menu/gui/game_menu";
 import { GuiManager } from "../common/menu/gui/gui_manager";
 import { Inventory } from "../common/menu/inventory/inventory";
 import { DungeonFloorInfo, Dungeon, DungeonsInfo, LightLevel } from "../data/dungeons";
@@ -12,7 +13,6 @@ import { FloorGuide } from "./map/floor_guide";
 import { ByteGrid } from "./map/grid";
 import { LightOverlay } from "./map/light_overlay";
 import { Minimap } from "./ui/minimap";
-import { DungeonUI } from "./ui/ui";
 
 const CAMERA_ROTATION = V2(Math.PI / 24, 0);
 const CAMERA_OFFSET = V3(0.5, 8, 1);
@@ -22,7 +22,6 @@ export class DungeonState {
     // Scene
     public scene: Scene;
     public camera: TargetCamera;
-    public ui: DungeonUI;
     // -> Floor
     public dungeonId: Dungeon;
     public floorNumber: number;
@@ -42,6 +41,7 @@ export class DungeonState {
     // Common UI
     public inventory: Inventory;
     public formation: Formation;
+    public minimap: Minimap;
 
     // Pokemon Movement
     public static readonly WALKING_TICKS: number = 40;
@@ -77,7 +77,7 @@ export class DungeonState {
         // Instantiate the logic
         this.logic = new DungeonLogic(this);
         // Instantiate the UI
-        this.ui = new DungeonUI({});
+        this.minimap = new Minimap();
         // Build the floor guide
         this.floorGuide = new FloorGuide(this.scene);
 
@@ -130,6 +130,13 @@ export class DungeonState {
             this.updateFloor();
         });
     }
+
+    // ANCHOR Uis
+    public get gameMenu(): GameMenuGui {
+        // gameMenuGui.update();
+        return gameMenuGui;
+    };
+
 
     // Loading methods
     /** Loads in this dungeons' graphics, found enemies, possible items... */
@@ -215,7 +222,7 @@ export class DungeonState {
         // Update the floor
         this.floor.onMapUpdate();
         // Update the minimap
-        this.ui.minimap.update();
+        this.minimap.update();
         // Update the lighting
         this.lightOverlay.lightPokemon(this.floor, this.floor.pokemon.getLeader());
     }
@@ -254,7 +261,7 @@ export class DungeonState {
         // Initialize the floor guide
         await this.floorGuide.init(this.floor, this.floor.pokemon.getLeader());
         // Init the minimap
-        await this.ui.minimap.init(this.floor, Minimap.getStyleFromLightLevel(this.info.lightLevel));
+        await this.minimap.init(this.floor, Minimap.getStyleFromLightLevel(this.info.lightLevel));
 
         /** Update the graphics */
         // Update the light overlay
@@ -272,7 +279,7 @@ export class DungeonState {
         // Look for the stairs
         this.floor.findStairs(spawn);
         // Update the minimap
-        this.ui.minimap.update(spawn);
+        this.minimap.update(spawn);
         // Initialize the logic
         this.logic.init();
     }

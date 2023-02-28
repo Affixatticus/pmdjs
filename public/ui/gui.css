@@ -92,3 +92,15 @@
 .context-menu-container {
     z-index: 100000;
 }
+
+.minimap-tiles,
+.minimap-objects {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 98;
+}
+
+.minimap-objects {
+    z-index: 99;
+}

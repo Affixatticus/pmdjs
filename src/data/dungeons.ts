@@ -109,6 +109,7 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
                 { id: ItemId.ORAN_BERRY, chance: 20 },
                 { id: ItemId.APPLE, chance: 20 },
                 { id: ItemId.BIG_APPLE, chance: 5 },
+                { id: ItemId.SILVER_THORN, chance: 15 },
                 // { id: ItemId.BIG_APPLE, chance: 1 },
             ],
             traps: [
@@ -122,16 +123,16 @@ export const DungeonsInfo: Record<Dungeon, DungeonFloorInfoFromLevel> = {
             }],
             generation: {
                 maxRoomSize: V2(7, 7),
-                connectionRate: 50,
+                connectionRate: 25,
                 bordersSize: V2(3, 3),
-                mapSize: V2(2, 2),
+                mapSize: V2(5, 4),
                 // generateWater: false,
-                generateWater: false,
-                layoutType: GeneratorLayouts.HALF_ROOMS,
+                generateWater: true,
+                layoutType: GeneratorLayouts.ALL_ROOMS,
                 roomDensity: .75,
-                terrainDensity: 40,
-                groundItemDensity: 4,
-                tileDensity: 4,
+                terrainDensity: 8,
+                groundItemDensity: 3,
+                tileDensity: 2,
             }
         },
         [50]: {

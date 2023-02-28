@@ -8,7 +8,7 @@ export const OranBerryItem: Throwable & Edible = {
     price: 100,
     texCoords: [6, 0, 1, 1],
     imageUrl: "Item_image_SEED_OREN",
-    eat: Effect_RestoreHP(100)
+    eat: Effect_RestoreHP(100),
 };
 export const AppleItem: Throwable & Edible = {
     name: "Apple",

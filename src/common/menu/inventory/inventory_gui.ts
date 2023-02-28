@@ -66,6 +66,7 @@ export class InventoryGui extends Gui {
     }
     // ANCHOR Multi Selection
     public enterMultiSelectionMode() {
+        console.log("Entering msm")
         if (this.inGroundPage || this.multiSelectionMode) return;
         this.multiSelectionMode = true;
         this.multiSelection = [];

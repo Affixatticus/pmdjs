@@ -1,5 +1,4 @@
 import { AssetsLoader } from "../../../utils/assets_loader";
-import { Pokemon } from "./pokemon";
 import { FormationTeam } from "./team";
 
 interface PokemonCard {

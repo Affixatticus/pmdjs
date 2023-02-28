@@ -127,7 +127,7 @@ export class DungeonLogic {
             }
             // See if the stairs were found
             this.state.floor.findStairs(leader.position);
-            this.state.ui.minimap.update(leader.position);
+            this.state.minimap.update(leader.position);
             // Execute the special flags
             this.turn.executeSpecialFlags(this.state);
             // Reset the turn

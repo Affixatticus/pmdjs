@@ -83,11 +83,26 @@ export class Minimap {
     private tiles!: CanvasRenderingContext2D;
     /** Objects context */
     private objects!: CanvasRenderingContext2D;
+    /** If the minimap is visible */
+    private visible = true;
 
     /** Creates a new minimap */
     constructor() {
         this.tiles = Canvas.create(0, 0);
         this.objects = Canvas.create(0, 0);
+        this.tiles.canvas.classList.add("minimap-tiles");
+        this.objects.canvas.classList.add("minimap-objects");
+        document.getElementById("overlays")!.appendChild(this.tiles.canvas);
+        document.getElementById("overlays")!.appendChild(this.objects.canvas);
+    }
+
+    public set isVisible(visible: boolean) {
+        this.visible = visible;
+        this.tiles.canvas.classList.toggle("hidden", !visible);
+        this.objects.canvas.classList.toggle("hidden", !visible);
+    }
+    public get isVisible() {
+        return this.visible;
     }
 
     /** Initializes the minimap with data from the loaded floor */
@@ -220,7 +235,7 @@ export class Minimap {
             const enemypos = enemy.position;
             // Draw if the enemy is on a tile you are visiting
             // if (this.explored.get(enemypos) === MinimapTilesVariants.VISITING) {
-                this.drawObject(enemypos, MinimapObjectType.ENEMY);
+            this.drawObject(enemypos, MinimapObjectType.ENEMY);
             // }
         }
         // Draw the player

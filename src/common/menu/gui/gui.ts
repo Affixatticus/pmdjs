@@ -21,6 +21,11 @@ export enum GuiOutput {
 
     /** When you choose to go down the stairs in the ground menu */
     PROCEED,
+
+    /** When you select the inventory option in the game menu */
+    MENU_INVENTORY,
+    /** When you select the party option in the game menu */
+    MENU_PARTY,
 };
 
 export type GuiClose = boolean;

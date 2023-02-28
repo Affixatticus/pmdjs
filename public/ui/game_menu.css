@@ -1,0 +1,40 @@
+#game-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 200000;
+}
+
+.obscured {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 75%, rgba(0, 0, 0, 0.25));
+    box-shadow: inset 0 0 200px 0 rgba(0, 0, 0, 1);
+}
+
+#game-menu .context-menu-container {
+    --menu-title: "Menu";
+    
+    position: absolute;
+    top: 30%;
+    left: 25%;
+    width: 20em;
+}
+
+#game-menu .context-menu-container::before {
+    color: #f8f8f8;
+    text-shadow: #888 2px 2px 0;
+    font-family: WonderMail;
+    font-weight: lighter;
+    font-size: 32pt;
+    user-select: none;
+
+    position: absolute;
+    top: calc(-1em - 24px + 8px);
+
+    content: var(--menu-title);
+    border-image: url(./custom_border_top.png) 32 fill stretch;
+    border-image-width: 24px;
+    border-image-outset: 16px 16px 8px;
+    padding: 0 0.5em;
+}

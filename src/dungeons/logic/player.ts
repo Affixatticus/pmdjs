@@ -51,6 +51,10 @@ abstract class InputState {
         return this.player.logic.state
     }
 
+    public get inventory(): Inventory {
+        return this.player.logic.state.inventory;
+    }
+
     public getInputDirection(): Direction {
         return Direction.fromVector(Controls.LEFT_STICK.position).flipY();
     }
@@ -59,7 +63,8 @@ abstract class InputState {
 
     // Automatically goes to the idle state without returning a value
     public exit(): null {
-        if (Controls.B.isDown) Controls.B.lockReleased();
+        Controls.B.lockReleased();
+        if (Controls.X.isDown) Controls.X.lockPressed();
         this.changeState(new IdleState());
         return null;
     }
@@ -82,6 +87,8 @@ class IdleState extends InputState {
     public update() {
         if (Controls.Y.isDown)
             this.changeState(new TurningState());
+        if (Controls.X.onPressed(1))
+            this.changeState(new MenuState());
         if (this.getInputDirection() !== Direction.NONE)
             this.changeState(new WalkingState());
         if (Controls.B.onReleased(1)) {
@@ -309,11 +316,8 @@ class TurningState extends InputState {
 }
 
 class InventoryState extends InputState {
-    public get inventory(): Inventory {
-        return this.player.logic.state.inventory;
-    }
-
     public init() {
+        console.log("Entered inventory state")
         // Set the gui's tile as the tile under the player
         this.inventory.gui.setGround(this.floor.objects.get(this.leader.position));
         // Tell the inventory gui that it was opened from the menu
@@ -356,23 +360,41 @@ class InventoryState extends InputState {
             return output;
         }
         return null;
-
-        // const guiResult = this.inventory.navigate();
-
-        // // Exit if the return state was true
-        // switch (guiResult) {
-        //     case GUIReturnType.CLOSED:
-        //         return this.exit();
-        //     case GUIReturnType.INVENTORY_EAT:
-        //         return this.exit();
-        //     case GUIReturnType.INVENTORY_DROP:
-        //         this.exit();
-        //         return [InputAction.DROP_ITEM, this.inventory.cursor];
-        // }
-        return null;
     }
 }
 
+class MenuState extends InputState {
+    public init() {
+        console.log("Entered Menu State")
+        GuiManager.openGui(this.state.gameMenu);
+    }
+
+    public update(): InputType {
+        const guiResult = GuiManager.awaitGuiResult();
+        const guiClose = GuiManager.shouldClose;
+
+        let output: InputType = null;
+
+        switch (guiResult) {
+            case GuiOutput.UNASSIGNED:
+                output = null;
+                break;
+            case GuiOutput.MENU_INVENTORY:
+                output = null;
+                return this.changeState(new InventoryState());
+            case GuiOutput.MENU_PARTY:
+                output = null;
+                break;
+            default:
+                console.log(GuiOutput[guiResult]);
+        }
+
+        if (guiClose) {
+            this.exit();
+        }
+        return output;
+    }
+}
 export class Player {
     public logic: DungeonLogic;
     public floor!: DungeonLogic["state"]["floor"];

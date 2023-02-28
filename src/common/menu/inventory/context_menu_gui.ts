@@ -59,7 +59,7 @@ export class ContextMenuGui extends Gui {
         if (Controls.LEFT_STICK.BUTTON_DOWN.onPressed(0)) {
             this.goDown();
         }
-        if (Controls.A.onPressed(0)) {
+        if (Controls.A.onPressed(1)) {
             // Always close this gui
             this.lastOutput = this.options[this.cursor].callback(this);
             return true;
