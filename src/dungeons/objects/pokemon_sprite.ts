@@ -9,7 +9,7 @@ import { PokemonMaterials } from "./pokemon_materials";
 export class PokemonSprite {
     static SCALING_DETERMINANT = 7;
     static SPRITE_ROTATION = Math.PI / 3;
-    static TRANSLUCID_MESH_VISIBILITY = 0.5;
+    static TRANSLUCENT_MESH_VISIBILITY = 0.5;
     static SHADOW_OFFSET = V3(0.5 - this.SCALING_DETERMINANT / 512, 0.01, -0.5);
     static SPRITE_OFFSET = V3(0.5, 0, -0.5);
 
@@ -97,7 +97,7 @@ export class PokemonSprite {
 
         const tranMesh = opaqMesh.clone("pokemon-tran");
         tranMesh.renderingGroupId = FloorRenderingLevels.HIGHEST;
-        tranMesh.visibility = PokemonSprite.TRANSLUCID_MESH_VISIBILITY;
+        tranMesh.visibility = PokemonSprite.TRANSLUCENT_MESH_VISIBILITY;
         this.translucentMesh = tranMesh;
     }
 

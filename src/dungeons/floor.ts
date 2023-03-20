@@ -14,7 +14,7 @@ import { AssetsLoader } from "../utils/assets_loader";
 import { DungeonTile } from "./objects/tile";
 import { DungeonEnemyGenerator } from "./objects/enemy_generator";
 import { DungeonItem } from "./objects/item";
-import { FormationTeam } from "../common/menu/formation/formation";
+import { FormationTeam } from "../common/menu/formation/team";
 
 export enum FloorRenderingLevels {
     /** The level that has the floor and water, the tiles and the items */
@@ -85,8 +85,7 @@ export class DungeonFloor {
         );
         this.pokemon.add(leader);
         // Place the partners
-        party.pokemon.forEach((pokemon, i) => {
-            if (i === 0) return;
+        party.partners.forEach((pokemon) => {
             const partner = new DungeonPokemon(
                 DungeonStartup.placePartner(this), DungeonPokemonType.PARTNER, pokemon);
             this.pokemon.add(partner);

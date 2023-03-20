@@ -193,6 +193,9 @@ export class Inventory {
         return ButtonVisibility.HIDDEN;
     }
     public showsTossOption(): ButtonVisibility {
-        return ButtonVisibility.VISIBLE;
+        if (!this.inDungeonState()) {
+            return ButtonVisibility.VISIBLE;
+        }
+        return ButtonVisibility.HIDDEN;
     }
 }

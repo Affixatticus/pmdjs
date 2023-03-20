@@ -1,4 +1,4 @@
-import { ContextMenuGui, ContextMenuOption } from "../inventory/context_menu_gui";
+import { ContextMenuGui, ContextMenuOption } from "./context_menu_gui";
 import { Gui } from "./gui";
 import { TextboxGui } from "./textbox_gui";
 

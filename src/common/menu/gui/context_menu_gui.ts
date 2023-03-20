@@ -1,5 +1,5 @@
 import { Controls } from "../../../utils/controls";
-import { Gui, GuiClose, GuiOutput } from "../gui/gui";
+import { Gui, GuiClose, GuiOutput } from "./gui";
 
 export interface ContextMenuOption {
     /** The text that will be displayed on the option */
@@ -51,6 +51,14 @@ export class ContextMenuGui extends Gui {
         if (index < this.options.length)
             this.updateSelection(index);
     }
+    public goLeft() {
+        // Go to the 0th option
+        this.updateSelection(0);
+    }
+    public goRight() {
+        // Go to the last option
+        this.updateSelection(this.options.length - 1);
+    }
 
     public handleInput(): GuiClose {
         if (Controls.LEFT_STICK.BUTTON_UP.onPressed(0)) {
@@ -58,6 +66,12 @@ export class ContextMenuGui extends Gui {
         }
         if (Controls.LEFT_STICK.BUTTON_DOWN.onPressed(0)) {
             this.goDown();
+        }
+        if (Controls.LEFT_STICK.BUTTON_LEFT.onPressed(0)) {
+            this.goLeft();
+        }
+        if (Controls.LEFT_STICK.BUTTON_RIGHT.onPressed(0)) {
+            this.goRight();
         }
         if (Controls.A.onPressed(1)) {
             // Always close this gui

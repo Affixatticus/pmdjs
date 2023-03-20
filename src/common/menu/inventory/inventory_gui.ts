@@ -1,7 +1,7 @@
 import { ItemStack } from "../../../data/item/item_stack";
 import { AssetsLoader } from "../../../utils/assets_loader";
 import { Controls } from "../../../utils/controls";
-import { ContextMenuGui as ContextMenuGui, ContextMenuOption } from "./context_menu_gui";
+import { ContextMenuGui as ContextMenuGui, ContextMenuOption } from "../gui/context_menu_gui";
 import { ButtonVisibility, Inventory } from "./inventory";
 import { Gui, GuiClose, GuiOutput } from "../gui/gui";
 import { GuiManager } from "../gui/gui_manager";
@@ -429,7 +429,8 @@ export class InventoryGui extends Gui {
         items.id = "inventory-items";
         this.elements.items = items;
         this.updateItems();
-        items.onwheel = (e) => {
+        items.addEventListener("wheel", (e) => {
+            e.preventDefault();
             const scrollUp = e.deltaY < 0;
             if (scrollUp) {
                 if (this.inventory.cursor === this.inventory.pageStart) {
@@ -445,7 +446,7 @@ export class InventoryGui extends Gui {
                     this.goRight();
                 } else this.goDown();
             }
-        }
+        }, { passive: true });
         return items;
     }
     private createIcon() {
@@ -713,7 +714,8 @@ export class InventoryGui extends Gui {
                 case ObjectType.TRAP:
                 case ObjectType.STAIRS:
                     const src = TileObjects[(<DungeonTile>this.ground).id].imageLocation;
-                    if (src === "") return;
+                    // Don't add the image if an imageLocation wasn't specified
+                    if (src === "") return console.warn("No imageLocation specified for tile " + (<DungeonTile>this.ground).id);
                     image.src = src;
                     this.elements.icon.appendChild(image);
             }

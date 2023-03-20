@@ -1,4 +1,5 @@
-import { ContextMenuGui } from "../inventory/context_menu_gui";
+import { Controls } from "../../../utils/controls";
+import { ContextMenuGui } from "./context_menu_gui";
 import { Gui, GuiOutput } from "./gui";
 
 export class GameMenuGui extends Gui {
@@ -14,12 +15,13 @@ export class GameMenuGui extends Gui {
         this.ctxMenu.isVisible = visible;
     }
     public onOpen(): void {
+        this.ctxMenu.updateSelection(0);
         this.lastOutput = GuiOutput.UNASSIGNED;
         this.ctxMenu.lastOutput = GuiOutput.UNASSIGNED;
     }
 
     public handleInput(): boolean {
-        const shouldClose = this.ctxMenu.handleInput();
+        const shouldClose = this.ctxMenu.handleInput() || Controls.X.onPressed(1);
         this.lastOutput = this.ctxMenu.lastOutput;
         return shouldClose;
     }
@@ -60,6 +62,13 @@ export class GameMenuGui extends Gui {
                     return GuiOutput.MENU_PARTY;
                 }
             },
+            {
+                text: "Cancel",
+                callback: () => {
+                    this.close();
+                    return GuiOutput.UNASSIGNED;
+                }
+            }
         ]);
     }
 }
